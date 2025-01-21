@@ -1,16 +1,9 @@
 import { ToggleIcon } from '../icons/ToggleIcon';
 import Button from './Button';
 import Card from './Card';
+import { testPrompts } from '../mockData';
 
-const SideBar = ({ isOpen, onToggle }: any) => {
-	const code = `import { useState } from "react";
-                import { invoke } from "@tauri-apps/api/core";
-                import "./App.css";
-
-                function App() {
-                const [name, setName] = useState("");
-                const [name, setName] = useState("");
-                }`;
+const SideBar = ({ isOpen, onToggle, onPreview }: any) => {
 	return (
 		<aside
 			className={`w-64 fixed z-10 h-full  bg-[#F4F4F5] rounded p-4  overflow-auto ${
@@ -27,9 +20,9 @@ const SideBar = ({ isOpen, onToggle }: any) => {
 					<h2>Saved Prompts</h2>
 				</div>
 			</div>
-			<Card code={code} />
-			<Card code={code} />
-			<Card code={code} />
+			{testPrompts.map((prompt) => (
+				<Card onClick={() => onPreview(prompt.code)} code={prompt.code} key={prompt.id} />
+			))}
 		</aside>
 	);
 };

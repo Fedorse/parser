@@ -1,5 +1,5 @@
 import Button from './Button';
-export const Modal = ({ isOpen, onClose }) => {
+export const PressetsModal = ({ isOpen, onClose }) => {
 	return (
 		isOpen && (
 			<div className="fixed inset-0 z-20 flex items-center justify-center ">
@@ -67,4 +67,4 @@ export const Modal = ({ isOpen, onClose }) => {
 	);
 };
 
-export default Modal;
+export default PressetsModal;
