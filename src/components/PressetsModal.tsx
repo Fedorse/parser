@@ -1,4 +1,5 @@
 import Button from './Button';
+import Input from './Input';
 export const PressetsModal = ({ isOpen, onClose }) => {
 	return (
 		isOpen && (
@@ -11,31 +12,22 @@ export const PressetsModal = ({ isOpen, onClose }) => {
 					<div className="text-center pt-6">
 						<h2 className="text-2xl font-bold">Presets configuration</h2>
 					</div>
-					<div className="p-6 overflow-y-auto">
-						<form className="space-y-6 " action="">
-							<div>
-								{/* <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="title">
-									Preset Name
-								</label> */}
-								<input
-									className="bg-gray-50 w-full px-4 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500"
-									type="text"
-									placeholder="Name"
-									id="title"
-								/>
-							</div>
-							<div>
-								{/* <label htmlFor="pattern" className="block text-sm font-medium text-gray-700 mb-1">
+					<div className="px-6 py-4 overflow-y-auto">
+						<form className="space-y-4 " action="">
+							<Input id="title" placeholder="" label={'Preset Name'} />
+
+							{/* <label htmlFor="pattern" className="block text-sm font-medium text-gray-700 mb-1">
 									Parse pattern
 								</label> */}
-								<select
+							{/* <select
 									name=""
 									className="bg-gray-50 w-full rounded-lg border px-4 py-2 "
 									id="pattern"
 								>
 									<option value="Ignore pattern">Ignore pattern</option>
-								</select>
-							</div>
+								</select> */}
+							<Input id="include" placeholder="" label={'Files to include'} />
+							<Input id="exclude" placeholder="" label={'Files to exclude'} />
 
 							<textarea
 								name=""

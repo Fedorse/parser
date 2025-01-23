@@ -2,7 +2,7 @@ export const PreviewModal = ({ isOpen, onClose, code }) => {
 	if (!isOpen) return null;
 	return (
 		<div
-			className="fixed z-50 inset-0 bg-black/50 flex flex-col items-center justify-center"
+			className="fixed z-50 inset-0 bg-black/60 backdrop-blur-sm transition-opacity flex flex-col items-center justify-center"
 			onClick={onClose}
 		>
 			<div
