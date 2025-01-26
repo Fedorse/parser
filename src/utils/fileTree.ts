@@ -7,32 +7,30 @@ export const createFileTree = (files) => {
 
 		parts.forEach((part, index) => {
 			if (!part) return;
-
-			let existingNode = currentLevel.find((node) => node.name === part);
-
 			const isLast = index === parts.length - 1;
 
-			if (isLast) {
-				if (!existingNode) {
-					currentLevel.push({
-						name: part,
-						isDirectory: false,
-						checked: false
-					});
+			let existingNode = currentLevel.find((node) => node.name === part);
+			if (!existingNode) {
+				// Создаём новый узел
+				existingNode = {
+					name: part,
+					isDirectory: !isLast,
+					// path для файла:
+					path: isLast ? file.webkitRelativePath : parts.slice(0, index + 1).join('/')
+				};
+				// Если директория - добавим children
+				if (!isLast) {
+					existingNode.children = [];
 				}
-			} else {
-				if (!existingNode) {
-					existingNode = {
-						name: part,
-						isDirectory: true,
-						children: [],
-						checked: false
-					};
-					currentLevel.push(existingNode);
-				}
+				currentLevel.push(existingNode);
+			}
+
+			// Если не последний, спускаемся в children
+			if (!isLast) {
 				currentLevel = existingNode.children;
 			}
 		});
 	});
+
 	return root;
 };

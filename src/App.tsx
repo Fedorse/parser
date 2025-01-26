@@ -12,11 +12,12 @@ import { ToggleIcon } from './icons/ToggleIcon';
 import { createFileTree } from './utils/fileTree';
 
 function App() {
+	const [fileStructure, setFileStructure] = useState([]);
+	const [selectedPaths, setSelectedPaths] = useState([]);
 	const [isSideBarOpen, setIsSideBarOpen] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [previewCode, setPreviewCode] = useState(null);
 	const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-	const [fileStructure, setFileStructure] = useState([]);
 	const [showFileStructure, setShowFileStructure] = useState(false);
 
 	const modalClose = () => {
@@ -49,6 +50,16 @@ function App() {
 		setShowFileStructure(false);
 	};
 
+	const toggleNodeCheck = (nodePath) => {
+		setSelectedPaths((prev) => {
+			if (prev.includes(nodePath)) {
+				return prev.filter((path) => path !== nodePath);
+			} else {
+				return [...prev, nodePath];
+			}
+		});
+	};
+
 	return (
 		<main className="flex h-screen w-screen">
 			<SideBar
@@ -57,6 +68,8 @@ function App() {
 				onPreview={openPreview}
 				fileStructure={fileStructure}
 				showFileStructure={showFileStructure}
+				toggleNodeCheck={toggleNodeCheck}
+				selectedPaths={selectedPaths}
 			/>
 
 			<div className="z-5 relative gap-4 bg-white  flex flex-col items-center justify-center text-black  w-full h-full text-xl  ">

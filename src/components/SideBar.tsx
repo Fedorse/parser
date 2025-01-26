@@ -4,7 +4,15 @@ import Card from './Card';
 import FileTree from './FileTree';
 import { testPrompts } from '../mockData';
 
-const SideBar = ({ isOpen, onToggle, onPreview, fileStructure, showFileStructure }: any) => {
+const SideBar = ({
+	isOpen,
+	onToggle,
+	onPreview,
+	fileStructure,
+	showFileStructure,
+	toggleNodeCheck,
+	selectedPaths
+}: any) => {
 	return (
 		<aside
 			className={`w-64 fixed z-10 h-full  bg-[#F4F4F5] rounded p-4  overflow-auto ${
@@ -25,7 +33,11 @@ const SideBar = ({ isOpen, onToggle, onPreview, fileStructure, showFileStructure
 				{showFileStructure && fileStructure && fileStructure.length > 0 ? (
 					<>
 						<div className="pt-4">
-							<FileTree data={fileStructure} />
+							<FileTree
+								data={fileStructure}
+								onToggle={toggleNodeCheck}
+								selectedPaths={selectedPaths}
+							/>
 						</div>
 					</>
 				) : (
