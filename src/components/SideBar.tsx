@@ -15,24 +15,24 @@ const SideBar = ({
 }: any) => {
 	return (
 		<aside
-			className={`w-64 fixed z-10 h-full  bg-[#F4F4F5] rounded p-4  overflow-auto ${
-				isOpen ? 'translate-x-0' : '-translate-x-full'
-			} transition-transform duration-300 ease-in-out`}
+			className={`z-10 h-full transition-all duration-500 bg-black overflow-auto ${
+				isOpen ? 'w-64' : 'w-0'
+			} ${showFileStructure ? 'drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]' : ''}  `}
 		>
-			<div className="flex gap-4 items-center ">
+			<div className="flex gap-4 p-4 items-center ">
 				<div className="flex">
 					<Button onClick={onToggle}>
 						<ToggleIcon />
 					</Button>
 				</div>
-				<div className="border-l border-gray-500 pl-2 font-semibold ">
+				<div className="border-l text-xl min-w-64 text-white border-gray-600 pl-2 font-normal leading-none ">
 					<h2>{showFileStructure ? 'File Structure' : 'Saved Prompts'}</h2>
 				</div>
 			</div>
 			<div>
 				{showFileStructure && fileStructure && fileStructure.length > 0 ? (
 					<>
-						<div className="pt-4">
+						<div className="pt-2 ">
 							<FileTree
 								data={fileStructure}
 								onToggle={toggleNodeCheck}
@@ -41,11 +41,11 @@ const SideBar = ({
 						</div>
 					</>
 				) : (
-					<>
+					<div className="p-4">
 						{testPrompts.map((prompt) => (
 							<Card onClick={() => onPreview(prompt.code)} code={prompt.code} key={prompt.id} />
 						))}
-					</>
+					</div>
 				)}
 			</div>
 		</aside>

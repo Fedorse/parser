@@ -8,7 +8,7 @@ export const PressetsModal = ({ isOpen, onClose }) => {
 					className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
 					onClick={onClose}
 				/>
-				<div className="relative bg-white w-[600px] max-h-[80vh] rounded-xl shadow-xl">
+				<div className="relative text-gray-300 border border-gray-700   bg-zinc-950 w-[600px] max-h-[80vh] rounded-xl shadow-xl">
 					<div className="text-center pt-6">
 						<h2 className="text-2xl font-bold">Presets configuration</h2>
 					</div>
@@ -31,7 +31,7 @@ export const PressetsModal = ({ isOpen, onClose }) => {
 
 							<textarea
 								name=""
-								className="bg-gray-50 w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+								className="bg-zinc-800 w-full rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
 								id="content"
 								rows={5}
 								cols={5}

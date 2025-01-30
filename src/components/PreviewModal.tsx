@@ -7,12 +7,14 @@ export const PreviewModal = ({ isOpen, onClose, code }) => {
 		>
 			<div
 				onClick={(e) => e.stopPropagation()}
-				className="bg-white relative rounded-lg p-4 w-[600px] max-h-[80vh] flex flex-col"
+				className="w-[600px] rounded max-h-[80vh] flex flex-col border border-slate-800"
 			>
-				<h2>Code preview</h2>
-				<div className="overflow-hidden flex-1">
-					<pre className="bg-gray-50 p-4 rounded h-full overflow-y-auto ">
-						<code className="text-sm font-mono ">{code}</code>
+				<div className="h-10 bg-slate-900 items-center flex ">
+					<h2 className=" text-sm text-gray-300 leading-none pl-4 ">Preview</h2>
+				</div>
+				<div className="overflow-hidden flex-1 ">
+					<pre className="bg-[#282c34] p-4  h-full overflow-y-auto ">
+						<code className="text-sm font-mono text-gray-300 ">{code}</code>
 					</pre>
 				</div>
 			</div>
