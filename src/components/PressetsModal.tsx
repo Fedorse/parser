@@ -1,6 +1,6 @@
 import Button from './Button';
 import Input from './Input';
-export const PressetsModal = ({ isOpen, onClose }) => {
+export const PressetsModal = ({ isOpen, onClose }: any) => {
 	return (
 		isOpen && (
 			<div className="fixed inset-0 z-20 flex items-center justify-center ">

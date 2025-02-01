@@ -1,7 +1,7 @@
 import Button from './Button';
 import { DownLoadsIcon } from '../icons/DownLoadsIcon';
 import { DeleteIcon } from '../icons/DeleteIcon';
-const Card = ({ code, onClick }) => {
+const Card = ({ code, onClick }: any) => {
 	return (
 		<div className="h-64 w-52 flex-1 mb-6">
 			<div
@@ -20,10 +20,10 @@ const Card = ({ code, onClick }) => {
 				</div>
 
 				<div className="flex justify-end gap-4 text-white">
-					<Button>
+					<Button variant="icon">
 						<DownLoadsIcon />
 					</Button>
-					<Button>
+					<Button variant="icon">
 						<DeleteIcon />
 					</Button>
 				</div>

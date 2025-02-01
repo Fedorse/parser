@@ -2,7 +2,7 @@ import { ToggleIcon } from '../icons/ToggleIcon';
 import Button from './Button';
 import Card from './Card';
 import FileTree from './FileTree';
-import { testPrompts } from '../mockData';
+import { data } from '../mockData';
 
 const SideBar = ({
 	isOpen,
@@ -15,15 +15,13 @@ const SideBar = ({
 }: any) => {
 	return (
 		<aside
-			className={`z-10 h-full transition-all duration-500  overflow-y-auto overflow-x-hidden 
-
-     ${isOpen ? 'w-64' : 'w-0'} ${
-				showFileStructure ? 'drop-shadow-[0_0_55px_rgba(59,130,246,0.4)] bg-black' : ''
-			}  `}
+			className={`z-10 h-full transition-all duration-500  overflow-y-auto overflow-x-hidden ${
+				isOpen ? 'w-64' : 'w-0'
+			} ${showFileStructure ? 'drop-shadow-[0_0_55px_rgba(59,130,246,0.4)] bg-black' : ''}  `}
 		>
 			<div className="flex gap-4 p-4 items-center ">
 				<div className="flex">
-					<Button onClick={onToggle}>
+					<Button variant="icon" onClick={onToggle}>
 						<ToggleIcon />
 					</Button>
 				</div>
@@ -34,7 +32,7 @@ const SideBar = ({
 			<div>
 				{showFileStructure && fileStructure && fileStructure.length > 0 ? (
 					<>
-						<div className="pt-2 ">
+						<div className="pt-2">
 							<FileTree
 								data={fileStructure}
 								onToggle={toggleNodeCheck}
@@ -44,8 +42,8 @@ const SideBar = ({
 					</>
 				) : (
 					<div className="p-4">
-						{testPrompts.map((prompt) => (
-							<Card onClick={() => onPreview(prompt.code)} code={prompt.code} key={prompt.id} />
+						{data.map((data) => (
+							<Card onClick={() => onPreview(data.code)} code={data.code} key={data.id} />
 						))}
 					</div>
 				)}

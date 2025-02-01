@@ -1,4 +1,4 @@
-export const PreviewModal = ({ isOpen, onClose, code }) => {
+export const PreviewModal = ({ isOpen, onClose, code }: any) => {
 	if (!isOpen) return null;
 	return (
 		<div

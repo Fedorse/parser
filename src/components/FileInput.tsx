@@ -1,5 +1,5 @@
 import { InputIcon } from '../icons/InputIcon';
-export const FileInput = ({ onFolderSelected }) => {
+export const FileInput = ({ onFolderSelected }: any) => {
 	return (
 		<>
 			<input

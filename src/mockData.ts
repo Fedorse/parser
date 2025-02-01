@@ -1,13 +1,12 @@
-// src/data/mockData.ts
-export const testPrompts = [
+export const data = [
 	{
 		id: 1,
 		title: 'React useState Example',
 		code: `import { useState } from "react";
-  import { invoke } from "@tauri-apps/api/core";
+  import { invoke } from "@tauri-apps/api/core";ß
   import "./App.css";
   
-  function App() {
+  function App() 
     const [name, setName] = useState("");
     const [count, setCount] = useState(0);
       import { invoke } from "@tauri-apps/api/core";
