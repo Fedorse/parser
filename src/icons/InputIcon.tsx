@@ -1,6 +1,6 @@
-export function InputIcon(props: SVGProps<SVGSVGElement>) {
+export function InputIcon() {
 	return (
-		<svg xmlns="http://www.w3.org/2000/svg" className="w-32 h-24" viewBox="0 0 16 16" {...props}>
+		<svg xmlns="http://www.w3.org/2000/svg" className="w-32 h-24" viewBox="0 0 16 16">
 			<g fill="none" strokeLinecap="round" strokeLinejoin="round">
 				<path
 					stroke="#cad3f5"

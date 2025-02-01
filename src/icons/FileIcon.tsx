@@ -1,4 +1,4 @@
-export function FileIcon(props: SVGProps<SVGSVGElement>) {
+export function FileIcon() {
 	return (
 		<svg
 			width="105"

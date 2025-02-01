@@ -1,7 +1,6 @@
-export function ToggleIcon(props: SVGProps<SVGSVGElement>) {
+export function ToggleIcon() {
 	return (
 		<svg
-
 			className="text-gray-400 h-6 w-6"
 			viewBox="0 0 24 24"
 			fill="none"

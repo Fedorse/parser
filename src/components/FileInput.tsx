@@ -1,13 +1,14 @@
 import { InputIcon } from '../icons/InputIcon';
-export const FileInput = ({ onFolderSelected }: any) => {
+
+export const FileInput = ({ onFolderSelected }) => {
 	return (
 		<>
 			<input
 				id="file-input"
 				type="file"
 				multiple
-				webkitdirectory=""
-				directory=""
+				{...{ webkitdirectory: '' }}
+				{...{ directory: '' }}
 				className="absolute inset-0 w-full h-full opacity-0"
 				onChange={onFolderSelected}
 			/>
