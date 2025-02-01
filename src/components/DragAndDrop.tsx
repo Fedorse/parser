@@ -1,4 +1,5 @@
 import FileInput from './FileInput';
+
 export const DragAndDrop = ({ onFolderSelected }: any) => {
 	return (
 		<div className="flex rounded-2xl w-[450px] h-[290px] bg-gray-900 p-6 border border-gray-800">

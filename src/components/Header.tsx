@@ -3,14 +3,10 @@ import { ToggleIcon } from '../icons/ToggleIcon';
 import { SettingIcon } from '../icons/SettingIcon';
 const Header = ({ setIsModalOpen, setIsSideBarOpen, isSideBarOpen }: any) => {
 	return (
-		<header
-			className={`flex z-30 p-4  text-white items-center w-full ${
-				isSideBarOpen ? 'justify-end' : 'justify-between'
-			}`}
-		>
+		<header className="flex z-30 p-4 justify-between  text-white items-center w-full ">
 			<div
-				className={`flex transition-opacity duration-500 ${
-					isSideBarOpen ? 'opacity-0 : ' : 'opacity-100'
+				className={`flex transition-opacity duration-300 ${
+					isSideBarOpen ? 'opacity-0 pointer-events-none : ' : 'opacity-100'
 				}`}
 			>
 				<Button variant="icon" onClick={() => setIsSideBarOpen(!isSideBarOpen)}>
