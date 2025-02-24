@@ -6,7 +6,7 @@ const Header = ({ setIsModalOpen, setIsSideBarOpen, isSideBarOpen }: any) => {
 		<header className="flex z-30 p-4 justify-between  text-white items-center w-full ">
 			<div
 				className={`flex transition-opacity duration-300 ${
-					isSideBarOpen ? 'opacity-0 pointer-events-none : ' : 'opacity-100'
+					isSideBarOpen ? 'opacity-100 md:opacity-0 pointer-events-none' : 'opacity-100'
 				}`}
 			>
 				<Button variant="icon" onClick={() => setIsSideBarOpen(!isSideBarOpen)}>

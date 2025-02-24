@@ -15,8 +15,8 @@ const SideBar = ({
 }: any) => {
 	return (
 		<aside
-			className={`z-10 h-full transition-all duration-500  overflow-y-auto overflow-x-hidden ${
-				isOpen ? 'w-64' : 'w-0'
+			className={`z-10 h-full transition-all duration-500  overflow-y-scroll overflow-hidden ${
+				isOpen ? 'w-64' : 'w-0 '
 			} ${showFileStructure ? 'drop-shadow-[0_0_55px_rgba(59,130,246,0.4)] bg-black' : ''}  `}
 		>
 			<div className="flex gap-4 p-4 items-center ">
