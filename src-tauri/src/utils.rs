@@ -121,7 +121,7 @@ pub fn update_parsed_file(file_name: String, content: String) -> Result<(), Stri
 }
 
 pub fn update_saved_preset(new_preset: SavedPreset) -> Result<(), String> {
-    let preset_path = get_file_path(PRESETS_FILE_NAME.to_string(), PARSED_FILES_DIR)?;
+    let preset_path = get_file_path(PRESETS_FILE_NAME.to_string(), "")?;
 
     if !preset_path.exists() {
         fs::write(&preset_path, "[]").map_err(|e| e.to_string())?;
@@ -134,6 +134,7 @@ pub fn update_saved_preset(new_preset: SavedPreset) -> Result<(), String> {
     existing_presets.push(new_preset);
 
     let presets_json = serde_json::to_string_pretty(&existing_presets).map_err(|e| e.to_string())?;
+
     fs::write(preset_path, presets_json).map_err(|e| e.to_string())?;
 
     Ok(())
@@ -141,7 +142,7 @@ pub fn update_saved_preset(new_preset: SavedPreset) -> Result<(), String> {
 
 /// Delete a user-defined preset from the local presets.json.
 pub fn delete_saved_preset(preset: SavedPreset) -> Result<(), String> {
-    let preset_path = get_file_path(PRESETS_FILE_NAME.to_string(), PARSED_FILES_DIR)?;
+    let preset_path = get_file_path(PRESETS_FILE_NAME.to_string(), "")?;
 
     if !preset_path.exists() {
         return Err("Presets file not found".to_string());
@@ -207,6 +208,9 @@ pub fn parse_files_with_patterns(file_paths: Vec<String>, ignore_patterns: Vec<S
         let file_name = path_buf.file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("");
+
+        log::info!("File name: {:?}", file_name);
+        log::info!("Ignore patterns: {:?}", ignore_patterns);
 
         // Skip if the file name is in the ignore patterns
         if ignore_patterns.iter().any(|pattern| pattern == file_name) {

@@ -46,6 +46,8 @@ export default function FileUploader() {
   };
 
   const parseFiles = async (files) => {
+    console.log("CURRET", currentPreset);
+
     const ignorePatterns = currentPreset?.ignorePatterns ?? [];
 
     console.log("IGNORE", ignorePatterns);
@@ -78,17 +80,37 @@ export default function FileUploader() {
   useEffect(() => {
     reloadFiles();
     invoke("get_presets").then((res) => {
-      console.log("RES", res);
-
       const { default: defaultPresets, saved } = res;
 
-      setDefaultPresets(defaultPresets);
-      setSavedPresets(saved);
+      setDefaultPresets(
+        defaultPresets.map((preset) => ({
+          ...preset,
+          ignorePatterns: preset.ignore_patterns,
+        }))
+      );
+      setSavedPresets(
+        saved.map((preset) => ({
+          ...preset,
+          ignorePatterns: preset.ignore_patterns,
+        }))
+      );
+
+      console.log("SAVED", saved);
+      console.log("DEFAULT", defaultPresets);
     });
   }, []);
 
   const savePreset = async () => {
-    await invoke("save_preset", { preset: newPreset });
+    console.log("NEW PRESET", newPreset);
+
+    const res = await invoke("save_preset", {
+      preset: {
+        ...newPreset,
+        ignore_patterns: newPreset.ignorePatterns.split(","),
+      },
+    });
+    console.log("RES", res);
+
     setSavedPresets([...savedPresets, newPreset]);
     setNewPreset({ name: "", ignorePatterns: "" });
   };
@@ -133,6 +155,15 @@ export default function FileUploader() {
         </div>
       )}
 
+      {currentPreset && (
+        <>
+          <h3>Selected preset</h3>
+          <div className="mt-4 text-sm text-black gap-10">
+            {currentPreset.name}
+          </div>
+        </>
+      )}
+
       <h3>PRESETS</h3>
       {savedPresets.map((preset) => (
         <div
@@ -160,7 +191,7 @@ export default function FileUploader() {
           key={preset.name}
         >
           <span className="text-ellipsis">{preset.name}</span>
-          <span className="text-red-600 text-lg">{preset.ignorePatterns}</span>
+          {/* <span className="text-red-600 text-lg">{preset.ignorePatterns}</span> */}
         </div>
       ))}
       <form
@@ -178,9 +209,7 @@ export default function FileUploader() {
           id="preset-name"
           className="w-full rounded-lg border-2 border-gray-300 p-4"
           value={newPreset.name}
-          onChange={(e) =>
-            setNewPreset({ ...newPreset, ignorePatterns: e.target.value })
-          }
+          onChange={(e) => setNewPreset({ ...newPreset, name: e.target.value })}
         />
         <label htmlFor="ignore-patterns" className="text-sm">
           Files to ignore, comma separated
