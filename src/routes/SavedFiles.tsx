@@ -1,9 +1,9 @@
 import { ListFiles } from '../components/ListFiles';
 
-const SavedFiles = (props) => {
+const SavedFiles = ({reloadFiles, savedFiles, handleFileRemove}) => {
 	return (
 		<div className="flex flex-col items-center justify-center">
-			<ListFiles {...props} />
+			<ListFiles savedFiles={savedFiles} reloadFiles={reloadFiles} handleFileRemove={handleFileRemove} />
 		</div>
 	);
 };

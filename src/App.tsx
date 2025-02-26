@@ -7,27 +7,11 @@ import FileUploader from './routes/FileUploader';
 import SavedFiles from './routes/SavedFiles';
 
 export default function App() {
-	const [savedFiles, setSavedFiles] = useState([]);
-	const [currentFile, setCurrentFile] = useState('');
-	const [currentFileContent, setCurrentFileContent] = useState('');
-
-	const saveCurrentFile = async (content) => {
-		await invoke('update_file', {
-			fileName: currentFile,
-			content: content
-		});
-		setCurrentFileContent(content);
-	};
+	const [savedFiles, setSavedFiles] = useState<string[]>([]);
 
 	const reloadFiles = async () => {
 		const res = await invoke('get_files');
 		setSavedFiles(res);
-	};
-
-	const handleFileClick = async (fileName) => {
-		const content = await invoke('get_file_content', { fileName });
-		setCurrentFile(fileName);
-		setCurrentFileContent(content);
 	};
 
 	const handleFileRemove = async (fileName) => {
@@ -72,23 +56,29 @@ export default function App() {
 		reloadFiles();
 	}, []);
 
-	const fileProps = {
-		savedFiles,
-		currentFile,
-		currentFileContent,
-		handleFileClick,
-		handleFileRemove,
-		saveCurrentFile,
-		handleFileSelect,
-		handleFolderSelect
-	};
-
 	return (
 		<BrowserRouter>
 			<Routes>
 				<Route element={<RootLayout />}>
-					<Route path="/" element={<FileUploader {...fileProps} />} />
-					<Route path="/saved-files" element={<SavedFiles {...fileProps} />} />
+					<Route
+						path="/"
+						element={
+							<FileUploader
+								handleFileSelect={handleFileSelect}
+								handleFolderSelect={handleFolderSelect}
+							/>
+						}
+					/>
+					<Route
+						path="/saved-files"
+						element={
+							<SavedFiles
+								savedFiles={savedFiles}
+								handleFileRemove={handleFileRemove}
+								reloadFiles={reloadFiles}
+							/>
+						}
+					/>
 				</Route>
 			</Routes>
 		</BrowserRouter>

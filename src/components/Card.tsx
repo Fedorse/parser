@@ -1,41 +1,61 @@
-// Card.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DeleteIcon } from '../icons/DeleteIcon';
 import PreviewModal from './PreviewModal';
+import { invoke } from '@tauri-apps/api/core';
 
-const Card = ({
-	fileName,
-	handleFileClick,
-	handleFileRemove,
-	currentFileContent,
-	currentFile,
-	saveCurrentFile
-}) => {
+const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [localContent, setLocalContent] = useState('');
 
-	const handleClose = () => {
-		setIsOpen(false);
+	const loadContent = async () => {
+		const content = await invoke('get_file_content', { fileName });
+		return content;
 	};
 
 	const handleOpen = async () => {
-		// Загружаем содержимое файла при открытии
-		await handleFileClick(fileName);
+		const content = await loadContent();
+		setLocalContent(content);
 		setIsOpen(true);
 	};
+
+	const handleSave = async ({ newContent }) => {
+		await invoke('update_file', {
+			fileName: fileName,
+			content: newContent
+		});
+
+		setLocalContent(newContent);
+		setIsOpen(false);
+		if (reloadFiles) {
+			reloadFiles();
+		}
+	};
+
+	useEffect(() => {
+		const loadInitialContent = async () => {
+			const content = await loadContent();
+			setLocalContent(content || '');
+		};
+		loadInitialContent();
+	}, [fileName]);
 
 	return (
 		<>
 			<div
 				onClick={handleOpen}
-				className="border-[1px] w-80 h-40 bg-neutral-950 border-gray-600 rounded-lg mb-4 flex flex-col cursor-pointer hover:border-blue-500 transition-colors"
+				className="border-[1px] w-72 h-52 bg-neutral-950 border-gray-600 rounded-lg  flex flex-col cursor-pointer hover:border-white transition-colors"
 			>
-				<div className="p-4 flex-grow flex items-center justify-center">
-					<h3 className="text-white text-lg font-medium truncate max-w-full text-center">
-						{fileName}
-					</h3>
+				<div className="p-3 border-b border-gray-700">
+					<h3 className="text-white text-base font-medium max-w-full">{fileName}</h3>
 				</div>
 
-				<div className="p-3 flex justify-end items-center border-t border-gray-700">
+				<div className="p-3 flex-grow overflow-hidden">
+					<div className="text-gray-400 text-xs font-mono line-clamp-5 overflow-hidden">
+						{localContent}
+					</div>
+				</div>
+
+				<div className="p-2 flex justify-end items-center border-t border-gray-700">
 					<button
 						className="text-red-500 hover:text-red-400 transition-colors"
 						onClick={(e) => {
@@ -50,10 +70,10 @@ const Card = ({
 
 			<PreviewModal
 				isOpen={isOpen}
-				onClose={handleClose}
-				content={currentFileContent}
+				onClose={() => setIsOpen(false)}
+				content={localContent}
 				fileName={fileName}
-				saveCurrentFile={saveCurrentFile}
+				saveCurrentFile={handleSave}
 			/>
 		</>
 	);
