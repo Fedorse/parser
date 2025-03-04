@@ -1,10 +1,10 @@
 import DragAndDrop from '../components/DragAndDrop';
 
-export const FileUploader = ({ handleFolderSelect, handleFileSelect }) => {
+export const MainPage = ({ handleFolderSelect, handleFileSelect }) => {
 	return (
 		<main className="h-screen w-screen flex flex-col items-center justify-center gap-5">
 			<DragAndDrop handleFileSelect={handleFileSelect} handleFolderSelect={handleFolderSelect} />
 		</main>
 	);
 };
-export default FileUploader;
+export default MainPage;

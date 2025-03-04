@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { DeleteIcon } from '../icons/DeleteIcon';
 import PreviewModal from './PreviewModal';
 import { invoke } from '@tauri-apps/api/core';
-import { CopyIcon } from '../icons/CopyIcon';
+import { DeleteIcon, CopyIcon, EditIcon } from '../icons';
 
 const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -56,7 +55,6 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 			>
 				<div className="p-2 border-b border-gray-800/60 flex flex-col items-center">
 					<h3 className="text-white text-base font-light max-w-full mb-1">{fileName}</h3>
-					{/* <span className="text-white/50 text-xs">1 march 2024 at 12:00 PM</span> */}
 					<span className="text-white/50 text-xs">Last edited 14 minutes ago</span>
 				</div>
 
@@ -66,32 +64,46 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 					</div>
 				</div>
 
-				<div className="p-3 flex justify-between items-center border-t border-gray-800">
-					<button
-						className={`text-white/70 hover:text-white transition-colors flex items-center gap-1 ${
-							isCopied ? 'text-green-500' : ''
-						}`}
-						onClick={handleCopy}
-						title="Copy content"
-					>
-						{isCopied ? (
-							<span className="text-xs text-green-500">Copied!</span>
-						) : (
-							<>
-								<CopyIcon />
-								<span className="text-xs">Copy</span>
-							</>
-						)}
-					</button>
-					<button
-						className="text-red-500/90 hover:text-red-400 transition-colors"
-						onClick={(e) => {
-							e.stopPropagation();
-							handleFileRemove(fileName);
-						}}
-					>
-						<DeleteIcon />
-					</button>
+				<div className="p-3 flex w-full justify-between items-center border-t border-gray-800">
+					<div className="flex gap-4 items-center">
+						<button
+							className={`text-white/70 hover:text-white transition-colors flex items-center gap-1 ${
+								isCopied ? 'text-green-500' : ''
+							}`}
+							onClick={handleCopy}
+							title="Copy content"
+						>
+							{isCopied ? (
+								<span className="text-xs text-green-500">Copied!</span>
+							) : (
+								<>
+									<CopyIcon />
+									<span className="text-xs">Copy</span>
+								</>
+							)}
+						</button>
+						<button
+							className="text-white/70 hover:text-white transition-colors flex items-center gap-1"
+							onClick={handleOpen}
+							title="Edit file"
+						>
+							<EditIcon />
+							<span className="text-xs">Edit</span>
+						</button>
+					</div>
+
+					<div className="flex gap-4 items-center">
+						<span className="text-white/70 text-xs">24 KB</span>
+						<button
+							className="text-red-500/90 flex self-end hover:text-red-400 transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								handleFileRemove(fileName);
+							}}
+						>
+							<DeleteIcon />
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -101,6 +113,9 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 				content={localContent}
 				fileName={fileName}
 				saveCurrentFile={handleSave}
+				handleCopy={handleCopy}
+				isCopied={isCopied}
+
 			/>
 		</>
 	);

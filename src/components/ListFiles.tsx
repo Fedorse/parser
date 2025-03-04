@@ -3,10 +3,14 @@ import Card from './Card';
 export const ListFiles = ({ savedFiles, reloadFiles, handleFileRemove }) => {
 	return (
 		<div className="gap-2 flex flex-col p-10">
-			<p className="text-base font-light text-white/50 ">
-				Your saved files are ready to use. Click on any files to wiew or edit its contents.{' '}
-			</p>
-
+			{savedFiles.length > 0 && (
+				<>
+					<h3 className="text-2xl font-light text-white">Saved Files</h3>
+					<p className="text-base font-light text-white/70 ">
+						Your saved files are ready to use. Click on any files to wiew or edit its contents.{' '}
+					</p>
+				</>
+			)}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-5">
 				{savedFiles && savedFiles.length > 0 ? (
 					savedFiles.map((fileName) => (
@@ -18,7 +22,7 @@ export const ListFiles = ({ savedFiles, reloadFiles, handleFileRemove }) => {
 						/>
 					))
 				) : (
-					<p className="text-gray-400 col-span-full text-center">No have save files</p>
+					<p className="text-white text-2xl col-span-full text-center">No saved files</p>
 				)}
 			</div>
 		</div>

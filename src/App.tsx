@@ -4,8 +4,8 @@ import RootLayout from './layouts/RootLoyaout';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
-import FileUploader from './routes/FileUploader';
-import SavedFiles from './routes/SavedFiles';
+import MainPage from './routes/MainPage';
+import SavedFilesPage from './routes/SavedFilesPage';
 
 export default function App() {
 	const [savedFiles, setSavedFiles] = useState<string[]>([]);
@@ -64,7 +64,7 @@ export default function App() {
 					<Route
 						path="/"
 						element={
-							<FileUploader
+							<MainPage
 								handleFileSelect={handleFileSelect}
 								handleFolderSelect={handleFolderSelect}
 							/>
@@ -73,7 +73,7 @@ export default function App() {
 					<Route
 						path="/saved-files"
 						element={
-							<SavedFiles
+							<SavedFilesPage
 								savedFiles={savedFiles}
 								handleFileRemove={handleFileRemove}
 								reloadFiles={reloadFiles}

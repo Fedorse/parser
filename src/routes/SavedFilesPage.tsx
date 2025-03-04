@@ -1,6 +1,6 @@
 import { ListFiles } from '../components/ListFiles';
 
-const SavedFiles = ({ reloadFiles, savedFiles, handleFileRemove }) => {
+const SavedFilesPage = ({ reloadFiles, savedFiles, handleFileRemove }) => {
 	return (
 		<div className="flex flex-col items-center justify-center ">
 			<ListFiles
@@ -11,4 +11,4 @@ const SavedFiles = ({ reloadFiles, savedFiles, handleFileRemove }) => {
 		</div>
 	);
 };
-export default SavedFiles;
+export default SavedFilesPage;

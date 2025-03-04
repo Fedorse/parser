@@ -1,6 +1,4 @@
-import { InputIcon } from '../icons/InputIcon';
-import { FolderIcon } from '../icons/FolderIcon';
-import { FileIcon } from '../icons/FileIcon';
+import { InputIcon, FolderIcon, FileIcon } from '../icons';
 export const DragAndDrop = ({ handleFileSelect, handleFolderSelect }) => {
 	return (
 		<div className="flex flex-col items-center justify-center ">
