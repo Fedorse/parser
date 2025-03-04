@@ -51,7 +51,7 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 		<>
 			<div
 				onClick={handleOpen}
-				className="border-[1px] bg-[#121212] w-72 h-96  border-gray-600 rounded-t-2xl rounded-bl-2xl rounded-br-sm  flex flex-col cursor-pointer hover:border-blue-600 transition-colors"
+				className="border-[1px] bg-[#121212] w-72 h-96  border-gray-600 rounded-t-2xl rounded-bl-2xl rounded-br-sm  flex flex-col cursor-pointer hover:border-blue-600 transition-colors motion-preset-rebound-right"
 			>
 				<div className="p-2 border-b border-gray-800/60 flex flex-col items-center">
 					<h3 className="text-white text-base font-light max-w-full mb-1">{fileName}</h3>
@@ -115,7 +115,6 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 				saveCurrentFile={handleSave}
 				handleCopy={handleCopy}
 				isCopied={isCopied}
-
 			/>
 		</>
 	);

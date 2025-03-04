@@ -5,15 +5,17 @@ export const ListFiles = ({ savedFiles, reloadFiles, handleFileRemove }) => {
 		<div className="gap-2 flex flex-col p-10">
 			{savedFiles.length > 0 && (
 				<>
-					<h3 className="text-2xl font-light text-white">Saved Files</h3>
-					<p className="text-base font-light text-white/70 ">
+					<h3 className="text-2xl font-light text-white motion-opacity-in-0 motion-translate-z-in--50 motion-perspective-in motion-duration-700">
+						Saved Files
+					</h3>
+					<p className="text-base font-light text-white/70 motion-opacity-in-0 motion-translate-z-in--50 motion-perspective-in motion-duration-700 motion-delay-300">
 						Your saved files are ready to use. Click on any files to wiew or edit its contents.{' '}
 					</p>
 				</>
 			)}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-5">
 				{savedFiles && savedFiles.length > 0 ? (
-					savedFiles.map((fileName) => (
+					savedFiles.map((fileName, index) => (
 						<Card
 							key={fileName}
 							fileName={fileName}
