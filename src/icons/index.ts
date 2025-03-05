@@ -1,0 +1,11 @@
+export { DeleteIcon } from './DeleteIcon';
+export { CopyIcon } from './CopyIcon';
+export { EditIcon } from './EditIcon';
+export { FolderIcon } from './FolderIcon';
+export { FileIcon } from './FileIcon';
+export { InputIcon } from './InputIcon';
+export { ArrowIcon } from './ArrowIcon';
+export { GitIcon } from './GitIcon';
+export { MoonIcon } from './MoonIcon';
+export { SunIcon } from './SunIcon';
+export { UploadIcon } from './UploadIcon';

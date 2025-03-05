@@ -1,24 +1,81 @@
-export const PreviewModal = ({ isOpen, onClose, code }: any) => {
+import { useState, useEffect } from 'react';
+import { CopyIcon } from '../icons';
+
+const PreviewModal = ({
+	isOpen,
+	onClose,
+	content,
+	fileName,
+	saveCurrentFile,
+	handleCopy,
+	isCopied
+}) => {
+	const [editContent, setEditContent] = useState('');
+
+	useEffect(() => {
+		if (content) {
+			setEditContent(content);
+		}
+	}, [content]);
+
+	const handleSave = () => {
+		saveCurrentFile({ newContent: editContent });
+		onClose();
+	};
+
 	if (!isOpen) return null;
+
 	return (
 		<div
-			className="fixed z-50 inset-0 bg-black/60 backdrop-blur-sm transition-opacity flex flex-col items-center justify-center"
+			className="fixed z-10 inset-0 bg-black/60 backdrop-blur-sm transition-opacity flex flex-col items-center justify-center motion-preset-expand"
 			onClick={onClose}
 		>
 			<div
 				onClick={(e) => e.stopPropagation()}
-				className="w-[600px]  max-h-[80vh] flex flex-col rounded-t-xl rounded-b-xl  border border-slate-800"
+				className="w-2/3 h-2/3 flex flex-col rounded-xl border border-gray-600"
 			>
-				<div className="h-10 bg-slate-900 items-center flex rounded-t-xl  ">
-					<h2 className=" text-sm text-gray-300 leading-none pl-4 ">Preview</h2>
+				<div className="h-14 bg-[#121212] items-center flex justify-between rounded-t-xl px-4">
+					<h2 className="text-sm text-white/60 leading-none">{fileName}</h2>
+					<button className="text-white/60 text-lg hover:text-white" onClick={onClose}>
+						✕
+					</button>
 				</div>
-				<div className="overflow-hidden flex-1  ">
-					<pre className="bg-[#282c34] p-4  h-full overflow-y-auto rounded-b-xl">
-						<code className="text-sm font-mono text-gray-300 ">{code}</code>
-					</pre>
+
+				<div className="flex-grow bg-[#282c34] p-4 overflow-auto rounded-md">
+					<textarea
+						onChange={(e) => setEditContent(e.target.value)}
+						value={editContent}
+						className="w-full h-full resize-none bg-transparent text-sm font-mono text-white/80 focus:outline-none"
+					/>
+				</div>
+
+				<div className="h-14 bg-[#121212] flex items-center justify-between px-4 rounded-b-xl">
+					<button
+						className={`text-white/70 hover:text-white transition-colors flex items-center gap-1 ${
+							isCopied ? 'text-green-500' : ''
+						}`}
+						onClick={handleCopy}
+						title="Copy content"
+					>
+						{isCopied ? (
+							<span className="text-xs text-green-500">Copied!</span>
+						) : (
+							<>
+								<CopyIcon />
+								<span className="text-xs">Copy</span>
+							</>
+						)}
+					</button>
+					<button
+						className="text-black text-sm rounded-md py-2 px-4 bg-white hover:bg-gray-200 transition-colors"
+						onClick={handleSave}
+					>
+						Saved Files
+					</button>
 				</div>
 			</div>
 		</div>
 	);
 };
+
 export default PreviewModal;

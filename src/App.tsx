@@ -1,74 +1,87 @@
-import "./App.css";
-import { useState } from "react";
-import { useFileTree } from "./hooks/useFileTree";
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import RootLayout from './layouts/RootLoyaout';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 
-import SideBar from "./components/SideBar";
-import Button from "./components/Button";
-import PressetsModal from "./components/PressetsModal";
-import PreviewModal from "./components/PreviewModal";
-import DragAndDrop from "./components/DragAndDrop";
-import Header from "./components/Header";
+import MainPage from './routes/MainPage';
+import SavedFilesPage from './routes/SavedFilesPage';
 
-function App() {
-  const [isSideBarOpen, setIsSideBarOpen] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [previewCode, setPreviewCode] = useState(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+export default function App() {
+	const [savedFiles, setSavedFiles] = useState<string[]>([]);
 
-  const {
-    fileStructure,
-    selectedPaths,
-    showFileStructure,
-    handleFolderSelect,
-    toggleNodeCheck,
-    parseSelected,
-  } = useFileTree();
+	const reloadFiles = async () => {
+		const res = await invoke('get_files');
+		setSavedFiles(res);
+	};
 
-  const closePreview = () => {
-    setPreviewCode(null);
-    setIsPreviewOpen(false);
-  };
-  const openPreview = (code: string) => {
-    setPreviewCode(code);
-    setIsPreviewOpen(true);
-  };
+	const handleFileRemove = async (fileName) => {
+		await invoke('remove_file', { fileName });
+		await reloadFiles();
+	};
 
-  return (
-    <main className="flex h-screen w-screen bg-gradient-to-r from-gray-950 to-black  ">
-      <SideBar
-        isOpen={isSideBarOpen}
-        onToggle={() => setIsSideBarOpen(!isSideBarOpen)}
-        onPreview={openPreview}
-        fileStructure={fileStructure}
-        showFileStructure={showFileStructure}
-        toggleNodeCheck={toggleNodeCheck}
-        selectedPaths={selectedPaths}
-      />
+	const parseFiles = async (files) => {
+		await invoke('parse_files', {
+			filePaths: files,
+			title: 'Test'
+		});
+		await reloadFiles();
+	};
 
-      <section className=" flex-1 flex flex-col w-full h-full ">
-        <Header
-          setIsModalOpen={setIsModalOpen}
-          setIsSideBarOpen={setIsSideBarOpen}
-          isSideBarOpen={isSideBarOpen}
-        />
-        <div className="flex items-center justify-center h-full">
-          {!showFileStructure ? (
-            <DragAndDrop onFolderSelected={handleFolderSelect} />
-          ) : (
-            <Button onClick={parseSelected}>Parse your files</Button>
-          )}
-        </div>
-      </section>
+	const handleFileSelect = async () => {
+		const selected = await open({
+			multiple: true,
+			filters: [{ name: 'Text', extensions: ['txt', 'log', 'md'] }]
+		});
 
-      <PressetsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-      <PreviewModal
-        code={previewCode}
-        onClose={closePreview}
-        isOpen={isPreviewOpen}
-      />
-    </main>
-  );
+		if (!selected) return;
+
+		const files = Array.isArray(selected) ? selected : [selected];
+		await parseFiles(files);
+	};
+
+	const handleFolderSelect = async () => {
+		const selected = await open({
+			multiple: true,
+			directory: true,
+			filters: [{ name: 'Text', extensions: ['txt', 'log', 'md'] }]
+		});
+
+		if (!selected) return;
+
+		const files = Array.isArray(selected) ? selected : [selected];
+		await parseFiles(files);
+	};
+
+	useEffect(() => {
+		reloadFiles();
+	}, []);
+
+	return (
+		<BrowserRouter>
+			<Routes>
+				<Route element={<RootLayout />}>
+					<Route
+						path="/"
+						element={
+							<MainPage
+								handleFileSelect={handleFileSelect}
+								handleFolderSelect={handleFolderSelect}
+							/>
+						}
+					/>
+					<Route
+						path="/saved-files"
+						element={
+							<SavedFilesPage
+								savedFiles={savedFiles}
+								handleFileRemove={handleFileRemove}
+								reloadFiles={reloadFiles}
+							/>
+						}
+					/>
+				</Route>
+			</Routes>
+		</BrowserRouter>
+	);
 }

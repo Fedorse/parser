@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -126,32 +127,43 @@ export default function FileUploader() {
     name: "",
     ignorePatterns: "",
   });
+=======
+import { useEffect, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 
-  const saveCurrentFile = async () => {
-    await invoke("update_file", {
-      fileName: currentFile,
-      content: currentFileContent,
-    });
-  };
+export default function FileUploader() {
+	const [savedFiles, setSavedFiles] = useState<string[]>([]);
+	const [currentFile, setCurrentFile] = useState<string>('');
+	const [currentFileContent, setCurrentFileContent] = useState<string>('');
+>>>>>>> 0dd20663a6c152e8d9ac9cf16d5635ba13719b08
 
-  const reloadFiles = async () => {
-    const res = await invoke("get_files");
+	const saveCurrentFile = async () => {
+		await invoke('update_file', {
+			fileName: currentFile,
+			content: currentFileContent
+		});
+	};
 
-    setSavedFiles(res);
-  };
+	const reloadFiles = async () => {
+		const res = await invoke('get_files');
 
-  const handleFileClick = async (fileName: string) => {
-    const content = await invoke("get_file_content", { fileName });
-    setCurrentFile(fileName);
+		setSavedFiles(res);
+	};
 
-    setCurrentFileContent(content);
-  };
+	const handleFileClick = async (fileName: string) => {
+		const content = await invoke('get_file_content', { fileName });
+		setCurrentFile(fileName);
 
-  const handleFileRemove = async (fileName) => {
-    await invoke("remove_file", { fileName });
-    await reloadFiles();
-  };
+		setCurrentFileContent(content);
+	};
 
+	const handleFileRemove = async (fileName) => {
+		await invoke('remove_file', { fileName });
+		await reloadFiles();
+	};
+
+<<<<<<< HEAD
   const parseFiles = async (files) => {
     console.log("CURRET", currentPreset);
 
@@ -167,10 +179,18 @@ export default function FileUploader() {
       paths: files,
       ignorePatterns,
     });
+=======
+	const parseFiles = async (files) => {
+		await invoke('parse_files', {
+			filePaths: files,
+			title: 'Test'
+		});
+>>>>>>> 0dd20663a6c152e8d9ac9cf16d5635ba13719b08
 
-    await reloadFiles();
-  };
+		await reloadFiles();
+	};
 
+<<<<<<< HEAD
   const handleFileSelect = async () => {
     const selected = await open({
       multiple: true,
@@ -180,16 +200,27 @@ export default function FileUploader() {
     console.log("selected", selected);
 
     let files;
+=======
+	const handleFileSelect = async () => {
+		const selected = await open({
+			multiple: true,
+			//   directory: true,
+			filters: [{ name: 'Text', extensions: ['txt', 'log', 'md'] }]
+		});
 
-    if (Array.isArray(selected)) {
-      files = selected;
-    } else if (selected) {
-      files = selected;
-    }
+		let files;
+>>>>>>> 0dd20663a6c152e8d9ac9cf16d5635ba13719b08
 
-    await parseFiles(files);
-  };
+		if (Array.isArray(selected)) {
+			files = selected;
+		} else if (selected) {
+			files = selected;
+		}
 
+		await parseFiles(files);
+	};
+
+<<<<<<< HEAD
   useEffect(() => {
     reloadFiles();
     invoke("get_presets").then((res) => {
@@ -239,34 +270,46 @@ export default function FileUploader() {
       >
         Select Files
       </button>
+=======
+	useEffect(() => {
+		reloadFiles();
+	}, []);
 
-      {savedFiles.map((fileName) => (
-        <div
-          onClick={() => handleFileClick(fileName)}
-          className="mt-4 text-md text-gray-600 cursor-pointer gap-10"
-          key={fileName}
-        >
-          <span className="text-ellipsis">{fileName}</span>
-          <span
-            className="text-red-600 text-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleFileRemove(fileName);
-            }}
-          >
-            | X |
-          </span>
-        </div>
-      ))}
+	return (
+		<div className="p-4 border rounded-lg shadow-lg">
+			<button onClick={handleFileSelect} className="px-4 py-2 bg-blue-500 text-white rounded">
+				Select Files
+			</button>
+>>>>>>> 0dd20663a6c152e8d9ac9cf16d5635ba13719b08
 
-      {currentFile && (
-        <div className="mt-4 text-sm text-black gap-10">
-          <textarea
-            value={currentFileContent}
-            onChange={(e) => setCurrentFileContent(e.target.value)}
-            className="w-full h-full rounded-lg border-2 border-gray-300 p-4"
-          ></textarea>
+			{savedFiles.map((fileName) => (
+				<div
+					onClick={() => handleFileClick(fileName)}
+					className="mt-4 text-md text-gray-600 cursor-pointer gap-10"
+					key={fileName}
+				>
+					<span className="text-ellipsis">{fileName}</span>
+					<span
+						className="text-red-600 text-lg"
+						onClick={(e) => {
+							e.stopPropagation();
+							handleFileRemove(fileName);
+						}}
+					>
+						| X |
+					</span>
+				</div>
+			))}
 
+			{currentFile && (
+				<div className="mt-4 text-sm text-black gap-10">
+					<textarea
+						value={currentFileContent}
+						onChange={(e) => setCurrentFileContent(e.target.value)}
+						className="w-full h-full rounded-lg border-2 border-gray-300 p-4"
+					></textarea>
+
+<<<<<<< HEAD
           <button onClick={() => saveCurrentFile()}>Save</button>
         </div>
       )}
@@ -344,4 +387,11 @@ export default function FileUploader() {
       </form>
     </div>
   );
+=======
+					<button onClick={() => saveCurrentFile()}>Save</button>
+				</div>
+			)}
+		</div>
+	);
+>>>>>>> 0dd20663a6c152e8d9ac9cf16d5635ba13719b08
 }
