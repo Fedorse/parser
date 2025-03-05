@@ -17,7 +17,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_log::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
+            commands::parse,
             commands::parse_files,
+            commands::parse_directories,
             commands::get_files,
             commands::get_file_content,
             commands::remove_file,

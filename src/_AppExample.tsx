@@ -1,11 +1,118 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 type Preset = {
   name: string;
   ignorePatterns: string;
 };
+
+function useDragDrop(parseCB) {
+  const [dragState, setDragState] = useState({
+    isDragging: false,
+    position: null,
+    files: [],
+  });
+
+  const unlistenRef = useRef(null);
+
+  useEffect(() => {
+    // Get the current webview window
+    const currentWindow = getCurrentWebview();
+
+    const setupListener = async () => {
+      try {
+        unlistenRef.current = await currentWindow.onDragDropEvent((event) => {
+          const { type, position, paths } = event.payload;
+
+          console.log(`Drag event: ${type}`);
+
+          switch (type) {
+            case "over":
+              console.log("Hover position:", position);
+              setDragState({
+                isDragging: true,
+                position,
+                files: [],
+              });
+              break;
+
+            case "drop":
+              console.log("Files dropped:", paths);
+              setDragState({
+                isDragging: false,
+                position,
+                files: paths,
+              });
+
+              parseCB(paths);
+
+              break;
+            case "leave":
+              console.log("Drag operation cancelled");
+              setDragState({
+                isDragging: false,
+                position: null,
+                files: [],
+              });
+              break;
+
+            default:
+              console.log("Unknown drag event type:", type);
+          }
+        });
+
+        console.log("Drag and drop listener set up successfully");
+      } catch (error) {
+        console.error("Failed to set up drag and drop listener:", error);
+      }
+    };
+
+    setupListener();
+
+    // Properly clean up the listener when the component unmounts
+    return () => {
+      if (unlistenRef.current) {
+        console.log("Cleaning up drag and drop listener");
+        unlistenRef.current();
+      }
+    };
+  }, []);
+
+  return dragState;
+}
+
+function DropZone({ isDragging, files }) {
+  return (
+    <div
+      className={`drop-zone ${isDragging ? "active" : ""}`}
+      style={{
+        padding: "2rem",
+        border: `2px dashed ${isDragging ? "#4a90e2" : "#ccc"}`,
+        borderRadius: "4px",
+        textAlign: "center",
+        transition: "all 0.2s ease",
+        backgroundColor: isDragging ? "rgba(74, 144, 226, 0.1)" : "transparent",
+      }}
+    >
+      {isDragging ? (
+        <p>Drop files here...</p>
+      ) : files.length > 0 ? (
+        <div>
+          <p>Files dropped:</p>
+          <ul>
+            {files.map((file, index) => (
+              <li key={index}>{file}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Drag files here to upload</p>
+      )}
+    </div>
+  );
+}
 
 export default function FileUploader() {
   const [savedFiles, setSavedFiles] = useState<string[]>([]);
@@ -52,8 +159,12 @@ export default function FileUploader() {
 
     console.log("IGNORE", ignorePatterns);
 
-    await invoke("parse_files", {
-      filePaths: files,
+    // await invoke("parse_files", {
+    //   filePaths: files,
+    //   ignorePatterns,
+    // });
+    await invoke("parse", {
+      paths: files,
       ignorePatterns,
     });
 
@@ -63,8 +174,10 @@ export default function FileUploader() {
   const handleFileSelect = async () => {
     const selected = await open({
       multiple: true,
-      //   directory: true,
+      directory: true,
     });
+
+    console.log("selected", selected);
 
     let files;
 
@@ -115,8 +228,11 @@ export default function FileUploader() {
     setNewPreset({ name: "", ignorePatterns: "" });
   };
 
+  const { isDragging, files } = useDragDrop(parseFiles);
+
   return (
     <div className="p-4 border rounded-lg shadow-lg">
+      <DropZone isDragging={isDragging} files={files} />
       <button
         onClick={handleFileSelect}
         className="px-4 py-2 bg-blue-500 text-white rounded"

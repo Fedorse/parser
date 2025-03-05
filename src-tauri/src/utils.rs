@@ -227,6 +227,91 @@ pub fn parse_files_with_patterns(file_paths: Vec<String>, ignore_patterns: Vec<S
     Ok(concatenated_content)
 }
 
+// Directory parsing
+
+pub fn parse_directory_recursively(
+    dir_path: &str,
+    ignore_patterns: &[String],
+) -> Result<String, String> {
+    let path = PathBuf::from(dir_path);
+    if !path.exists() || !path.is_dir() {
+        return Err(format!("Invalid directory path: {}", dir_path));
+    }
+
+    let mut concatenated_content = String::new();
+    let mut file_paths = Vec::new();
+
+    walk_directory(&path, &mut file_paths, ignore_patterns)?;
+
+    for file_path in file_paths {
+        match fs::read_to_string(&file_path) {
+            Ok(content) => concatenated_content.push_str(&content),
+            Err(e) => log::warn!("Failed to read file {}: {}", file_path.display(), e),
+        }
+    }
+
+    Ok(concatenated_content)
+}
+
+fn should_ignore(path: &PathBuf, ignore_patterns: &[String]) -> bool {
+    // Get both the file/directory name and full path for matching
+    let name = path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+
+    let path_str = path.to_string_lossy();
+
+    // Check if the path should be ignored based on various criteria
+    for pattern in ignore_patterns {
+        // Exact filename match
+        if pattern == name {
+            return true;
+        }
+
+        // Path ends with the pattern (for matching specific files regardless of location)
+        if path_str.ends_with(pattern) {
+            return true;
+        }
+
+        // Path contains the pattern as a directory or file name component
+        let pattern_as_component = format!("/{}/", pattern);
+        if path_str.contains(&pattern_as_component) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn walk_directory(
+    dir: &PathBuf,
+    file_paths: &mut Vec<PathBuf>,
+    ignore_patterns: &[String],
+) -> Result<(), String> {
+    let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+
+        // Skip if the path should be ignored
+        if should_ignore(&path, ignore_patterns) {
+            log::info!("Skipping ignored path: {}", path.display());
+            continue;
+        }
+
+        if path.is_dir() {
+            // Recursively process subdirectories
+            walk_directory(&path, file_paths, ignore_patterns)?;
+        } else if path.is_file() {
+            // Add file to the list for later processing
+            file_paths.push(path);
+        }
+    }
+
+    Ok(())
+}
+
 /// Setup
 pub fn setup_app_structure() -> Result<(), String> {
     let app_dir = get_app_dir().map_err(|e| e.to_string())?;
