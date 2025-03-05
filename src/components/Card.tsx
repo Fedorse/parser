@@ -82,14 +82,14 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 								</>
 							)}
 						</button>
-						<button
+						{/* <button
 							className="text-white/70 hover:text-white transition-colors flex items-center gap-1"
 							onClick={handleOpen}
 							title="Edit file"
 						>
 							<EditIcon />
 							<span className="text-xs">Edit</span>
-						</button>
+						</button> */}
 					</div>
 
 					<div className="flex gap-4 items-center">
