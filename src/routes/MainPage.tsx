@@ -1,13 +1,11 @@
 import DragAndDrop from '../components/DragAndDrop';
+import GroupButtons from '../components/GroupButtons';
 
-export const MainPage = ({ handleFolderSelect, handleFileSelect, parseFiles }) => {
+export const MainPage = ({ parseFiles }) => {
 	return (
-		<main className="h-screen flex flex-col items-center justify-center ">
-			<DragAndDrop
-				parseFiles={parseFiles}
-				handleFileSelect={handleFileSelect}
-				handleFolderSelect={handleFolderSelect}
-			/>
+		<main className="h-full flex flex-col items-center justify-center ">
+			<DragAndDrop parseFiles={parseFiles} />
+			<GroupButtons parseFiles={parseFiles} />
 		</main>
 	);
 };

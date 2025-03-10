@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RootLayout from './layouts/RootLoyaout';
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
 
 import MainPage from './routes/MainPage';
 import SavedFilesPage from './routes/SavedFilesPage';
@@ -15,45 +14,13 @@ export default function App() {
 		setSavedFiles(res);
 	};
 
-	const handleFileRemove = async (fileName) => {
-		await invoke('remove_file', { fileName });
-		await reloadFiles();
-	};
-
 	const parseFiles = async (files) => {
-		try {
-			console.log('PARSE', files);
-			await invoke('parse', {
-				paths: files,
-				ignorePatterns: []
-			});
-			await reloadFiles();
-		} catch (err) {
-			console.error('PARSE ERROR', err);
-		}
-	};
-
-	const handleFileSelect = async () => {
-		const selected = await open({
-			multiple: true
+		await invoke('parse', {
+			paths: files,
+			ignorePatterns: []
 		});
 
-		if (!selected) return;
-
-		const files = Array.isArray(selected) ? selected : [selected];
-		await parseFiles(files);
-	};
-
-	const handleFolderSelect = async () => {
-		const selected = await open({
-			multiple: true,
-			directory: true
-		});
-
-		if (!selected) return;
-
-		const files = Array.isArray(selected) ? selected : [selected];
-		await parseFiles(files);
+		await reloadFiles();
 	};
 
 	useEffect(() => {
@@ -64,25 +31,10 @@ export default function App() {
 		<BrowserRouter>
 			<Routes>
 				<Route element={<RootLayout />}>
-					<Route
-						path="/"
-						element={
-							<MainPage
-								handleFileSelect={handleFileSelect}
-								handleFolderSelect={handleFolderSelect}
-								parseFiles={parseFiles}
-							/>
-						}
-					/>
+					<Route path="/" element={<MainPage parseFiles={parseFiles} />} />
 					<Route
 						path="/saved-files"
-						element={
-							<SavedFilesPage
-								savedFiles={savedFiles}
-								handleFileRemove={handleFileRemove}
-								reloadFiles={reloadFiles}
-							/>
-						}
+						element={<SavedFilesPage savedFiles={savedFiles} reloadFiles={reloadFiles} />}
 					/>
 				</Route>
 			</Routes>

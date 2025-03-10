@@ -1,21 +1,23 @@
 import { FolderIcon, FileIcon, UploadIcon } from '../icons';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 
-const GridPattern = () => {
+const GridPattern = ({ isDragging }) => {
 	const columns = 41;
 	const rows = 11;
 	return (
-		<div className="flex dark:bg-gray-900 bg-white  flex-shrink-0 flex-wrap justify-center items-center gap-x-px gap-y-px scale-105">
+		<div className="flex dark:bg-gray-500 bg-white flex-shrink-0 flex-wrap justify-center items-center gap-x-px gap-y-px scale-105">
 			{Array.from({ length: rows }).map((_, row) =>
 				Array.from({ length: columns }).map((_, col) => {
 					const index = row * columns + col;
 					return (
 						<div
 							key={`${col}-${row}`}
-							className={`w-10 h-10 flex flex-shrink-0 rounded-[2px] ${
-								index % 2 === 0
-									? 'dark:bg-gray-800/60 bg-gray-200/60'
-									: 'dark:bg-gray-800/60 bg-gray-200/60 dark:shadow-[0px_0px_1px_3px_rgba(31,31,31,1)_inset]'
+							className={`w-10 h-10 flex flex-shrink-0 rounded-[2px] transition-colors duration-300 ${
+								isDragging
+									? 'dark:bg-blue-800/30 bg-blue-200/40'
+									: index % 2 === 0
+									? 'dark:bg-gray-800/40 bg-gray-200/60'
+									: 'dark:bg-gray-800/40 bg-gray-200/60 '
 							}`}
 						/>
 					);
@@ -25,55 +27,47 @@ const GridPattern = () => {
 	);
 };
 
-export const DragAndDrop = ({ handleFileSelect, handleFolderSelect, parseFiles }) => {
-	const { isDragging, files } = useDragAndDrop(parseFiles);
+export const DragAndDrop = ({ parseFiles }) => {
+	const { isDragging } = useDragAndDrop(parseFiles);
 	return (
-		<div className="w-1/2">
+		<div className="w-1/2 h-2/5 relative">
+			{/* Добавлен relative для ограничения абсолютно позиционированных элементов */}
 			<div
-				className={`w-full h-full py-8 dark:text-white text-black  flex items-center justify-center border-dashed border-[1px] ${
-					isDragging ? 'dark:border-white/40' : 'dark:border-blue-200/20'
-				}  border-black/40 shadow-md hover:border-black/20  rounded-lg relative overflow-hidden group`}
+				className={`w-full h-full flex items-center justify-center dark:text-white text-black border-dashed border-[2px] shadow-md rounded-lg overflow-hidden transition-colors duration-300 
+        ${
+					isDragging
+						? 'dark:border-blue-600 border-blue-500'
+						: 'dark:border-gray-600/50 border-gray-300'
+				}`}
 			>
-				<div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
-					<GridPattern />
+				{/* Ограничиваем маску паттерна контейнером с overflow:hidden */}
+				<div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] pointer-events-none">
+					<GridPattern isDragging={isDragging} />
 				</div>
-				<div className="relative">
+
+				<div className="h-full flex flex-col items-center justify-center gap-10 z-10">
+					<div
+						className={`relative dark:bg-white/50 shadow-lg bg-white/90 flex items-center justify-center h-32 w-32 max-w-[8rem] rounded-md transition-all duration-300 ease-out 
+            ${isDragging ? 'scale-75' : ''}`}
+					>
+						<div className="transition-opacity duration-300 ease-in-out">
+							<UploadIcon />
+							<div
+								className={`absolute inset-0 rounded-md border-[1px] border-dashed border-blue-600 opacity-0 transition-opacity duration-300 scale-110 
+                ${isDragging ? 'scale-125 opacity-100' : ''}`}
+							></div>
+						</div>
+					</div>
 					<div className="text-center">
-						<h2 className="text-xl dark:text-white text-black font-medium mb-2">
-							Upload Your Files
+						<h2 className="text-xl dark:text-white text-black font-medium">
+							Drag and drop files here
 						</h2>
-						<p className="text-gray-400 text-sm mb-4">Upload files or folders to start parsing</p>
-					</div>
-
-					<div className="relative">
-						<div className="relative dark:bg-black/50 shadow-lg bg-white/90 mt-10 z-40 flex items-center justify-center h-32 w-full max-w-[8rem] mx-auto rounded-md  transition-all duration-300 ease-out group-hover:scale-75">
-							<div className="transition-opacity duration-300 ease-in-out">
-								<UploadIcon />
-								<div className="absolute inset-0 rounded-md border-[1px] border-dashed border-blue-600  opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-110 group-hover:scale-125"></div>
-							</div>
+						<div className="flex items-center justify-center gap-4">
+							<div className="h-px bg-gray-300 dark:bg-gray-600 w-16 "></div>
+							<span className="text-gray-500 dark:text-gray-400">or</span>
+							<div className="h-px bg-gray-300 dark:bg-gray-600 w-16 "></div>
 						</div>
-					</div>
-
-					<div className="inline-flex items-center gap-2 flex-row rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700 mt-12 ">
-						<button
-							onClick={handleFileSelect}
-							className="bg-transparent items-center flex gap-2 rounded-lg hover:bg-gray-800 text-black/70 dark:text-gray-200 px-4 py-3 text-sm font-medium transition-colors"
-						>
-							<FileIcon />
-							<span>Select Files</span>
-						</button>
-
-						<div className="flex items-center rounded-lg px-4 py-1 dark:text-gray-600 text-gray-400 shadow-md bg-white/10 dark:bg-gray-800/60">
-							<span className="text-sm font-medium">/</span>
-						</div>
-
-						<button
-							onClick={handleFolderSelect}
-							className="min-w-36 bg-transparent rounded-lg items-center flex gap-2 hover:bg-gray-800 text-black/70 dark:text-gray-200  px-4 py-3 text-sm font-medium transition-colors"
-						>
-							<FolderIcon />
-							<span>Select Folder</span>
-						</button>
+						<p className="text-gray-400">select a file your computer</p>
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CopyIcon } from '../icons';
 
+
 const PreviewModal = ({
 	isOpen,
 	onClose,
@@ -11,6 +12,7 @@ const PreviewModal = ({
 	isCopied
 }) => {
 	const [editContent, setEditContent] = useState('');
+
 
 	useEffect(() => {
 		if (content) {

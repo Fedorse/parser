@@ -3,7 +3,7 @@ import PreviewModal from './PreviewModal';
 import { invoke } from '@tauri-apps/api/core';
 import { DeleteIcon, CopyIcon, EditIcon } from '../icons';
 
-const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
+const Card = ({ fileName, reloadFiles }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [localContent, setLocalContent] = useState('');
 	const [isCopied, setIsCopied] = useState(false);
@@ -13,6 +13,10 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 		return content;
 	};
 
+	const handleFileRemove = async (fileName) => {
+		await invoke('remove_file', { fileName });
+		reloadFiles();
+	};
 	const handleOpen = async () => {
 		const content = await loadContent();
 		setLocalContent(content);
@@ -82,14 +86,6 @@ const Card = ({ fileName, reloadFiles, handleFileRemove }) => {
 								</>
 							)}
 						</button>
-						{/* <button
-							className="text-white/70 hover:text-white transition-colors flex items-center gap-1"
-							onClick={handleOpen}
-							title="Edit file"
-						>
-							<EditIcon />
-							<span className="text-xs">Edit</span>
-						</button> */}
 					</div>
 
 					<div className="flex gap-4 items-center">

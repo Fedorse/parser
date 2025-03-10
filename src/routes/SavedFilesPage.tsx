@@ -1,13 +1,9 @@
 import { ListFiles } from '../components/ListFiles';
 
-const SavedFilesPage = ({ reloadFiles, savedFiles, handleFileRemove }) => {
+const SavedFilesPage = ({ reloadFiles, savedFiles }) => {
 	return (
 		<div className="flex flex-col items-center justify-center ">
-			<ListFiles
-				savedFiles={savedFiles}
-				reloadFiles={reloadFiles}
-				handleFileRemove={handleFileRemove}
-			/>
+			<ListFiles savedFiles={savedFiles} reloadFiles={reloadFiles} />
 		</div>
 	);
 };
