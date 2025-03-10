@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import MainPage from './routes/MainPage';
 import SavedFilesPage from './routes/SavedFilesPage';
+import { ToastProvider } from './context/ToastContext';
 
 export default function App() {
 	const [savedFiles, setSavedFiles] = useState<string[]>([]);
@@ -14,30 +15,23 @@ export default function App() {
 		setSavedFiles(res);
 	};
 
-	const parseFiles = async (files) => {
-		await invoke('parse', {
-			paths: files,
-			ignorePatterns: []
-		});
-
-		await reloadFiles();
-	};
-
 	useEffect(() => {
 		reloadFiles();
 	}, []);
 
 	return (
-		<BrowserRouter>
-			<Routes>
-				<Route element={<RootLayout />}>
-					<Route path="/" element={<MainPage parseFiles={parseFiles} />} />
-					<Route
-						path="/saved-files"
-						element={<SavedFilesPage savedFiles={savedFiles} reloadFiles={reloadFiles} />}
-					/>
-				</Route>
-			</Routes>
-		</BrowserRouter>
+		<ToastProvider>
+			<BrowserRouter>
+				<Routes>
+					<Route element={<RootLayout />}>
+						<Route path="/" element={<MainPage reloadFiles={reloadFiles} />} />
+						<Route
+							path="/saved-files"
+							element={<SavedFilesPage savedFiles={savedFiles} reloadFiles={reloadFiles} />}
+						/>
+					</Route>
+				</Routes>
+			</BrowserRouter>
+		</ToastProvider>
 	);
 }
