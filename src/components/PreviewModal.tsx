@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CopyIcon } from '../icons';
 
-
 const PreviewModal = ({
 	isOpen,
 	onClose,
@@ -12,7 +11,6 @@ const PreviewModal = ({
 	isCopied
 }) => {
 	const [editContent, setEditContent] = useState('');
-
 
 	useEffect(() => {
 		if (content) {
@@ -72,7 +70,7 @@ const PreviewModal = ({
 						className="text-black text-sm rounded-md py-2 px-4 bg-white hover:bg-gray-200 transition-colors"
 						onClick={handleSave}
 					>
-						Saved Files
+						Saved
 					</button>
 				</div>
 			</div>
