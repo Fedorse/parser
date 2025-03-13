@@ -7,10 +7,6 @@ const Card = ({ fileName, reloadFiles, handleModalOpen, onCopy, isCopied, data }
 		reloadFiles();
 	};
 
-	const handleCardClick = () => {
-		handleModalOpen(fileName, data[fileName]);
-	};
-
 	const handleCopyClick = async (e) => {
 		e.stopPropagation();
 		onCopy(data[fileName]);
@@ -19,7 +15,7 @@ const Card = ({ fileName, reloadFiles, handleModalOpen, onCopy, isCopied, data }
 	return (
 		<>
 			<div
-				onClick={handleCardClick}
+				onClick={handleModalOpen}
 				className="border-[1px] bg-[#121212] w-72 h-96  border-gray-600 rounded-t-2xl rounded-bl-2xl rounded-br-sm  flex flex-col cursor-pointer hover:border-blue-600 transition-colors motion-preset-rebound-right"
 			>
 				<div className="p-2 border-b border-gray-800/60 flex flex-col items-center">

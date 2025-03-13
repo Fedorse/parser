@@ -21,7 +21,7 @@ export const ListFiles = ({ savedFiles, reloadFiles, handleModalOpen, onCopy, is
 							key={fileName}
 							fileName={fileName}
 							reloadFiles={reloadFiles}
-							handleModalOpen={handleModalOpen}
+							handleModalOpen={() => handleModalOpen(fileName)}
 							onCopy={onCopy}
 							isCopied={isCopied}
 						/>

@@ -13,9 +13,6 @@ const SavedFilesPage = () => {
 		fileName: ''
 	});
 
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [currentFile, setCurrentFile] = useState('');
-	const [currentContent, setCurrentContent] = useState('');
 	const [isCopied, setIsCopied] = useState(false);
 
 	const loadAllFiles = async () => {
@@ -31,27 +28,37 @@ const SavedFilesPage = () => {
 		setSavedAllDatа(allData);
 	};
 
-	const handleModalOpen = (fileName, content) => {
-		setCurrentFile(fileName);
-		setCurrentContent(content);
-		setIsModalOpen(true);
+	const handleModalOpen = (fileName) => {
+		setModal({
+			isOpen: true,
+			content: savedAllData[fileName],
+			fileName
+		});
 	};
+
+	const modalClose = () => {
+		setModal((prev) => ({
+			...prev,
+			isOpen: false
+		}));
+	};
+
 	const handleCopy = async (content) => {
 		await navigator.clipboard.writeText(content);
 		setIsCopied(true);
 		setTimeout(() => setIsCopied(false), 2000);
 	};
-	const handleSave = async ({ newContent }) => {
+	const handleSave = async ({ editContent }) => {
 		await invoke('update_file', {
-			fileName: currentFile,
-			content: newContent
+			fileName: modal.fileName,
+			content: editContent
 		});
 		setSavedAllDatа((prev) => ({
 			...prev,
-			[currentFile]: newContent
+			[modal.fileName]: editContent
 		}));
-		setCurrentContent(newContent);
-		setIsModalOpen(false);
+		// update success save file toast
+		modalClose();
 	};
 
 	useEffect(() => {
@@ -59,7 +66,7 @@ const SavedFilesPage = () => {
 	}, []);
 
 	return (
-		<div className="flex flex-col items-center justify-center ">
+		<div className="flex flex-col items-center justify-center">
 			<ListFiles
 				savedFiles={savedFiles}
 				reloadFiles={loadAllFiles}
@@ -69,13 +76,13 @@ const SavedFilesPage = () => {
 				data={savedAllData}
 			/>
 			<PreviewModal
-				isOpen={isModalOpen}
+				isOpen={modal.isOpen}
 				isCopied={isCopied}
-				onClose={() => setIsModalOpen(false)}
-				content={currentContent}
-				fileName={currentFile}
-				handleCopy={() => handleCopy(currentContent)}
-				saveCurrentFile={handleSave}
+				onClose={modalClose}
+				initContent={modal.content}
+				fileName={modal.fileName}
+				onCopy={handleCopy}
+				onSave={handleSave}
 			/>
 		</div>
 	);
