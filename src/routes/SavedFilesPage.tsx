@@ -2,18 +2,19 @@ import { ListFiles } from '../components/ListFiles';
 import PreviewModal from '../components/PreviewModal';
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useToast } from '../hooks/useToast';
 const SavedFilesPage = () => {
 	const [savedFiles, setSavedFiles] = useState<string[]>([]);
 	const [savedAllData, setSavedAllDatа] = useState({});
 	const [isLoading, setIsLoading] = useState(false);
+	const { success } = useToast();
 
+	const [isCopied, setIsCopied] = useState(false);
 	const [modal, setModal] = useState({
 		isOpen: false,
 		content: '',
 		fileName: ''
 	});
-
-	const [isCopied, setIsCopied] = useState(false);
 
 	const loadAllFiles = async () => {
 		const filesNames = await invoke('get_files');
@@ -48,6 +49,7 @@ const SavedFilesPage = () => {
 		setIsCopied(true);
 		setTimeout(() => setIsCopied(false), 2000);
 	};
+
 	const handleSave = async ({ editContent }) => {
 		await invoke('update_file', {
 			fileName: modal.fileName,
@@ -57,7 +59,7 @@ const SavedFilesPage = () => {
 			...prev,
 			[modal.fileName]: editContent
 		}));
-		// update success save file toast
+		success('File saved successfully');
 		modalClose();
 	};
 

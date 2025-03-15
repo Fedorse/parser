@@ -32,7 +32,7 @@ export const ToastProvider = ({ children }) => {
 	return (
 		<ToastContext.Provider value={contextValue}>
 			{children}
-			<div className="fixed bottom-10 right-10 z-50">
+			<div className="">
 				{toast.map((toast) => (
 					<Toast
 						key={toast.id}

@@ -12,10 +12,9 @@ export const MainPage = () => {
 				paths: files,
 				ignorePatterns: []
 			});
+			success('Files parsed successfully');
 		} catch (e) {
 			error('Failed to parse files');
-		} finally {
-			success('Files parsed successfully!');
 		}
 	};
 	return (
