@@ -39,7 +39,6 @@ export const DragAndDrop = ({ parseFiles }) => {
 						: 'dark:border-gray-600/50 border-gray-300'
 				}`}
 			>
-				{/* Ограничиваем маску паттерна контейнером с overflow:hidden */}
 				<div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] pointer-events-none">
 					<GridPattern isDragging={isDragging} />
 				</div>
