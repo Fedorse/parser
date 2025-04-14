@@ -17,6 +17,13 @@ pub fn run() {
         .plugin(tauri_plugin_log::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::parse,
+            commands::get_files,
+            commands::get_file,
+            commands::update_file,
+            commands::open_file,
+            commands::delete_file,
+            commands::update_preset,
+            commands::delete_preset,
             commands::get_presets,
         ])
         .run(tauri::generate_context!())
