@@ -1,27 +1,14 @@
 import { useState, useEffect } from 'react';
 import { CopyIcon } from '../icons';
 
-const PreviewModal = ({
-	isOpen,
-	onClose,
-	content,
-	fileName,
-	saveCurrentFile,
-	handleCopy,
-	isCopied
-}) => {
+const PreviewModal = ({ isOpen, onClose, initContent, fileName, onSave, onCopy, isCopied }) => {
 	const [editContent, setEditContent] = useState('');
 
 	useEffect(() => {
-		if (content) {
-			setEditContent(content);
+		if (initContent) {
+			setEditContent(initContent);
 		}
-	}, [content]);
-
-	const handleSave = () => {
-		saveCurrentFile({ newContent: editContent });
-		onClose();
-	};
+	}, [initContent]);
 
 	if (!isOpen) return null;
 
@@ -54,7 +41,7 @@ const PreviewModal = ({
 						className={`text-white/70 hover:text-white transition-colors flex items-center gap-1 ${
 							isCopied ? 'text-green-500' : ''
 						}`}
-						onClick={handleCopy}
+						onClick={() => onCopy(editContent)}
 						title="Copy content"
 					>
 						{isCopied ? (
@@ -68,9 +55,9 @@ const PreviewModal = ({
 					</button>
 					<button
 						className="text-black text-sm rounded-md py-2 px-4 bg-white hover:bg-gray-200 transition-colors"
-						onClick={handleSave}
+						onClick={() => onSave({ editContent })}
 					>
-						Saved Files
+						Saved
 					</button>
 				</div>
 			</div>

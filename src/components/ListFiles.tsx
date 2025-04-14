@@ -1,8 +1,8 @@
 import Card from './Card';
 
-export const ListFiles = ({ savedFiles, reloadFiles, handleFileRemove }) => {
+export const ListFiles = ({ savedFiles, reloadFiles, handleModalOpen, onCopy, isCopied, data }) => {
 	return (
-		<div className="gap-2 flex flex-col p-10">
+		<div className="gap-2 flex flex-col p-10 ">
 			{savedFiles.length > 0 && (
 				<>
 					<h3 className="text-2xl font-light dark:text-white text-black motion-opacity-in-0 motion-translate-z-in--50 motion-perspective-in motion-duration-700">
@@ -13,14 +13,17 @@ export const ListFiles = ({ savedFiles, reloadFiles, handleFileRemove }) => {
 					</p>
 				</>
 			)}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-5">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-5 ">
 				{savedFiles && savedFiles.length > 0 ? (
-					savedFiles.map((fileName, index) => (
+					savedFiles.map((fileName) => (
 						<Card
+							data={data}
 							key={fileName}
 							fileName={fileName}
 							reloadFiles={reloadFiles}
-							handleFileRemove={handleFileRemove}
+							handleModalOpen={() => handleModalOpen(fileName)}
+							onCopy={onCopy}
+							isCopied={isCopied}
 						/>
 					))
 				) : (
