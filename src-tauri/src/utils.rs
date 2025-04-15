@@ -1,10 +1,9 @@
 use std::{
     collections::HashMap,
     error::Error,
-    io,
-    io::{Write, BufReader, BufRead},
+    io::{Write},
     path::{PathBuf, Path},
-    fs::{create_dir, read_dir, read_to_string, File, write},
+    fs::{create_dir, read_dir, read, read_to_string, File, write, metadata},
     process::Command
 };
 use serde::Serialize;
@@ -17,7 +16,9 @@ use crate::consts::{APP_NAME, PARSED_FILES_DIR, PRESETS_FILE_NAME, DEFAULT_PRESE
 #[derive(Serialize)]
 pub struct FilePreview {
     path: String,
-    content: String,
+    name: String,
+    preview: String,
+    size: u64
 }
 
 pub fn init_app_structure() -> Result<(), Box<dyn Error>> {
@@ -63,32 +64,28 @@ pub fn write_parsed_files(paths: Vec<PathBuf>, output_file: &mut File) -> Result
     Ok(())
 }
 
-pub fn update_parsed_file(path: String, content: String) -> Result<(), String> {
-    let file_path = get_app_dir().map_err(|e| e.to_string())?
-                            .join(PARSED_FILES_DIR)
-                            .join(path);
-    let mut file = File::create(file_path).map_err(|e| e.to_string())?;
-    file.write_all(content.as_bytes()).map_err(|e| e.to_string())?;
 
-    Ok(())
-}
+pub fn get_file_preview(file_path: PathBuf) -> Result<FilePreview, String> {
+    let meta = metadata(&file_path).map_err(|e| e.to_string())?;
+    let bytes = read(&file_path).map_err(|e| e.to_string())?;
 
-pub fn get_file_preview(file_name: String) -> Result<FilePreview, String> {
-    let file_path = get_app_dir().map_err(|e| e.to_string())?
-                            .join(PARSED_FILES_DIR)
-                            .join(file_name);
-    let file = File::open(&file_path).map_err(|e| e.to_string())?;
-    let reader = BufReader::new(file);
-
-    let content: String = reader
+    let preview = String::from_utf8_lossy(&bytes)
         .lines()
         .take(PREVIEW_LINE_LIMIT)
-        .collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?
+        .collect::<Vec<_>>()
         .join("\n");
 
+    let name = file_path
+        .file_name()
+        .ok_or("Failed to extract filename")?
+        .to_string_lossy()
+        .to_string();
+
     Ok(FilePreview {
+        name,
+        preview,
         path: file_path.to_string_lossy().to_string(),
-        content,
+        size: meta.len(),
     })
 }
 
@@ -129,7 +126,6 @@ pub fn write_presets(map: &HashMap<String, Vec<String>>) -> Result<(), String> {
     write(path, json).map_err(|e| e.to_string())?;
     Ok(())
 }
-
 
 pub fn open_with_default_app(path: &Path) -> Result<(), String> {
     #[cfg(target_os = "windows")]

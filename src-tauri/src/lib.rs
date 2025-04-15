@@ -18,13 +18,15 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::parse,
             commands::get_files,
-            commands::get_file,
+            commands::get_file_content,
             commands::update_file,
-            commands::open_file,
+            commands::open_in_default_editor,
             commands::delete_file,
+            commands::rename_file,
             commands::update_preset,
             commands::delete_preset,
             commands::get_presets,
+            commands::open_in_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

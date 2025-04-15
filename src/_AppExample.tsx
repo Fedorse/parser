@@ -2,24 +2,33 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 
+const THIRTY_MB_SIZE = 30 * 1024 * 1024;
+
 type FilePreview = {
   path: string;
-  content: string;
+  name: string;
+  preview: string;
+  size: number;
 };
 
 type PresetMap = Record<string, string[]>;
 
 export default function AppExample() {
   const [files, setFiles] = useState<FilePreview[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<FilePreview | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
 
   const [presets, setPresets] = useState<PresetMap>({});
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
+  const [renamingFile, setRenamingFile] = useState<string | null>(null); // path
+  const [newName, setNewName] = useState<string>("");
+
   const fetchFiles = async () => {
     try {
       const files: FilePreview[] = await invoke("get_files");
+      console.log("files", files);
+
       setFiles(files);
     } catch (err) {
       console.error("Failed to load files:", err);
@@ -55,13 +64,12 @@ export default function AppExample() {
     }
   };
 
-  const handleSelectFile = async (filePath: string) => {
-    const fileName = filePath.split("/").pop();
-    if (!fileName) return;
-
+  const handleSelectFile = async (filePreview) => {
     try {
-      const content: string = await invoke("get_file", { fileName });
-      setSelectedFile(fileName);
+      const content = await invoke("get_file_content", {
+        filePath: filePreview.path,
+      });
+      setSelectedFile(filePreview);
       setFileContent(content);
     } catch (err) {
       console.error("Failed to get file:", err);
@@ -70,31 +78,51 @@ export default function AppExample() {
 
   const handleSave = async () => {
     if (!selectedFile) return;
+
     try {
       await invoke("update_file", {
-        path: selectedFile,
+        filePath: selectedFile.path,
         content: fileContent,
       });
-      fetchFiles();
-      alert("File saved!");
+      await fetchFiles();
     } catch (err) {
       console.error("Failed to save file:", err);
     }
   };
 
-  const handleDelete = async (filePath: string) => {
-    const fileName = filePath.split("/").pop();
-    if (!fileName) return;
-
+  const handleDelete = async (file: FilePreview) => {
+    const fileName = file.name;
     try {
       await invoke("delete_file", { path: fileName });
-      setFiles((prev) => prev.filter((f) => f.path !== filePath));
-      if (selectedFile === fileName) {
+      setFiles((prev) => prev.filter((f) => f.path !== file.path));
+      if (selectedFile?.path === file.path) {
         setSelectedFile(null);
         setFileContent("");
       }
     } catch (err) {
       console.error("Failed to delete file:", err);
+    }
+  };
+
+  const handleOpenDir = (file: FilePreview) => {
+    invoke("open_in_folder", { filePath: file.path });
+  };
+
+  const openInEditor = async (file: FilePreview) => {
+    await invoke("open_in_default_editor", { filePath: file.path });
+  };
+
+  const handleRenameFile = async (file: FilePreview, newName: string) => {
+    if (!newName || newName === file.name) return;
+    try {
+      await invoke("rename_file", {
+        filePath: file.path,
+        newName: newName,
+      });
+      await fetchFiles();
+      setRenamingFile(null);
+    } catch (err) {
+      console.error("Failed to rename file:", err);
     }
   };
 
@@ -141,16 +169,54 @@ export default function AppExample() {
           <div key={file.path} className="rounded border p-4 relative group">
             <div
               className="cursor-pointer"
-              onClick={() => handleSelectFile(file.path)}
+              onClick={() => {
+                if (file.size > THIRTY_MB_SIZE) {
+                  openInEditor(file);
+                } else {
+                  handleSelectFile(file);
+                }
+              }}
             >
-              <p className="font-semibold">{file.path.split("/").pop()}</p>
+              {renamingFile === file.path ? (
+                <input
+                  className="font-semibold border rounded px-1 text-sm"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onBlur={() => handleRenameFile(file, newName)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRenameFile(file, newName);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <p
+                  className="font-semibold cursor-pointer"
+                  onClick={() => {
+                    setRenamingFile(file.path);
+                    setNewName(file.name);
+                  }}
+                >
+                  {file.name}
+                </p>
+              )}
               <pre className="text-xs text-gray-600 max-h-24 overflow-hidden whitespace-pre-wrap">
-                {file.content}
+                {file.preview}
               </pre>
             </div>
+
             {/* Delete button */}
             <button
-              onClick={() => handleDelete(file.path)}
+              onClick={() => handleOpenDir(file)}
+              className="absolute top-2 right-5 opacity-0 group-hover:opacity-100 text-blue-500 hover:text-blue-700"
+              title="Delete File"
+            >
+              Folder
+            </button>
+
+            <button
+              onClick={() => handleDelete(file)}
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
               title="Delete File"
             >
@@ -163,7 +229,7 @@ export default function AppExample() {
       {/* Editor */}
       {selectedFile && (
         <div className="flex flex-col gap-4 mt-6">
-          <h2 className="text-lg font-bold">Editing: {selectedFile}</h2>
+          <h2 className="text-lg font-bold">Editing: {selectedFile.name}</h2>
           <textarea
             className="w-full min-h-[300px] border rounded p-3 font-mono text-sm"
             value={fileContent}
