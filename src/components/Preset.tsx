@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { DeleteIcon } from '../icons';
 
-export const Preset = ({ selectedPreset, setSelectedPreset, presets, handlePresetsDelete }) => {
+export const Preset = ({
+	selectedPreset,
+	setSelectedPreset,
+
+	handlePresetsDelete,
+	presets
+}) => {
 	const isPresetSelected = (presetName) => {
 		return selectedPreset.some((item) => item.name === presetName);
 	};
@@ -26,7 +32,7 @@ export const Preset = ({ selectedPreset, setSelectedPreset, presets, handlePrese
 	return (
 		<div className=" mt-1 w-1/2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
 			<span className="text-white/30 pl-10">default patterns</span>
-			{presets.default.map((preset) => (
+			{presets.map((preset) => (
 				<div
 					key={preset.name}
 					className="flex items-center w-full text-left px-4 py-2 text-black/70 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -48,7 +54,7 @@ export const Preset = ({ selectedPreset, setSelectedPreset, presets, handlePrese
 				</div>
 			))}
 			<span>Saved presets</span>
-			{presets.saved.map((preset) => (
+			{/* {presets.saved.map((preset) => (
 				<div
 					key={preset.name}
 					className="flex items-center w-full text-left px-4 py-2 text-black/70 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -74,7 +80,7 @@ export const Preset = ({ selectedPreset, setSelectedPreset, presets, handlePrese
 						<DeleteIcon />
 					</button>
 				</div>
-			))}
+			))} */}
 		</div>
 	);
 };

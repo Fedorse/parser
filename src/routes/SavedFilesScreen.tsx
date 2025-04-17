@@ -22,7 +22,6 @@ const SavedFilesScreen = () => {
 	const [files, setFiles] = useState<FilePreview[]>([]);
 	const [openFile, setOpenFile] = useState<OpenFile>(null);
 	const [isCopied, setIsCopied] = useState(false);
-	console.log(files);
 
 	const handleOpenFile = async (file: FilePreview) => {
 		try {

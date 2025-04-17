@@ -27,8 +27,8 @@ const GridPattern = ({ isDragging }) => {
 	);
 };
 
-export const DragAndDrop = ({ parseFiles }) => {
-	const { isDragging } = useDragAndDrop(parseFiles);
+export const DragAndDrop = ({ parse }) => {
+	const { isDragging } = useDragAndDrop(parse);
 	return (
 		<div className="w-1/2 h-2/5 relative">
 			<div
