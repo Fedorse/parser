@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useState } from 'react';
 import Toast from '../components/Toast';
 
 export const ToastContext = createContext(null);
@@ -9,7 +9,7 @@ export const ToastProvider = ({ children }) => {
 	const showToast = ({ message, type = 'success', duration = '3000' }) => {
 		const id = Date.now();
 
-		setToast((prevToast) => [...prevToast, { id, message, type, duration }]);
+		setToast((prev) => [...prev, { id, message, type, duration }]);
 
 		return id;
 	};
@@ -32,7 +32,7 @@ export const ToastProvider = ({ children }) => {
 	return (
 		<ToastContext.Provider value={contextValue}>
 			{children}
-			<div className="">
+			<div>
 				{toast.map((toast) => (
 					<Toast
 						key={toast.id}

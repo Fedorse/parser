@@ -1,7 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
+
+type DragState = {
+	isDragging: boolean;
+	position: { x: number; y: number } | null;
+	files: string[];
+};
+
+type DragEventPayload = {
+	type: 'over' | 'drop' | 'leave';
+	position: { x: number; y: number };
+	paths: string[];
+};
+
 export const useDragAndDrop = (parceCb) => {
-	const [dragState, setDragState] = useState({
+	const [dragState, setDragState] = useState<DragState>({
 		isDragging: false,
 		position: null,
 		files: []
@@ -15,11 +28,10 @@ export const useDragAndDrop = (parceCb) => {
 		const setupListener = async () => {
 			try {
 				unlistenRef.current = await currentWindow.onDragDropEvent((event) => {
-					const { type, position, paths } = event.payload;
+					const { type, position, paths } = event.payload as DragEventPayload;
 
 					switch (type) {
 						case 'over':
-							console.log('over');
 							setDragState({
 								isDragging: true,
 								position,
@@ -27,7 +39,6 @@ export const useDragAndDrop = (parceCb) => {
 							});
 							break;
 						case 'drop':
-							console.log('drop');
 							setDragState({
 								isDragging: false,
 								position,
@@ -36,7 +47,6 @@ export const useDragAndDrop = (parceCb) => {
 							parceCb(paths);
 							break;
 						case 'leave':
-							console.log('leave');
 							setDragState({
 								isDragging: false,
 								position: null,

@@ -13,3 +13,7 @@ export { OpenDocument } from './OpenDocument';
 export { ArrowDown } from './ArrowDown';
 export { ArrowUp } from './ArrowUp';
 export { EditorIcon } from './EditorIcon';
+export { SuccessIconToast } from './SuccessIconToast';
+export { ErrorIconToast } from './ErrorIconToast';
+export { InfoIconToast } from './InfoIconToast';
+export { CrossIcon } from './CrossIcon';

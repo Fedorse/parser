@@ -1,10 +1,9 @@
-import { UploadIcon } from '../icons';
-import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useState } from 'react';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { usePreset } from '../hooks/usePresset';
 import { PresetForm } from '../components/PresetForm';
 import { PresetList } from '../components/PresetList';
-import { ArrowUp, ArrowDown } from '../icons';
+import { ArrowUp, ArrowDown, UploadIcon } from '../icons';
 import { GridMask } from '../components/GridMask';
 
 type Props = {
@@ -78,9 +77,9 @@ export const DragAndDrop = ({ parse }: Props) => {
 							Drag and drop files here
 						</h2>
 						<div className="flex items-center justify-center gap-4">
-							<div className="h-px bg-gray-300 dark:bg-gray-600 w-16 "></div>
+							<div className="h-px bg-gray-300 dark:bg-gray-600 my-1 w-16 "></div>
 
-							<div className="h-px bg-gray-300 dark:bg-gray-600 w-16 "></div>
+							<div className="h-px bg-gray-300 dark:bg-gray-600 my-1 w-16 "></div>
 						</div>
 						<p className="text-gray-400"> use the buttons below</p>
 					</div>
