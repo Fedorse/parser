@@ -51,6 +51,7 @@ export const usePreset = () => {
 				delete copy[preset];
 				return copy;
 			});
+			setSelected(null);
 			success('Preset deleted');
 		} catch (err) {
 			console.error('Failed to delete preset:', err);

@@ -26,7 +26,7 @@ const ButtonUploads = ({ parse }: Props) => {
 				<div className="flex justify-center w-full">
 					<div className="inline-flex items-center border border-gray-300 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
 						<button
-							onClick={() => handleOpenFile(false)}
+							onClick={(e) => handleOpenFile(false)}
 							className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-800 dark:text-white"
 						>
 							<FileIcon />

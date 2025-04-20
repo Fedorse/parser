@@ -5,17 +5,21 @@ import { PresetForm } from '../components/PresetForm';
 import { PresetList } from '../components/PresetList';
 import { ArrowUp, ArrowDown, UploadIcon } from '../icons';
 import { GridMask } from '../components/GridMask';
+import { useClickOutside } from '../hooks/useClickOutside';
 
 type Props = {
 	parse: (selected: string[]) => void;
 };
 
 export const DragAndDrop = ({ parse }: Props) => {
-	const [showPreset, setShowPresets] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	const { presets, selected, setSelected, form, setForm, savePreset, deletePreset, toggleForm } =
 		usePreset();
 	const { isDragging } = useDragAndDrop(parse);
+
+	useClickOutside({ targetClass: 'select-menu', cb: () => setOpen(false) });
+
 	return (
 		<div className="w-full max-w-3xl  relative">
 			<div
@@ -30,22 +34,25 @@ export const DragAndDrop = ({ parse }: Props) => {
 				<div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] pointer-events-none">
 					<GridMask isDragging={isDragging} />
 				</div>
-				<div className="z-50 relative">
+				<div className="z-50 relative select-menu inline-block">
 					<button
-						onClick={() => setShowPresets(!showPreset)}
+						onClick={(e) => {
+							e.stopPropagation();
+							setOpen(!open);
+						}}
 						className={`flex flex-col dark:hover:bg-gray-800 hover:bg-gray-300  dark:text-white text-black rounded-md px-4 py-2 
-							${showPreset ? 'bg-gray-300 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'}
+							${open ? 'bg-gray-300 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'}
 						}`}
 					>
 						<div className="flex items-center gap-2">
-							Preset {showPreset ? <ArrowDown /> : <ArrowUp />}
+							Preset {open ? <ArrowDown /> : <ArrowUp />}
 						</div>
 						<span className="text-xs text-black/60 dark:text-white/60">
 							{selected || 'No preset'}
 						</span>
 					</button>
 
-					{showPreset && (
+					{open && (
 						<div className="absolute left-0 top-full mt-2 w-[90vw] max-w-[300px]  dark:bg-gray-900  bg-white  border dark:border-slate-600  rounded-md shadow-lg z-50 p-4">
 							<PresetForm form={form} onSave={savePreset} onToggle={toggleForm} setForm={setForm} />
 							<PresetList

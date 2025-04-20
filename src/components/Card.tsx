@@ -30,6 +30,7 @@ const Card = ({
 }: Props) => {
 	const [newName, setNewName] = useState<string>('');
 	const [renamingFile, setRenamingFile] = useState<string | null>(null);
+
 	const handleDeleteClick = async (path: string) => {
 		try {
 			await invoke('delete_file', { path: path });

@@ -4,7 +4,7 @@ import { SuccessIconToast, ErrorIconToast, InfoIconToast, CrossIcon } from '../i
 type Props = {
 	message: string;
 	type: 'success' | 'error' | 'info';
-	duration: string;
+	duration: number;
 	onClose: () => void;
 };
 
@@ -31,7 +31,7 @@ const Toast = ({ message, type, duration, onClose }: Props) => {
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			onClose();
-		}, 100000);
+		}, duration);
 
 		return () => {
 			clearTimeout(timer);
