@@ -6,6 +6,8 @@ import { PresetList } from '../components/PresetList';
 import { ArrowUp, ArrowDown, UploadIcon } from '../icons';
 import { GridMask } from '../components/GridMask';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { AnimatePresence, motion } from 'framer-motion';
+import { variants } from '../animation/seletct';
 
 type Props = {
 	parse: (selected: string[]) => void;
@@ -51,18 +53,30 @@ export const DragAndDrop = ({ parse }: Props) => {
 							{selected || 'No preset'}
 						</span>
 					</button>
-
-					{open && (
-						<div className="absolute left-0 top-full mt-2 w-[90vw] max-w-[300px]  dark:bg-gray-900  bg-white  border dark:border-slate-600  rounded-md shadow-lg z-50 p-4">
-							<PresetForm form={form} onSave={savePreset} onToggle={toggleForm} setForm={setForm} />
-							<PresetList
-								presets={presets}
-								setSelected={setSelected}
-								selected={selected}
-								onDelete={deletePreset}
-							/>
-						</div>
-					)}
+					<AnimatePresence>
+						{open && (
+							<motion.div
+								initial="initial"
+								animate="animate"
+								exit="exit"
+								variants={variants}
+								className="absolute left-0 top-full mt-2 w-[90vw] max-w-[300px]  dark:bg-gray-900  bg-white  border dark:border-slate-600  rounded-md shadow-lg z-50 p-4"
+							>
+								<PresetForm
+									form={form}
+									onSave={savePreset}
+									onToggle={toggleForm}
+									setForm={setForm}
+								/>
+								<PresetList
+									presets={presets}
+									setSelected={setSelected}
+									selected={selected}
+									onDelete={deletePreset}
+								/>
+							</motion.div>
+						)}
+					</AnimatePresence>
 				</div>
 
 				<div className=" flex flex-col items-center justify-center gap-6 mt-4 sm:mt-10 z-10">

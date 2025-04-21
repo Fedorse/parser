@@ -1,4 +1,5 @@
 import { createContext, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';
 
 export const ToastContext = createContext(null);
@@ -33,15 +34,17 @@ export const ToastProvider = ({ children }) => {
 		<ToastContext.Provider value={contextValue}>
 			{children}
 			<div>
-				{toast.map((toast) => (
-					<Toast
-						key={toast.id}
-						message={toast.message}
-						type={toast.type}
-						duration={toast.duration}
-						onClose={() => hideToast(toast.id)}
-					/>
-				))}
+				<AnimatePresence>
+					{toast.map((toast) => (
+						<Toast
+							key={toast.id}
+							message={toast.message}
+							type={toast.type}
+							duration={toast.duration}
+							onClose={() => hideToast(toast.id)}
+						/>
+					))}
+				</AnimatePresence>
 			</div>
 		</ToastContext.Provider>
 	);

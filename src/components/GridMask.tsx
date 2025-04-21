@@ -12,7 +12,7 @@ export const GridMask = ({ isDragging }: Props) => {
 					return (
 						<div
 							key={`${col}-${row}`}
-							className={`w-10 h-10 flex flex-shrink-0 rounded-[2px] transition-colors duration-300 ${
+							className={`w-10 h-10 flex flex-shrink-0 rounded-[2px] ${
 								isDragging
 									? 'dark:bg-blue-800/30 bg-blue-200/40'
 									: index % 2 === 0

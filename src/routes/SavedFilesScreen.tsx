@@ -93,8 +93,6 @@ const SavedFilesScreen = () => {
 			<ListFiles
 				savedFiles={files}
 				onOpen={handleOpenFile}
-
-
 				handleDelete={deleteByPath}
 				onRename={handleRenameFile}
 			/>

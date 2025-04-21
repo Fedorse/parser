@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowIcon, GitIcon, MoonIcon, SunIcon } from '../icons';
 import { SavedContentIcon } from '../icons/SavedContentIcon';
 
@@ -30,9 +31,20 @@ export const Navbar = () => {
 						</Link>
 					)}
 				</div>
+
 				<div className="flex items-center gap-4 text-white">
-					<button onClick={toggleTheme} className=" hover:text-blue-400 transition-colors">
-						{theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+					<button onClick={toggleTheme} className="relative w-8 h-8">
+						<AnimatePresence mode="wait" initial={false}>
+							<motion.span
+								key={theme}
+								initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+								animate={{ rotate: 0, opacity: 1, scale: 1 }}
+								exit={{ rotate: 90, opacity: 0, scale: 0.8 }}
+								className="absolute inset-0 flex items-center justify-center"
+							>
+								{theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+							</motion.span>
+						</AnimatePresence>
 					</button>
 
 					<a href="https://github.com/Fedorse/parser-ai">
@@ -43,4 +55,5 @@ export const Navbar = () => {
 		</nav>
 	);
 };
+
 export default Navbar;

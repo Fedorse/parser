@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { variants } from '../animation/toast';
 import { SuccessIconToast, ErrorIconToast, InfoIconToast, CrossIcon } from '../icons';
 
 type Props = {
@@ -39,7 +41,11 @@ const Toast = ({ message, type, duration, onClose }: Props) => {
 	}, [duration, onClose]);
 
 	return (
-		<div
+		<motion.div
+			initial="initial"
+			animate="animate"
+			exit="exit"
+			variants={variants}
 			onClick={onClose}
 			className={`fixed bottom-4 right-4 rounded-xl dark:bg-slate-800 bg-slate-100 font-light dark:text-white text-black flex w-64 h-20 z-50 overflow-hidden transition-colors duration-300 ease-out`}
 		>
@@ -53,7 +59,7 @@ const Toast = ({ message, type, duration, onClose }: Props) => {
 			>
 				<CrossIcon />
 			</button>
-		</div>
+		</motion.div>
 	);
 };
 

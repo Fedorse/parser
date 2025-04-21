@@ -1,3 +1,5 @@
+import { motion, AnimatePresence } from 'framer-motion';
+import { formVariants } from '../animation/seletct';
 type Props = {
 	form: {
 		isOpen: boolean;
@@ -9,6 +11,7 @@ type Props = {
 	onToggle: () => void;
 	setForm: (form: any) => void;
 };
+
 export const PresetForm = ({ form, onSave, onToggle, setForm }: Props) => {
 	return (
 		<>
@@ -37,42 +40,51 @@ export const PresetForm = ({ form, onSave, onToggle, setForm }: Props) => {
 					</span>
 				)}
 			</div>
-			{form.isOpen && (
-				<div className="flex flex-col gap-2 mt-2">
-					<label htmlFor="preset-name" className="text-xs">
-						Preset name
-					</label>
-					<input
-						id="preset-name"
-						type="text"
-						value={form.name}
-						onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								onSave();
-							}
-						}}
-						placeholder="Enter preset name"
-						className="dark:bg-slate-800 outline-none  focus:ring-2   bg-slate-200 px-2 py-1 rounded dark:text-white text-black placeholder-transparent text-sm dark:focus:placeholder-white/50 focus:placeholder-black/50 transition-colors"
-					/>
+			<AnimatePresence>
+				{form.isOpen && (
+					<motion.div
+						key="preset-form"
+						variants={formVariants}
+						initial="initial"
+						animate="animate"
+						exit="exit"
+						className="flex flex-col gap-2 mt-2"
+					>
+						<label htmlFor="preset-name" className="text-xs">
+							Preset name
+						</label>
+						<input
+							id="preset-name"
+							type="text"
+							value={form.name}
+							onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									onSave();
+								}
+							}}
+							placeholder="Enter preset name"
+							className="dark:bg-slate-800 outline-none  focus:ring-2   bg-slate-200 px-2 py-1 rounded dark:text-white text-black placeholder-transparent text-sm dark:focus:placeholder-white/50 focus:placeholder-black/50 transition-colors"
+						/>
 
-					<label htmlFor="preset-patterns" className="text-xs ">
-						Files to exclude, comma separated
-					</label>
-					<input
-						id="preset-patterns"
-						value={form.patterns}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								onSave();
-							}
-						}}
-						placeholder="Comma-separated patterns (e.g. node_modules, .git)"
-						onChange={(e) => setForm((prev) => ({ ...prev, patterns: e.target.value }))}
-						className="dark:bg-slate-800 outline-none  focus:ring-2   bg-slate-200 px-2 py-1 rounded dark:text-white text-black placeholder-transparent text-sm dark:focus:placeholder-white/50 focus:placeholder-black/50 transition-colors mb-4"
-					></input>
-				</div>
-			)}
+						<label htmlFor="preset-patterns" className="text-xs ">
+							Files to exclude, comma separated
+						</label>
+						<input
+							id="preset-patterns"
+							value={form.patterns}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									onSave();
+								}
+							}}
+							placeholder="Comma-separated patterns (e.g. node_modules, .git)"
+							onChange={(e) => setForm((prev) => ({ ...prev, patterns: e.target.value }))}
+							className="dark:bg-slate-800 outline-none  focus:ring-2   bg-slate-200 px-2 py-1 rounded dark:text-white text-black placeholder-transparent text-sm dark:focus:placeholder-white/50 focus:placeholder-black/50 transition-colors mb-4"
+						></input>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</>
 	);
 };
