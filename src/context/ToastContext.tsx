@@ -7,7 +7,7 @@ export const ToastProvider = ({ children }) => {
 	const [toast, setToast] = useState([]);
 
 	const showToast = ({ message, type = 'success', duration = '3000' }) => {
-		const id = Date.now();
+		const id = `${Date.now()}-${Math.random()}`;
 
 		setToast((prev) => [...prev, { id, message, type, duration }]);
 

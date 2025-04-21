@@ -8,66 +8,65 @@ type DragState = {
 };
 
 type DragEventPayload = {
-	type: 'over' | 'drop' | 'leave';
+	type: 'over' | 'drop' | 'leave' | 'enter'; // добавим enter
 	position: { x: number; y: number };
 	paths: string[];
 };
 
-export const useDragAndDrop = (parceCb) => {
+export const useDragAndDrop = (parseCb: (paths: string[]) => void) => {
 	const [dragState, setDragState] = useState<DragState>({
 		isDragging: false,
 		position: null,
 		files: []
 	});
 
-	const unlistenRef = useRef(null);
+	const unlistenRef = useRef<() => void | null>(null);
 
 	useEffect(() => {
-		const currentWindow = getCurrentWebview();
+		let aborted = false;
 
-		const setupListener = async () => {
+		const setup = async () => {
 			try {
-				unlistenRef.current = await currentWindow.onDragDropEvent((event) => {
+				const currentWindow = getCurrentWebview();
+				const unlisten = await currentWindow.onDragDropEvent((event) => {
 					const { type, position, paths } = event.payload as DragEventPayload;
 
 					switch (type) {
 						case 'over':
-							setDragState({
-								isDragging: true,
-								position,
-								files: []
-							});
+							setDragState({ isDragging: true, position, files: [] });
 							break;
 						case 'drop':
-							setDragState({
-								isDragging: false,
-								position,
-								files: paths
-							});
-							parceCb(paths);
+							setDragState({ isDragging: false, position, files: paths });
+							parseCb(paths);
 							break;
 						case 'leave':
-							setDragState({
-								isDragging: false,
-								position: null,
-								files: []
-							});
+							setDragState({ isDragging: false, position: null, files: [] });
 							break;
 						default:
-							console.log('Unknown drag event type:', type);
+							console.warn(`[useDragAndDrop:] unknown type:`, type);
 					}
 				});
+
+				if (aborted) {
+					unlisten();
+				} else {
+					unlistenRef.current = unlisten;
+				}
 			} catch (err) {
-				console.error('Failed to set up drag and drop listener:', err);
+				console.error(`[useDragAndDrop:] Failed to setup listener:`, err);
 			}
 		};
-		setupListener();
+
+		setup();
 
 		return () => {
+			aborted = true;
 			if (unlistenRef.current) {
 				unlistenRef.current();
+				unlistenRef.current = null;
 			}
 		};
-	}, []);
+	}, [parseCb]);
+
 	return dragState;
 };
