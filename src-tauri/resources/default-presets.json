@@ -1,7 +1,7 @@
 {
   "Git": [".git", ".gitignore"],
-  "JS": ["Git", "node_modules", "build", ".next"],
-  "Java": ["Git", ".maven", "target", "out"],
-  "Python": ["Git", "__pycache__", "venv", ".pytest_cache"],
-  "Rust": ["Git", "target", "Cargo.lock"]
+  "JS": [".git", ".gitignore", "node_modules", "build", ".next"],
+  "Java": [".git", ".gitignore", ".maven", "target", "out"],
+  "Python": [".git", ".gitignore", "__pycache__", "venv", ".pytest_cache"],
+  "Rust": [".git", ".gitignore", "target", "Cargo.lock"]
 }
