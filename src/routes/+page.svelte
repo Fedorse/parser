@@ -12,7 +12,7 @@
   type FileTreeNode = {
   name: string;
   path:string;
-  type: 'File' | 'Dir',
+  type: 'File' | 'Directory',
   selected?: boolean,
   children?: FileTreeNode[]
 }
@@ -154,17 +154,18 @@ $effect(()=>{
         </div>
     {#if filesTreeNodes.length > 0}
     <Dialog.Root open={isDialogOpen} onOpenChange={(v) => (isDialogOpen = v)}>
-      <Dialog.Content class='w-full h-96 ' >
+      <Dialog.Content class='w-full flex flex-col  h-[70%]' >
         <Dialog.Header>
-          <Dialog.Title>Select files to parse</Dialog.Title>
+          <Dialog.Title>Select to parse files</Dialog.Title>
+          <Dialog.Description>
+            Make changes to your profile here. Click parse when you're done.
+          </Dialog.Description>        
         </Dialog.Header>
-        <Dialog.Description class='overflow-y-auto' >
-          <ul class="mt-4 space-y-1 text-sm w-full overflow-y-auto  h-full ">
+          <ul class="mt-4 flex  space-y-1 text-sm w-full overflow-y-auto h-full ">
             {#each filesTreeNodes as node (node.path)}
               <FileTreeItem {node}/>
             {/each}
           </ul>
-        </Dialog.Description>
         <div class="flex justify-end">
           <Button onclick={parseSelectedNodes}>Parse</Button>
         </div>
