@@ -8,7 +8,7 @@ type DragState = {
 };
 
 type DragEventPayload = {
-	type: 'over' | 'drop' | 'leave' | 'enter'; // добавим enter
+	type: 'over' | 'drop' | 'leave' | 'enter';
 	position: { x: number; y: number };
 	paths: string[];
 };

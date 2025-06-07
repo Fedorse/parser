@@ -1,101 +1,175 @@
 <script lang="ts">
-import {invoke} from '@tauri-apps/api/core';
-import {open} from '@tauri-apps/plugin-dialog';
-import {Button} from '$lib/components/ui/button/index'
-import * as Resizable from "$lib/components/ui/resizable/index.js";
-import FileInput from '@lucide/svelte/icons/file-input'
-import FolderInput from '@lucide/svelte/icons/folder-input'
-import * as Card from "$lib/components/ui/card/index.js";
-import {Separator} from '$lib/components/ui/separator/index'
+  import {open} from '@tauri-apps/plugin-dialog';
+  import {Button} from '$lib/components/ui/button/index'
+  
+  import FolderInput from '@lucide/svelte/icons/folder-input'
+  import * as Card from "$lib/components/ui/card/index.js";
+  import {Separator} from '$lib/components/ui/separator/index'
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import FileTreeItem from "$lib/components/FileTreeItem.svelte";
+  import {invoke} from '@tauri-apps/api/core';
+
+  type FileTreeNode = {
+  name: string;
+  path:string;
+  type: 'File' | 'Dir',
+  selected?: boolean,
+  children?: FileTreeNode[]
+}
 
 type FilePreview = {
-	name: string;
-	path: string;
-	preview: string;
-	size: number;
+  name: string
+  path: string;
+  preview: string;
+  size: number;
 };
 
 
-let savedFiles = $state<FilePreview[]>([])
 
-const fetchFiles = async () => {
+
+let filePrewiews = $state<FilePreview[]>([])
+let filesTreeNodes = $state<FileTreeNode[]>([])
+let isDialogOpen = $state(true)
+
+
+
+
+const laodFiles = async () => {
   try {
     const files = await invoke<FilePreview[]>('get_files')
-    savedFiles = files
-    console.log('files', savedFiles)
+    filePrewiews = files
   } catch(err) {
     console.error('Failed to load files:', err)
   }
 }
 
-
-const parse = async (selectedPaths: string[] )=>{
-  try {
-    await invoke('parse',{
-  paths: selectedPaths,
-  ignorePatterns: []
-    })
-    await fetchFiles()
-  } catch(err){
-    console.error('Parse failed:', err)
+const selectAllNodes = (nodes: FileTreeNode[]) => {
+  for (const node of nodes) {
+    if (node.type === 'File') {
+      node.selected = true;
+    } else {
+      node.selected = true;     
+      if (node.children) {
+        selectAllNodes(node.children);
+      } 
+    }
   }
+};
+
+
+const parseSelectedNodes = async () => {
+  const paths = collectSelectedPath(filesTreeNodes);
+
+  if(paths.length === 0) return;
+
+  await invoke('parse', { paths });
+  isDialogOpen = false;
+  filesTreeNodes = [];
+  await laodFiles();
+};
+
+const collectSelectedPath = (nodes: FileTreeNode[]): string[] => {
+  const paths: string[] = [];
+  for (const node of nodes) {
+    if (node.type === 'File') {
+      if (node.selected) paths.push(node.path);
+    } else if (node.children) {
+      paths.push(...collectSelectedPath(node.children));
+    }
+  }
+  return paths;
 }
 
-const handleOpenFile = async (directory: boolean) => {
-  const selected = await open({
-    multiple: true,
-    directory
-  })
+
+const handleOpenFiles = async (selectDir: boolean) => {
+  const selected = await open({multiple: true, directory: selectDir})
   if (!selected) return
   try {
-    await parse(selected)
+    const tree = await invoke<FileTreeNode[]>('get_preview_tree', {
+      paths: selected
+    })
+    selectAllNodes(tree)
+    filesTreeNodes = tree
+    isDialogOpen = true
   } catch(err) {
     console.error('Parse failed:', err)
   }
 }
 
+const handleOpenDir = async (file: FilePreview) => {
+  try {
+    await invoke('open_in_folder', { filePath: file.path });
+  } catch (err) {
+    console.error('Failed to open file:', err);
+  }
+};
+
+const handleDelete = async (file: FilePreview) => {
+  try {
+    await invoke('delete_file', { path: file.path });
+    await laodFiles();
+  } catch (err) {
+    console.error('Failed to delete file:', err);
+  }
+};
+
+
+
 $effect(()=>{
-  fetchFiles()
+  laodFiles()
 })
 
 </script>
 
-<main class='w-full h-full flex items-center  justify-center flex-col'>
-
-
-    <Resizable.PaneGroup direction="horizontal">
-      <Resizable.Pane>
+<main class='w-full h-full flex items-center justify-center flex-col'>
         <div class="bg-card h-full p-4">
           <div class='border border-muted border-dashed h-1/2  bg-black  w-full flex flex-col items-center justify-center  rounded-sm'>
           <p>drag and drop files here</p>
         </div>
     <div class="pt-3 gap-2 flex justify-center items-center">
-      <Button variant="outline" onclick={()=> handleOpenFile(false)} >
-        <FileInput class="mr-2 size-4"/>
-        Upload Files
-      </Button>
       <Separator orientation='vertical' />
-      <Button variant="outline">
-        <FolderInput class="mr-2 size-4" onclick={()=> handleOpenFile(true)} />
+      <Button variant="outline" onclick={()=> handleOpenFiles(true)}>
+        <FolderInput class="mr-2 size-4"  />
         Upload Folder
       </Button>
         </div>
-    </div></Resizable.Pane>
-      <Resizable.Handle withHandle />
-      <Resizable.Pane>
-        <Card.Root>
-          <Card.Header>
-            <Card.Title>fsdaf</Card.Title>
-            <Card.Description>Card Description</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <p>Card Content</p>
-          </Card.Content>
-          <Card.Footer>
-            <p>Card Footer</p>
-          </Card.Footer>
-        </Card.Root>
-      </Resizable.Pane>
-    </Resizable.PaneGroup>
+    </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-10'>
+          {#each filePrewiews as file (file.path)}
+          <Card.Root class='max-w-sm'>
+            <Card.Header>
+              <Card.Title>{file.name}</Card.Title>
+            </Card.Header>
+            <Card.Content>
+              <p class="line-clamp-6">{file.preview}</p>
+            </Card.Content>
+            <Card.Footer>
+              <div class="flex justify-between w-full"> 
+                <Button variant="outline" onclick={()=> handleOpenDir(file)}>Open in folder</Button>
+                <Button  onclick={()=> handleDelete(file)}>Delete</Button>
+              </div>
+            </Card.Footer>
+          </Card.Root>
+        {/each}
+        </div>
+    {#if filesTreeNodes.length > 0}
+    <Dialog.Root open={isDialogOpen} onOpenChange={(v) => (isDialogOpen = v)}>
+      <Dialog.Content class='w-full h-96 ' >
+        <Dialog.Header>
+          <Dialog.Title>Select files to parse</Dialog.Title>
+        </Dialog.Header>
+        <Dialog.Description class='overflow-y-auto' >
+          <ul class="mt-4 space-y-1 text-sm w-full overflow-y-auto  h-full ">
+            {#each filesTreeNodes as node (node.path)}
+              <FileTreeItem {node}/>
+            {/each}
+          </ul>
+        </Dialog.Description>
+        <div class="flex justify-end">
+          <Button onclick={parseSelectedNodes}>Parse</Button>
+        </div>
+      </Dialog.Content>
+    </Dialog.Root>
+    {/if}
 </main>
 

@@ -47,7 +47,7 @@ export default function AppExample() {
     return paths;
   };
 
-  const handleOpenFiles = async (directory: boolean) => {
+const handleOpenFiles = async (directory: boolean) => {
     const selected = await open({
       multiple: true,
       directory,
