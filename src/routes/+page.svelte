@@ -1,17 +1,13 @@
 <script lang="ts">
   import {open} from '@tauri-apps/plugin-dialog';
   import {Button} from '$lib/components/ui/button/index'
-  
   import FolderInput from '@lucide/svelte/icons/folder-input'
-  import * as Card from "$lib/components/ui/card/index.js";
   import {Separator} from '$lib/components/ui/separator/index'
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import FileTreeItem from "$lib/components/FileTreeItem.svelte";
   import {invoke} from '@tauri-apps/api/core';
   import {getCurrentWebview} from '@tauri-apps/api/webview';
-
 	import { onMount } from 'svelte';
-
 
 
   type DragEventPayload = {
@@ -28,21 +24,11 @@
   children?: FileTreeNode[]
 }
 
-type FilePreview = {
-  name: string
-  path: string;
-  preview: string;
-  size: number;
-};
-
-
-
-
-let filePrewiews = $state<FilePreview[]>([])
 let filesTreeNodes = $state<FileTreeNode[]>([])
 
 let isDialogOpen = $state(true)
 let isDragging = $state(false)
+let isLoading = $state(false)
 
 
 
@@ -55,7 +41,6 @@ onMount(async () => {
     
       unlistenDrag = await webview.onDragDropEvent((event) => {
         const { type, paths } = event.payload as DragEventPayload;
-        
         switch (type) {
           case 'enter':
             isDragging = true;
@@ -99,15 +84,6 @@ const handleDroppedFiles = async (paths: string[]) => {
 }
 
 
-const laodFiles = async () => {
-  try {
-    const files = await invoke<FilePreview[]>('get_files')
-    filePrewiews = files
-  } catch(err) {
-    console.error('Failed to load files:', err)
-  }
-}
-
 const selectAllNodes = (nodes: FileTreeNode[]) => {
   for (const node of nodes) {
     if (node.type === 'File') {
@@ -126,11 +102,16 @@ const parseSelectedNodes = async () => {
   const paths = collectSelectedPath(filesTreeNodes);
 
   if(paths.length === 0) return;
-
-  await invoke('parse', { paths });
-  isDialogOpen = false;
-  filesTreeNodes = [];
-  await laodFiles();
+  isLoading = true
+  try {
+    await invoke('parse', { paths });
+    isDialogOpen = false;
+    filesTreeNodes = [];
+  } catch(err) {
+    console.error('Parse failed:', err)
+  } finally {
+    isLoading = false
+  }
 };
 
 const collectSelectedPath = (nodes: FileTreeNode[]): string[] => {
@@ -160,86 +141,51 @@ const handleOpenFiles = async (selectDir: boolean) => {
     console.error('Parse failed:', err)
   }
 }
-
-const handleOpenDir = async (file: FilePreview) => {
-  try {
-    await invoke('open_in_folder', { filePath: file.path });
-  } catch (err) {
-    console.error('Failed to open file:', err);
-  }
-};
-
-const handleDelete = async (file: FilePreview) => {
-  try {
-    await invoke('delete_file', { path: file.path });
-    await laodFiles();
-  } catch (err) {
-    console.error('Failed to delete file:', err);
-  }
-};
-
-
-
-$effect(()=>{
-  laodFiles()
-})
-
 </script>
+
+
 
 <main class=''>
         <div 
           class = {{
-            "bg-card h-full p-4 transition-colors duration-200  " : true,
-            "bg-blue-50 border-blue-300": isDragging
+            "bg-card p-4 rounded-sm " : true,
+            "": isDragging
           }}
         >
           <div 
           class={{
-            "border border-muted border-dashed flex flex-col items-center justify-center rounded-sm space-y-20 p-20": true,
-            "border-sidebar border-2 bg-slate-100": isDragging,
+            "border border-border border-dashed flex flex-col items-center justify-center rounded-sm w-2xl h-96": true,
+            "border-highlight border-2 bg-input": isDragging,
             "bg-muted": !isDragging
           }}>
             {#if isDragging}
               <div class="text-center">
-                <div class="text-4xl mb-2">📂</div>
-                <p class="text-lg font-medium text-card">Drop files here to parse</p>
-                <p class="text-sm text-card">Release to select files</p>
+                <div class="text-7xl mb-2">📂</div>
+                <p class="text-xl font-medium text-accent-foreground">Drop files here to parse</p>
+                <p class="text-sm text-card-foreground">Release to select files</p>
               </div>
             {:else}
               <div class="text-center">
-                <div class="text-4xl mb-2">📁</div>
-                <p class="">Drag and drop files here</p>
-                <p class="text-sm text-muted-foreground mt-1">or use the button below</p>
+                <div class="text-7xl mb-2">📁</div>
+                <p class="text-xl">Drag and drop files here</p>
+                <p class="text-sm text-card-foreground mt-1">or use the button below</p>
+
               </div>
-              
             {/if}
-            <div class="">
+
+            <div class={{
+              'pt-6 transition-opacity duration-200': true,
+              'opacity-0 pointer-events-none': isDragging,
+              'opacity-100': !isDragging
+            }}>
               <Button variant="outline" onclick={()=> handleOpenFiles(true)}>
-                <FolderInput class="mr-2 size-4" />
+                <FolderInput class="mr-2 size-5" />
                 Upload Files
               </Button>
             </div>
+
           </div>
-          
     </div>
-        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-10'>
-          {#each filePrewiews as file (file.path)}
-          <Card.Root class='max-w-sm'>
-            <Card.Header>
-              <Card.Title>{file.name}</Card.Title>
-            </Card.Header>
-            <Card.Content>
-              <p class="line-clamp-6">{file.preview}</p>
-            </Card.Content>
-            <Card.Footer>
-              <div class="flex justify-between w-full"> 
-                <Button variant="outline" onclick={()=> handleOpenDir(file)}>Open in folder</Button>
-                <Button  onclick={()=> handleDelete(file)}>Delete</Button>
-              </div>
-            </Card.Footer>
-          </Card.Root>
-        {/each}
-        </div>
     {#if filesTreeNodes.length > 0}
     <Dialog.Root open={isDialogOpen} onOpenChange={(v) => (isDialogOpen = v)}>
       <Dialog.Content class='w-full flex flex-col  h-[70%]' >
