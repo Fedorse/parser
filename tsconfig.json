@@ -10,7 +10,9 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler",
+		"types": ["svelte"],
 		"paths": {
+			"@/*": ["./src/*"],
 			"$lib": ["./src/lib"],
 			"$lib/*": ["./src/lib/*"]
 		}

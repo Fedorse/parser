@@ -9,7 +9,7 @@
   </script>
   
   <Tooltip.Provider delayDuration={100}>
-	<Toaster richColors={true} position="top-right"  />
+	<Toaster richColors={true} position="bottom-right"  />
 	  <div class="flex flex-col h-screen">
 		<NavBar />
 		<main class="flex-1 flex p-4">
