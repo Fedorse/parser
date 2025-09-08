@@ -7,7 +7,7 @@
   import FileTreeItem from "$lib/components/file-tree-item.svelte";
   import {invoke} from '@tauri-apps/api/core';
   import {getCurrentWebview} from '@tauri-apps/api/webview';
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
   import {toast} from 'svelte-sonner'
 
 
