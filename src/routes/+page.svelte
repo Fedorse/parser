@@ -21,8 +21,11 @@
     selected?: boolean;
     children?: FileTreeNode[];
   };
+  type SavedFiles = { name: string; path: string; preview: string; size: number };
 
   let filesTreeNodes = $state<FileTreeNode[]>([]);
+  let recentFiles = $state<SavedFiles[]>([]);
+
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
   let isLoading = $state(false);
@@ -82,8 +85,8 @@
     try {
       await invoke('parse', { paths });
       toast.success('Parse completed successfully');
-      isDialogOpen = false;
       filesTreeNodes = [];
+      await loadRecentFiles();
     } catch (err) {
       console.error('Parse failed:', err);
       toast.error('Parse failed');
@@ -119,10 +122,21 @@
       isLoading = false;
     }
   };
+
+  const loadRecentFiles = async () => {
+    try {
+      recentFiles = await invoke<SavedFiles[]>('get_files');
+    } catch (err) {
+      console.error('Failed to load recent files:', err);
+    }
+  };
+  $effect(() => {
+    loadRecentFiles();
+  });
 </script>
 
-<main class="gap- flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-20 2xl:pt-24">
-  <Card.Root class="bg-card/40 w-full max-w-5xl justify-between md:h-72 xl:h-96">
+<main class="flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-28 2xl:pt-32">
+  <Card.Root class="bg-card/40  w-full max-w-5xl justify-between pt-6 pb-4">
     <Card.Header class="flex justify-between">
       <div class="flex flex-col gap-2">
         <Card.Title>Quick Start</Card.Title>
@@ -137,7 +151,7 @@
         </Button>
       </div>
     </Card.Header>
-    <Card.Content>
+    <Card.Content class="py-4">
       <div
         class={{
           ' w-full rounded-2xl border border-dashed p-8 text-center transition-all sm:p-10': true,
@@ -145,10 +159,8 @@
           'bg-input border-highlight ring-primary/40 ring-2': isDragging,
           'border-highlight pointer-events-none animate-pulse select-none': isLoading
         }}
-        aria-busy={isLoading}
-        aria-live="polite"
       >
-        <div class="mt-2">
+        <div class="">
           {#if isDragging}
             <div class="flex flex-col items-center gap-2">
               <div class="mb-1 text-7xl leading-none">📂</div>
@@ -162,10 +174,10 @@
         </div>
       </div>
     </Card.Content>
-    <Card.Footer class="border-border border-t  "></Card.Footer>
+    <div class="border-border border-t px-6 pt-4">
+      <RecentFiles limit={3} files={recentFiles} />
+    </div>
   </Card.Root>
-
-  <RecentFiles />
 
   {#if filesTreeNodes.length > 0}
     <FileDialogTree {filesTreeNodes} bind:open={isDialogOpen} onParse={parseSelectedNodes} />
