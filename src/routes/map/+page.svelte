@@ -1,6 +1,10 @@
-<script>
+<script lang="ts">
   import RoadMap from '$lib/components/road-map.svelte';
-  export const mockRoots = [
+  import { SvelteFlowProvider } from '@xyflow/svelte';
+
+  import type { FileNode } from '$lib/utils';
+
+  export const mockRoots: FileNode[] = [
     {
       name: 'src',
       path: '/project/src',
@@ -50,6 +54,6 @@
   ];
 </script>
 
-<div>
+<SvelteFlowProvider>
   <RoadMap roots={mockRoots} />
-</div>
+</SvelteFlowProvider>

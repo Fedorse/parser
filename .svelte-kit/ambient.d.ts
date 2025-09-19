@@ -42,6 +42,7 @@ declare module '$env/static/private' {
 	export const TAURI_CLI_VERBOSITY: string;
 	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
 	export const MallocNanoZone: string;
+	export const TERM_SESSION_ID: string;
 	export const TAURI_ENV_DEBUG: string;
 	export const COLOR: string;
 	export const npm_config_registry: string;
@@ -62,7 +63,6 @@ declare module '$env/static/private' {
 	export const npm_config_frozen_lockfile: string;
 	export const PATH: string;
 	export const npm_package_json: string;
-	export const LaunchInstanceID: string;
 	export const __CFBundleIdentifier: string;
 	export const USER_ZDOTDIR: string;
 	export const TAURI_ENV_PLATFORM_VERSION: string;
@@ -94,6 +94,7 @@ declare module '$env/static/private' {
 	export const npm_config_cache: string;
 	export const npm_lifecycle_script: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
+	export const LC_CTYPE: string;
 	export const NVM_BIN: string;
 	export const npm_config_user_agent: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
@@ -101,7 +102,6 @@ declare module '$env/static/private' {
 	export const HOMEBREW_CELLAR: string;
 	export const GIT_ASKPASS: string;
 	export const OSLogRateLimit: string;
-	export const SECURITYSESSIONID: string;
 	export const npm_node_execpath: string;
 	export const COLORTERM: string;
 	export const npm_config_prefix: string;
@@ -153,6 +153,7 @@ declare module '$env/dynamic/private' {
 		TAURI_CLI_VERBOSITY: string;
 		ORIGINAL_XDG_CURRENT_DESKTOP: string;
 		MallocNanoZone: string;
+		TERM_SESSION_ID: string;
 		TAURI_ENV_DEBUG: string;
 		COLOR: string;
 		npm_config_registry: string;
@@ -173,7 +174,6 @@ declare module '$env/dynamic/private' {
 		npm_config_frozen_lockfile: string;
 		PATH: string;
 		npm_package_json: string;
-		LaunchInstanceID: string;
 		__CFBundleIdentifier: string;
 		USER_ZDOTDIR: string;
 		TAURI_ENV_PLATFORM_VERSION: string;
@@ -205,6 +205,7 @@ declare module '$env/dynamic/private' {
 		npm_config_cache: string;
 		npm_lifecycle_script: string;
 		VSCODE_GIT_IPC_HANDLE: string;
+		LC_CTYPE: string;
 		NVM_BIN: string;
 		npm_config_user_agent: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
@@ -212,7 +213,6 @@ declare module '$env/dynamic/private' {
 		HOMEBREW_CELLAR: string;
 		GIT_ASKPASS: string;
 		OSLogRateLimit: string;
-		SECURITYSESSIONID: string;
 		npm_node_execpath: string;
 		COLORTERM: string;
 		npm_config_prefix: string;

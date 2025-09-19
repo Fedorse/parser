@@ -1,3 +1,21 @@
+<script lang="ts" context="module">
+  export type FileTreeNode = {
+    name: string;
+    path: string;
+    type: 'File' | 'Directory';
+    selected?: boolean;
+    children?: FileTreeNode[];
+  };
+
+  export type DragEventPayload = {
+    type: 'over' | 'drop' | 'leave' | 'enter';
+    position: { x: number; y: number };
+    paths: string[];
+  };
+
+  export type SavedFiles = { name: string; path: string; preview: string; size: number };
+</script>
+
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
   import { Button } from '$lib/components/ui/button/index';
@@ -9,20 +27,6 @@
   import RecentFiles from '$lib/components/collaps-files.svelte';
   import * as Card from '$lib/components/ui/card';
   import { Progress } from '$lib/components/ui/progress/index.js';
-
-  type DragEventPayload = {
-    type: 'over' | 'drop' | 'leave' | 'enter';
-    position: { x: number; y: number };
-    paths: string[];
-  };
-  type FileTreeNode = {
-    name: string;
-    path: string;
-    type: 'File' | 'Directory';
-    selected?: boolean;
-    children?: FileTreeNode[];
-  };
-  type SavedFiles = { name: string; path: string; preview: string; size: number };
 
   let filesTreeNodes = $state<FileTreeNode[]>([]);
   let recentFiles = $state<SavedFiles[]>([]);
