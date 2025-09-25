@@ -27,9 +27,11 @@
   import RecentFiles from '$lib/components/collaps-files.svelte';
   import * as Card from '$lib/components/ui/card';
   import { Progress } from '$lib/components/ui/progress/index.js';
+  import { invalidateAll } from '$app/navigation';
+
+  let { data } = $props();
 
   let filesTreeNodes = $state<FileTreeNode[]>([]);
-  let recentFiles = $state<SavedFiles[]>([]);
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
@@ -93,7 +95,7 @@
       await invoke('parse', { paths });
       toast.success('Parse completed successfully');
       filesTreeNodes = [];
-      await loadRecentFiles();
+      invalidateAll();
     } catch (err) {
       console.error('Parse failed:', err);
       toast.error('Parse failed');
@@ -130,17 +132,6 @@
       isLoading = false;
     }
   };
-
-  const loadRecentFiles = async () => {
-    try {
-      recentFiles = await invoke<SavedFiles[]>('get_files');
-    } catch (err) {
-      console.error('Failed to load recent files:', err);
-    }
-  };
-  $effect(() => {
-    loadRecentFiles();
-  });
 </script>
 
 <main class="flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-28 2xl:pt-32">
@@ -189,7 +180,7 @@
       </div>
     </Card.Content>
     <div class="border-border border-t px-6 pt-4">
-      <RecentFiles limit={3} files={recentFiles} />
+      <RecentFiles limit={3} files={data.recentFiles} />
     </div>
   </Card.Root>
 
