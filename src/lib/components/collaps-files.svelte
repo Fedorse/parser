@@ -7,7 +7,7 @@
 
   type SavedFiles = { name: string; path: string; preview: string; size: number };
 
-  let { limit = 3, files = [] as SavedFiles[] } = $props();
+  let { limit = 3, files = [] as SavedFiles[] } = $props<any>();
   let isOpen = $state(true);
   let loading = $state(false);
 

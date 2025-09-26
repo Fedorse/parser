@@ -37,8 +37,6 @@
   let isDragging = $state(false);
   let isLoading = $state(false);
 
-  let roadMapNodes = $state<FileTreeNode[]>([]);
-
   let unlistenDrag: () => void;
   onMount(async () => {
     try {
@@ -123,7 +121,6 @@
     try {
       const tree = await invoke<FileTreeNode[]>('get_preview_tree', { paths: selected });
       selectAllNodes(tree);
-      roadMapNodes = tree;
       filesTreeNodes = tree;
       isDialogOpen = true;
     } catch (err) {
@@ -148,7 +145,6 @@
         <Button variant="default" onclick={() => handleOpenFiles(true)} disabled={isLoading}>
           {isLoading ? '…' : 'Upload files'}
         </Button>
-        <!-- <Button href="/map" variant="default">Map</Button> -->
       </div>
     </Card.Header>
     <Card.Content class="py-4">

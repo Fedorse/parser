@@ -4,7 +4,8 @@ export const load = async () => {
   try {
     const recentFiles = await invoke('get_files');
     return { recentFiles };
-  } catch {
+  } catch (error) {
+    console.error('Failed to load recent files:', error);
     return { recentFiles: [] };
   }
 };
