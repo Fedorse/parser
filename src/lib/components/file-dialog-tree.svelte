@@ -3,19 +3,12 @@
   import { Separator } from '$lib/components/ui/separator';
   import * as Dialog from '$lib/components/ui/dialog';
   import FileTreeItem from '$lib/components/file-tree-item.svelte';
-
-  type FileTreeNode = {
-    name: string;
-    path: string;
-    type: 'File' | 'Directory';
-    selected?: boolean;
-    children?: FileTreeNode[];
-  };
+  import type { FileTreeNode } from '$lib/tauri.ts';
 
   type Props = { filesTreeNodes: FileTreeNode[]; open: boolean; onParse: () => void };
   let { filesTreeNodes, open = $bindable(false), onParse }: Props = $props();
 
-  let all = $state(true);
+  let allSelected = $state(true);
 
   const setAll = (nodes: FileTreeNode[], v: boolean) => {
     for (const n of nodes) {
@@ -25,8 +18,8 @@
   };
 
   const toggleAll = () => {
-    all = !all;
-    setAll(filesTreeNodes, all);
+    allSelected = !allSelected;
+    setAll(filesTreeNodes, allSelected);
   };
 </script>
 
@@ -49,7 +42,7 @@
 
     <div class="flex gap-4">
       <Button variant="outline" onclick={toggleAll}>
-        {all ? 'Deselect All' : 'Select All'}
+        {allSelected ? 'Deselect All' : 'Select All'}
       </Button>
       <Button onclick={onParse}>Parse</Button>
     </div>

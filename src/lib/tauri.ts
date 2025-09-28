@@ -9,8 +9,6 @@ export type FileTreeNode = {
 };
 export type SavedFiles = { name: string; path: string; preview: string; size: number };
 
-// TODO fix ts, delete try catch here, move in page client
-
 export const ensureChildrenArrays = (nodes: FileTreeNode[]): FileTreeNode[] => {
   for (const n of nodes) {
     if (!n.children) n.children = [];
@@ -32,47 +30,30 @@ export const collectSelectedPath = (nodes: FileTreeNode[]): string[] => {
   for (const n of nodes) {
     if (n.type === 'File') {
       if (n.selected) paths.push(n.path);
-    } else if (n.children) {
+    } else if (n.children?.length) {
       paths.push(...collectSelectedPath(n.children));
     }
   }
   return paths;
 };
 
-export const getPreviewTree = async (paths: string[]) => {
-  try {
-    const tree = await invoke<FileTreeNode[]>('get_preview_tree', { paths });
-    return tree ?? [];
-  } catch (err) {
-    console.error('Failed to prosses dropped files:', err);
-  }
-};
-
-export const getSavedFiles = async (): Promise<SavedFiles[]> => {
-  try {
-    const files = await invoke<SavedFiles[]>('get_files');
-    return files ?? [];
-  } catch (err) {
-    console.error('Failed to load files:', err);
-    return [];
-  }
+export const getPreviewTree = async (paths: string[]): Promise<FileTreeNode[]> => {
+  const tree = await invoke<FileTreeNode[]>('get_preview_tree', { paths });
+  return Array.isArray(tree) ? tree : [];
 };
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTreeNode[]> => {
-  try {
-    const tree = await getPreviewTree(paths);
-    ensureChildrenArrays(tree);
-    setSelectedRecursive(tree, true);
-    return tree;
-  } catch (err) {
-    console.error('Failed to prosses opened files:', err);
-  }
+  const tree = await getPreviewTree(paths); //
+  ensureChildrenArrays(tree);
+  setSelectedRecursive(tree, true);
+  return tree;
+};
+
+export const getSavedFiles = async (): Promise<SavedFiles[]> => {
+  const files = await invoke<SavedFiles[]>('get_files');
+  return Array.isArray(files) ? files : [];
 };
 
 export const parsePaths = async (paths: string[]): Promise<void> => {
-  try {
-    await invoke('parse', { paths });
-  } catch (err) {
-    console.error('Parse failed:', err);
-  }
+  await invoke('parse', { paths });
 };

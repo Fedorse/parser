@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export type DragEventPayload = {
     type: 'over' | 'drop' | 'leave' | 'enter';
     position: { x: number; y: number };
@@ -59,8 +59,13 @@
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
-    filesTreeNodes = await getPreviewTreeUI(paths);
-    isDialogOpen = true;
+    try {
+      filesTreeNodes = await getPreviewTreeUI(paths);
+      isDialogOpen = true;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load preview tree');
+    }
   };
 
   const parseSelectedNodes = async () => {
@@ -73,6 +78,7 @@
       invalidateAll();
       toast.success('Parse completed successfully');
     } catch (err) {
+      console.error(err);
       toast.error('Parse failed');
     } finally {
       isLoading = false;
@@ -87,7 +93,8 @@
       filesTreeNodes = await getPreviewTreeUI(selected);
       isDialogOpen = true;
     } catch (err) {
-      console.error('Parse failed:', err);
+      console.error(err);
+      toast.error('Failed to open selected paths');
     } finally {
       isLoading = false;
     }
