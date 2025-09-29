@@ -76,7 +76,7 @@
   };
 
   let didInitialLayout = false;
-  
+
   $effect(() => {
     if (!didInitialLayout && nodesReady.current) {
       didInitialLayout = true;

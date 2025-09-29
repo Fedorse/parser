@@ -7,6 +7,7 @@
   import * as Collapsible from '$lib/components/ui/collapsible';
   import Self from '$lib/components/file-tree-item.svelte';
   import { setSelected } from '$lib/utils';
+  import type { FileTreeNode } from '$lib/tauri.ts';
 
   let { node, isRoot = false } = $props();
 
@@ -21,8 +22,8 @@
       return { isChecked: node.selected, isIndeterminate: false };
     }
 
-    const allChildrenChecked = node.children.every((child) => child.selected);
-    const noChildrenChecked = node.children.every((child) => !child.selected);
+    const allChildrenChecked = node.children.every((child: FileTreeNode) => child.selected);
+    const noChildrenChecked = node.children.every((child: FileTreeNode) => !child.selected);
 
     return {
       isChecked: allChildrenChecked,

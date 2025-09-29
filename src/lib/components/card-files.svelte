@@ -6,58 +6,73 @@
   import { Trash2, Code, FolderOpenDot } from '@lucide/svelte/icons';
   import { formatFileSize } from '$lib/utils';
   import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
-  import { invoke } from '@tauri-apps/api/core';
   import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+  import { openDefaultEditor, openFileInfolder, renameFile } from '$lib/tauri';
+  import type { SavedFiles } from '$lib/tauri';
+  import { invalidateAll } from '$app/navigation';
 
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
-  type SavedFiles = {
-    name: string;
-    path: string;
-    preview: string;
-    size: number;
+  type Props = {
+    file: SavedFiles;
+    handleDelete: (file: SavedFiles) => void;
+    openDialogEditor: (file: SavedFiles) => void;
   };
 
-  let { file, handleDelete, openDialogCode } = $props();
+  let { file, handleDelete, openDialogEditor }: Props = $props();
 
-  let newName = $state<string>('');
-  let rename = $state<string | null>(null);
+  let draftName = $state<string>('');
+  let renamingPath = $state<string | null>(null);
   let isDeleteDialogOpen = $state(false);
 
+  const isLargeFile = $derived(file.size > THIRTY_MB_SIZE);
+
+  const canSave = $derived(() => {
+    const name = draftName.trim();
+    return name.length > 0 && name !== file.name;
+  });
+
+  const isRenaming = $derived(renamingPath === file.path);
+
   const startRename = () => {
-    rename = file.path;
-    newName = file.name;
+    renamingPath = file.path;
+    draftName = file.name;
   };
 
   const handleEdit = () => {
-    if (file.size > THIRTY_MB_SIZE) {
-      openDefaultEditor(file.path);
+    if (isLargeFile) {
+      openEditor(file.path);
     } else {
-      openDialogCode(file);
+      openDialogEditor(file);
     }
   };
 
-  const savedNameEvent = (e: KeyboardEvent) => {
+  const cancelRename = () => {
+    renamingPath = null;
+    draftName = '';
+  };
+
+  const onRenameKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') handleRename(file);
-    else if (e.key === 'Escape') rename = null;
+    else if (e.key === 'Escape') cancelRename();
   };
 
   const handleRename = async (file: SavedFiles) => {
-    if (!newName || newName === file.name) return;
+    if (!canSave) return;
     try {
-      await invoke('rename_file', { filePath: file.path, newName: newName });
-      file.name = newName;
-      file.path = file.path.replace(/[^\\/]+$/, newName);
-      rename = null;
-      newName = '';
+      await renameFile(file, draftName);
+      invalidateAll();
+      file.name = draftName;
+      file.path = file.path.replace(/[^\\/]+$/, draftName);
+      cancelRename();
     } catch (err) {
       console.error('Failed to rename file:', err);
     }
   };
 
-  const openDefaultEditor = async (path: string) => {
+  const openEditor = async (path: string) => {
     try {
-      await invoke('open_in_default_editor', { filePath: path });
+      await openDefaultEditor(path);
     } catch (err) {
       console.error('Failed to open file in editor:', err);
     }
@@ -65,7 +80,7 @@
 
   const handleOpenDir = async (file: SavedFiles) => {
     try {
-      await invoke('open_in_folder', { filePath: file.path });
+      await openFileInfolder(file);
     } catch (err) {
       console.error('Failed to open file:', err);
     }
@@ -77,17 +92,15 @@
     <Tooltip.Root>
       <Tooltip.Trigger>
         <Card.Title class="flex items-center justify-between gap-4">
-          {#if rename === file.path}
+          {#if isRenaming}
             <Input
               class="flex-1"
               autofocus
-              bind:value={newName}
-              onkeydown={(e) => {
-                savedNameEvent(e);
-              }}
+              bind:value={draftName}
+              onkeydown={onRenameKeydown}
               onblur={() => {
                 handleRename(file);
-                rename = null;
+                renamingPath = null;
               }}
             />
             <Button
@@ -99,6 +112,8 @@
               }}>Saved</Button
             >
           {:else}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <span class="max-w-64 flex-1 truncate text-left" onclick={startRename}
               >{file.name}
             </span>
