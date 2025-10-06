@@ -8,7 +8,8 @@
 		"src/routes/files/+page.ts",
 		"src/routes/+layout.ts"
 	],
-	"/map": [
+	"/graph/[...path]": [
+		"src/routes/graph/[...path]/+page.ts",
 		"src/routes/+layout.ts"
 	]
 }

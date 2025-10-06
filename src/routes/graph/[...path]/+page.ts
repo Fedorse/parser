@@ -1,5 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
-export type SavedFiles = { name: string; path: string; preview: string; size: number };
+import type { FileNode } from '$lib/utils';
 
 const mockRoots: FileNode[] = [
   {
@@ -50,14 +49,8 @@ const mockRoots: FileNode[] = [
   { name: 'tsconfig.json', path: '/project/tsconfig.json', type: 'File' }
 ];
 
-export const load = async () => {
-  try {
-    const files = await invoke<SavedFiles[]>('get_files');
-    const roots = mockRoots;
-
-    return { files: files ?? [], roots };
-  } catch (err) {
-    console.error('Failed to load files:', err);
-    return { files: [] as SavedFiles[] };
-  }
+export const load = async ({ url }) => {
+  // позже: const roots = await invoke<FileNode[]>('get_graph_by_path', { path: relPath });
+  const roots = mockRoots;
+  return { roots, url };
 };

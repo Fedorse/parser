@@ -7,6 +7,7 @@
   import type { SavedFiles } from '$lib/tauri';
 
   let { limit = 3, files = [] as SavedFiles[] } = $props<any>();
+
   let open = $state(true);
   let loading = $state(false);
 

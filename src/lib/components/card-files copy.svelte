@@ -9,13 +9,62 @@
   import { Button } from '$lib/components/ui/button/index';
   import { formatFileSize } from '$lib/utils';
   import { openDefaultEditor, openFileInfolder, renameFile } from '$lib/tauri';
-  import DiagramPreview from './diagram-preview.svelte';
-  import type { FileNode } from '$lib/utils';
+  import { goto } from '$app/navigation';
   import { SvelteFlowProvider } from '@xyflow/svelte';
+  import RoadMap from '$lib/components/road-map.svelte';
 
-  import { invalidateAll, goto } from '$app/navigation';
+  import { invalidateAll } from '$app/navigation';
 
   import type { SavedFiles } from '$lib/tauri';
+
+  const mockRoots: FileNode[] = [
+    {
+      name: 'src',
+      path: '/project/src',
+      type: 'Directory',
+      children: [
+        { name: 'main.ts', path: '/project/src/main.ts', type: 'File' },
+        {
+          name: 'app',
+          path: '/project/src/app',
+          type: 'Directory',
+          children: [
+            { name: 'App.svelte', path: '/project/src/app/App.svelte', type: 'File' },
+            { name: 'Header.svelte', path: '/project/src/app/Header.svelte', type: 'File' },
+            { name: 'Footer.svelte', path: '/project/src/app/Footer.svelte', type: 'File' }
+          ]
+        },
+        {
+          name: 'lib',
+          path: '/project/src/lib',
+          type: 'Directory',
+          children: [
+            { name: 'utils.ts', path: '/project/src/lib/utils.ts', type: 'File' },
+            {
+              name: 'stores',
+              path: '/project/src/lib/stores',
+              type: 'Directory',
+              children: [
+                { name: 'user.ts', path: '/project/src/lib/stores/user.ts', type: 'File' },
+                { name: 'theme.ts', path: '/project/src/lib/stores/theme.ts', type: 'File' }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: 'public',
+      path: '/project/public',
+      type: 'Directory',
+      children: [
+        { name: 'favicon.ico', path: '/project/public/favicon.ico', type: 'File' },
+        { name: 'robots.txt', path: '/project/public/robots.txt', type: 'File' }
+      ]
+    },
+    { name: 'package.json', path: '/project/package.json', type: 'File' },
+    { name: 'tsconfig.json', path: '/project/tsconfig.json', type: 'File' }
+  ];
 
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
@@ -23,10 +72,11 @@
     file: SavedFiles;
     handleDelete: (file: SavedFiles) => void;
     openDialogEditor: (file: SavedFiles) => void;
-    roots: FileNode[];
   };
 
-  let { file, handleDelete, openDialogEditor, roots }: Props = $props();
+  let { file, handleDelete, openDialogEditor }: Props = $props();
+
+  const openRoadmap = (file: { path: string }) => goto(`/graph/${file.path}`);
 
   let draftName = $state<string>('');
   let renamingPath = $state<string | null>(null);
@@ -92,96 +142,22 @@
       console.error('Failed to open file:', err);
     }
   };
-  const openRoadmap = (file: { path: string }) => goto(`/graph/${file.path}`);
 </script>
 
-<Card.Root class="bg-muted/30 w-full max-w-sm">
-  <Card.Header>
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <Card.Title class="flex items-center justify-between gap-4">
-          {#if isRenaming}
-            <Input
-              class="flex-1"
-              autofocus
-              bind:value={draftName}
-              onkeydown={onRenameKeydown}
-              onblur={() => {
-                handleRename(file);
-                renamingPath = null;
-              }}
-            />
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onclick={() => {
-                handleRename(file);
-              }}>Saved</Button
-            >
-          {:else}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span class="max-w-64 flex-1 truncate text-left" onclick={startRename}
-              >{file.name}
-            </span>
-          {/if}
-        </Card.Title>
-      </Tooltip.Trigger>
-      <Tooltip.Content>
-        <p>Rename file</p>
-      </Tooltip.Content>
-    </Tooltip.Root>
-    <Card.Description>
-      <Badge variant="outline" class="text-muted-foreground">
-        {formatFileSize(file.size)}
-      </Badge>
-    </Card.Description>
-  </Card.Header>
-  <Card.Content class="min-h-80 overflow-hidden">
+<div class=" border-border flex h-64 w-[800px] gap-6 rounded-2xl border p-4">
+  <div class="boredr-border line-clamp-6 flex-1 overflow-hidden rounded-2xl border p-2">
     <SvelteFlowProvider>
-      <DiagramPreview {roots} />
+      <RoadMap roots={mockRoots} />
     </SvelteFlowProvider>
-  </Card.Content>
-  <Card.Footer class="border-text-muted-foreground/20 flex w-full justify-between border-t  ">
-    <div class="flex gap-2">
-      <Tooltip.Root>
-        <Tooltip.Trigger>
-          <Button variant="outline" size="sm" onclick={handleEdit}>
-            <Code class="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Content>
-          <p>{file.size > THIRTY_MB_SIZE ? 'Edit in default editor' : 'Edit file'}</p>
-        </Tooltip.Content>
-      </Tooltip.Root>
-
-      <Tooltip.Root>
-        <Tooltip.Trigger>
-          <Button variant="ghost" size="sm" onclick={() => handleOpenDir(file)}>
-            <FolderOpenDot class="h-4 w-4 " />
-            Open
-          </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Content>
-          <p>Open file in your file manager</p>
-        </Tooltip.Content>
-      </Tooltip.Root>
-      <Button variant="ghost" onclick={() => openRoadmap(file)}>Diagram</Button>
+  </div>
+  <div class="flex-1">
+    <div class="flex flex-col gap-1">
+      <span class="text-muted-foreground">File name</span>
+      <span>{file.name}</span>
     </div>
-
-    <div class="flex">
-      <Button
-        variant="destructive"
-        size="sm"
-        onclick={() => (isDeleteDialogOpen = !isDeleteDialogOpen)}
-      >
-        <Trash2 class="h-4 w-4" />
-      </Button>
-    </div>
-  </Card.Footer>
-</Card.Root>
+    <Button variant="secondary" size="sm" onclick={() => openRoadmap(file)}>Open roadmap</Button>
+  </div>
+</div>
 
 <AlertDialog.Root bind:open={isDeleteDialogOpen}>
   <AlertDialog.Content>

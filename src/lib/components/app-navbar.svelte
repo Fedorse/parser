@@ -42,6 +42,6 @@
   <!-- right: actions -->
   <div class="flex items-center gap-2">
     <ToggleThemeButton />
-    <Button variant="default" size="sm" href="/map">map</Button>
+    <!-- <Button variant="default" size="sm" href="/map">map</Button> -->
   </div>
 </nav>

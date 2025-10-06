@@ -1,11 +1,3 @@
-<script lang="ts" module>
-  export type DragEventPayload = {
-    type: 'over' | 'drop' | 'leave' | 'enter';
-    position: { x: number; y: number };
-    paths: string[];
-  };
-</script>
-
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
   import { Button } from '$lib/components/ui/button/index';
@@ -20,6 +12,11 @@
   import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
   import type { FileTreeNode } from '$lib/tauri';
 
+  type DragEventPayload = {
+    type: 'over' | 'drop' | 'leave' | 'enter';
+    position: { x: number; y: number };
+    paths: string[];
+  };
   let { data } = $props();
 
   let filesTreeNodes = $state<FileTreeNode[]>([]);
