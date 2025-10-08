@@ -13,8 +13,14 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 import type { Edge, Node } from '@xyflow/svelte';
 import type { FileTreeNode } from './tauri';
-export type GraphData = { label: string; type: 'file' | 'dir' };
-
+export type GraphData = {
+  label: string;
+  type: 'file' | 'dir';
+  path: string;
+  onToggle?: (p: string) => void;
+  open?: boolean;
+  dir: 'TB' | 'LR';
+};
 export type FileNode = {
   name: string;
   path: string;

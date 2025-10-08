@@ -1,61 +1,34 @@
 import { invoke } from '@tauri-apps/api/core';
+
 export type SavedFiles = { name: string; path: string; preview: string; size: number };
 
-const mockRoots: FileNode[] = [
-  {
-    name: 'src',
-    path: '/project/src',
-    type: 'Directory',
-    children: [
-      { name: 'main.ts', path: '/project/src/main.ts', type: 'File' },
-      {
-        name: 'app',
-        path: '/project/src/app',
-        type: 'Directory',
-        children: [
-          { name: 'App.svelte', path: '/project/src/app/App.svelte', type: 'File' },
-          { name: 'Header.svelte', path: '/project/src/app/Header.svelte', type: 'File' },
-          { name: 'Footer.svelte', path: '/project/src/app/Footer.svelte', type: 'File' }
-        ]
-      },
-      {
-        name: 'lib',
-        path: '/project/src/lib',
-        type: 'Directory',
-        children: [
-          { name: 'utils.ts', path: '/project/src/lib/utils.ts', type: 'File' },
-          {
-            name: 'stores',
-            path: '/project/src/lib/stores',
-            type: 'Directory',
-            children: [
-              { name: 'user.ts', path: '/project/src/lib/stores/user.ts', type: 'File' },
-              { name: 'theme.ts', path: '/project/src/lib/stores/theme.ts', type: 'File' }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    name: 'public',
-    path: '/project/public',
-    type: 'Directory',
-    children: [
-      { name: 'favicon.ico', path: '/project/public/favicon.ico', type: 'File' },
-      { name: 'robots.txt', path: '/project/public/robots.txt', type: 'File' }
-    ]
-  },
-  { name: 'package.json', path: '/project/package.json', type: 'File' },
-  { name: 'tsconfig.json', path: '/project/tsconfig.json', type: 'File' }
+const mockSelectedNames: string[] = [
+  'README.md',
+  'package.json',
+  'svelte.config.js',
+  'tsconfig.json',
+  'vite.config.ts',
+  'src/app.d.ts',
+  'src/routes/+layout.svelte',
+  'src/routes/+page.svelte',
+  'src/lib/components/CardFiles.svelte',
+  'src/lib/components/EditModal.svelte',
+  'src/lib/tauri/index.ts',
+  'src-tauri/Cargo.toml',
+  'src-tauri/src/main.rs',
+  'src-tauri/tauri.conf.json',
+  'src/lib/components/CardFiles.svelte',
+  'src/lib/components/EditModal.svelte',
+  'src/lib/tauri/index.ts',
+  'src-tauri/Cargo.toml',
+  'src-tauri/src/main.rs',
+  'src-tauri/tauri.conf.json'
 ];
 
 export const load = async () => {
   try {
     const files = await invoke<SavedFiles[]>('get_files');
-    const roots = mockRoots;
-
-    return { files: files ?? [], roots };
+    return { files: files ?? [], previews: mockSelectedNames };
   } catch (err) {
     console.error('Failed to load files:', err);
     return { files: [] as SavedFiles[] };

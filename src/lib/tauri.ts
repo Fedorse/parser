@@ -43,9 +43,10 @@ export const getPreviewTree = async (paths: string[]): Promise<FileTreeNode[]> =
 };
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTreeNode[]> => {
-  const tree = await getPreviewTree(paths); //
+  const tree = await getPreviewTree(paths);
   ensureChildrenArrays(tree);
   setSelectedRecursive(tree, true);
+
   return tree;
 };
 

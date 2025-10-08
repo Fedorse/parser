@@ -65,7 +65,7 @@
 
   <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     {#each data?.files as file (file.path)}
-      <CardFiles {file} {handleDelete} {openDialogEditor} roots={data.roots} />
+      <CardFiles {file} {handleDelete} {openDialogEditor} previews={data.previews} />
     {/each}
   </div>
   <EditModal {fileContent} {selectedFile} {updateFileContent} bind:isCodeDialogOpen />

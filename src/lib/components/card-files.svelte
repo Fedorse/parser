@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Trash2, Code, FolderOpenDot } from '@lucide/svelte/icons';
+  import { Trash2, Code, FolderOpenDot, Network } from '@lucide/svelte/icons';
 
   import * as Card from '$lib/components/ui/card/index.js';
   import Input from './ui/input/input.svelte';
@@ -9,9 +9,8 @@
   import { Button } from '$lib/components/ui/button/index';
   import { formatFileSize } from '$lib/utils';
   import { openDefaultEditor, openFileInfolder, renameFile } from '$lib/tauri';
-  import DiagramPreview from './diagram-preview.svelte';
+
   import type { FileNode } from '$lib/utils';
-  import { SvelteFlowProvider } from '@xyflow/svelte';
 
   import { invalidateAll, goto } from '$app/navigation';
 
@@ -24,9 +23,10 @@
     handleDelete: (file: SavedFiles) => void;
     openDialogEditor: (file: SavedFiles) => void;
     roots: FileNode[];
+    previews: string[];
   };
 
-  let { file, handleDelete, openDialogEditor, roots }: Props = $props();
+  let { file, handleDelete, openDialogEditor, previews = [] }: Props = $props();
 
   let draftName = $state<string>('');
   let renamingPath = $state<string | null>(null);
@@ -92,7 +92,7 @@
       console.error('Failed to open file:', err);
     }
   };
-  const openRoadmap = (file: { path: string }) => goto(`/graph/${file.path}`);
+  const gotoGraph = (file: { path: string }) => goto(`/graph/${file.path}`);
 </script>
 
 <Card.Root class="bg-muted/30 w-full max-w-sm">
@@ -138,11 +138,14 @@
       </Badge>
     </Card.Description>
   </Card.Header>
-  <Card.Content class="min-h-80 overflow-hidden">
-    <SvelteFlowProvider>
-      <DiagramPreview {roots} />
-    </SvelteFlowProvider>
+  <Card.Content>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+      {#each previews as name}
+        <div class="truncate font-mono text-sm" title={name}>{name}</div>
+      {/each}
+    </div>
   </Card.Content>
+
   <Card.Footer class="border-text-muted-foreground/20 flex w-full justify-between border-t  ">
     <div class="flex gap-2">
       <Tooltip.Root>
@@ -156,7 +159,9 @@
           <p>{file.size > THIRTY_MB_SIZE ? 'Edit in default editor' : 'Edit file'}</p>
         </Tooltip.Content>
       </Tooltip.Root>
-
+      <Button size="sm" variant="outline" onclick={() => gotoGraph(file)}
+        ><Network class="size-4" /></Button
+      >
       <Tooltip.Root>
         <Tooltip.Trigger>
           <Button variant="ghost" size="sm" onclick={() => handleOpenDir(file)}>
@@ -168,7 +173,6 @@
           <p>Open file in your file manager</p>
         </Tooltip.Content>
       </Tooltip.Root>
-      <Button variant="ghost" onclick={() => openRoadmap(file)}>Diagram</Button>
     </div>
 
     <div class="flex">

@@ -84,6 +84,7 @@
 
   const handleOpenFiles = async () => {
     const selected = await open({ multiple: true, directory: true });
+
     if (!selected) return;
     isLoading = true;
     try {
