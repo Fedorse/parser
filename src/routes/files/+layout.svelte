@@ -23,7 +23,7 @@
 
 <div class="flex w-full flex-col px-10">
   <div class="mb-6">
-    <h1 class="text-3xl font-bold tracking-tight">Saved Files</h1>
+    <h1 class="text-xl font-semibold">Saved Files</h1>
     <p class="text-muted-foreground">Manage your saved files and documents</p>
   </div>
   {#if data?.files?.length === 0}
@@ -34,7 +34,7 @@
     </div>
   {/if}
 
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
     {#each data?.files as file (file.path)}
       <Card {file} {handleDelete} />
     {/each}

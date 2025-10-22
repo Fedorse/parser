@@ -25,35 +25,6 @@
   let isDragging = $state(false);
   let isLoading = $state(false);
 
-  let unlistenDrag: () => void;
-  onMount(async () => {
-    try {
-      const webview = await getCurrentWebview();
-      unlistenDrag = await webview.onDragDropEvent((event) => {
-        const { type, paths } = event.payload as DragEventPayload;
-        switch (type) {
-          case 'enter':
-            isDragging = true;
-            break;
-          case 'leave':
-            isDragging = false;
-            break;
-          case 'drop':
-            isDragging = false;
-            handleDroppedFiles(paths);
-            break;
-          default:
-            console.warn(`Unknown drag event type: ${type}`);
-        }
-      });
-    } catch (error) {
-      console.error('Failed to initialize drag and drop:', error);
-    }
-    return () => {
-      if (unlistenDrag) unlistenDrag();
-    };
-  });
-
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
     try {
@@ -97,10 +68,38 @@
       isLoading = false;
     }
   };
+  let unlistenDrag: () => void;
+  onMount(async () => {
+    try {
+      const webview = await getCurrentWebview();
+      unlistenDrag = await webview.onDragDropEvent((event) => {
+        const { type, paths } = event.payload as DragEventPayload;
+        switch (type) {
+          case 'enter':
+            isDragging = true;
+            break;
+          case 'leave':
+            isDragging = false;
+            break;
+          case 'drop':
+            isDragging = false;
+            handleDroppedFiles(paths);
+            break;
+          default:
+            console.warn(`Unknown drag event type: ${type}`);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to initialize drag and drop:', error);
+    }
+    return () => {
+      if (unlistenDrag) unlistenDrag();
+    };
+  });
 </script>
 
 <main class="flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-28 2xl:pt-32">
-  <Card.Root class="bg-card/40  w-full max-w-5xl justify-between pt-6 pb-4">
+  <Card.Root class="bg-card/20  w-full max-w-5xl justify-between pt-6 pb-4">
     <Card.Header class="flex justify-between">
       <div class="flex flex-col gap-2">
         <Card.Title>Quick Start</Card.Title>

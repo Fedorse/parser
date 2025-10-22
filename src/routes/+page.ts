@@ -2,11 +2,12 @@ import { getSavedFiles } from '@/lib/tauri';
 
 export const load = async () => {
   try {
-    const recentFiles = await getSavedFiles();
+    const files = await getSavedFiles();
+    const filtred = files.filter((file) => !file.name.startsWith('.DS_Store'));
 
-    return { recentFiles };
+    return { recentFiles: filtred };
   } catch (error) {
-    return { recentFiles: [] };
     console.error('Failed to load recent files:', error);
+    return { recentFiles: [] };
   }
 };

@@ -119,6 +119,7 @@
       toast.error('Copy failed');
     }
   };
+
   $effect(() => {
     if (page.state.focus === 'rename' && inputEl) {
       inputEl?.focus();
@@ -128,22 +129,18 @@
 </script>
 
 <Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
-  <Dialog.Content class="flex h-[90vh] w-[90vw] max-w-none flex-col gap-0">
+  <Dialog.Content class=" flex h-[90vh] w-[90vw] flex-col gap-0">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2 pt-2">
         <Code class="text-muted-foreground size-4" />
         <Input
           bind:value={rename}
           onblur={handleRename}
-          class="bg-background! max-w-[30vw] border-none text-lg!"
+          class="max-w-[30vw] border border-transparent bg-transparent! text-lg! hover:border-blue-900! focus-visible:border-blue-900 focus-visible:ring-0"
           onkeydown={onRenameKeydown}
           bind:ref={inputEl}
           tabIndex={page.state.focus === 'rename' ? 0 : -1}
         />
-
-        {#if isTainted}
-          <span class="text-muted-foreground text-xs">• Edited</span>
-        {/if}
       </Dialog.Title>
     </Dialog.Header>
 
@@ -159,24 +156,26 @@
             {data.file.path}
           </Badge>
           {#if isLargeFile}
-            <Badge variant="secondary" class="text-amber-600 dark:text-amber-400">Large file</Badge>
+            <Badge variant="secondary" class="text-warn">Large file</Badge>
+          {/if}
+          {#if isTainted}
+            <div class="flex items-center gap-1">
+              <span class="bg-warn h-1.5 w-1.5 animate-pulse rounded-full text-xs transition-all"
+              ></span>
+              <span class="text-muted-foreground text-xs">Edited</span>
+            </div>
           {/if}
         </div>
+
         {#if !isLargeFile}
-          <div class="flex items-center gap-2">
-            <Button variant="outline" size="sm" onclick={handleCopy}>
-              <Copy class="mr-2 h-4 w-4" />
-              {isCopied ? 'Copied!' : 'Copy'}
-            </Button>
-            <Button variant="default" size="sm" disabled={!isTainted} onclick={save}>Save</Button>
-          </div>
+          {@render controls()}
         {/if}
       </div>
 
       <div class="min-h-0 flex-1 overflow-hidden rounded-md border">
         {#if isLargeFile}
           <div class="flex h-full w-full items-center justify-center">
-            <div class="flex max-w-lg items-center gap-6">
+            <div class="flex max-w-xs items-center gap-6">
               <div class="flex flex-col gap-4">
                 <div class="space-y-2">
                   <div class="flex items-center gap-2">
@@ -221,3 +220,20 @@
     <Button onclick={saveAndClose}>Save & Close</Button>
   {/snippet}
 </ConfirmDialog>
+
+{#snippet controls()}
+  <div class="flex items-center gap-2">
+    <Button
+      variant="outline"
+      size="sm"
+      onclick={() => goto(`/graph/${data.file.path}`)}
+      class="text-muted-foreground">View graph</Button
+    >
+    <Button variant="outline" class="text-muted-foreground" size="sm" onclick={handleCopy}>
+      <Copy class=" mr-2 size-4" />
+
+      {isCopied ? 'Copied!' : 'Copy'}
+    </Button>
+    <Button variant="default" size="sm" disabled={!isTainted} onclick={save}>Save</Button>
+  </div>
+{/snippet}
