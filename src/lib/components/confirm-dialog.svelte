@@ -25,12 +25,14 @@
   }: Props = $props();
 </script>
 
-<AlertDialog.Root bind:open={confirmDialogOpen}>
-  <AlertDialog.Content>
+<AlertDialog.Root open={confirmDialogOpen}>
+  <AlertDialog.Content escapeKeydownBehavior="ignore">
     <AlertDialog.Header>
       <AlertDialog.Title>{dialogTitle}</AlertDialog.Title>
       {#if dialogDescription}
-        <AlertDialog.Description>{dialogDescription}</AlertDialog.Description>
+        <AlertDialog.Description class="line-clamp-2  block max-w-md 2xl:max-w-lg"
+          >{dialogDescription}</AlertDialog.Description
+        >
       {/if}
     </AlertDialog.Header>
     <AlertDialog.Footer class="gap-2">

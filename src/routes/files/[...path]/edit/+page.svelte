@@ -1,0 +1,223 @@
+<script lang="ts">
+  import * as Dialog from '$lib/components/ui/dialog';
+  import { Button } from '$lib/components/ui/button';
+  import Badge from '$lib/components/ui/badge/badge.svelte';
+  import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
+  import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
+  import { Input } from '$lib/components/ui/input';
+  import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
+  import { goto, invalidateAll } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
+  import {
+    updateFile,
+    renameFile,
+    openDefaultEditor,
+    openFileInfolder,
+    type SavedFiles
+  } from '$lib/tauri';
+  import { page } from '$app/state';
+  import { formatFileSize } from '@/lib/utils';
+
+  let { data } = $props() as { data: { file: SavedFiles; content: string } };
+  const THIRTY_MB_SIZE = 30 * 1024 * 1024;
+
+  let isOpen = $state(true);
+  let value = $state<string>(data.content);
+  let snapshot = $state<string>(data.content);
+  let isCopied = $state(false);
+  let rename = $state<string>(data.file.name);
+  let inputEl = $state<HTMLInputElement | null>(null);
+  let confirmOpen = $state(false);
+
+  const isTainted = $derived(value !== snapshot);
+  const isLargeFile = $derived(data.file.size > THIRTY_MB_SIZE);
+
+  const closeModal = () => {
+    goto('/files', { replaceState: true });
+    confirmOpen = false;
+    isOpen = false;
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isTainted) {
+      confirmOpen = true;
+      isOpen = true;
+    } else {
+      closeModal();
+    }
+  };
+
+  const save = async () => {
+    try {
+      await updateFile(value, data.file);
+      snapshot = value;
+      toast.success('File updated successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update file content');
+    }
+  };
+
+  const saveAndClose = async () => {
+    await save();
+    closeModal();
+  };
+
+  const onRenameKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      inputEl?.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      rename = data.file.name;
+      inputEl?.blur();
+    }
+  };
+
+  const handleRename = async () => {
+    if (rename === data.file.name) return;
+
+    try {
+      await renameFile(data.file, rename.trim());
+      const newPath = data.file.path.replace(data.file.name, rename.trim());
+
+      await goto(`/files/${encodeURIComponent(newPath)}/edit`, {
+        replaceState: true
+      });
+
+      await invalidateAll();
+      toast.success('Renamed file');
+    } catch (e) {
+      console.error(e);
+      toast.error('Rename failed');
+      rename = data.file.name;
+    }
+  };
+
+  const openEditor = async (path: string) => {
+    try {
+      await openDefaultEditor(path);
+    } catch (err) {
+      console.error('Failed to open file in editor:', err);
+    }
+  };
+  const handleOpenDir = async (file: SavedFiles) => {
+    try {
+      await openFileInfolder(file);
+    } catch (err) {
+      console.error('Failed to open file:', err);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      isCopied = true;
+      setTimeout(() => (isCopied = false), 2000);
+    } catch (e) {
+      console.error(e);
+      toast.error('Copy failed');
+    }
+  };
+  $effect(() => {
+    if (page.state.focus === 'rename' && inputEl) {
+      inputEl?.focus();
+      inputEl?.setSelectionRange(inputEl.value.length, inputEl.value.length);
+    }
+  });
+</script>
+
+<Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
+  <Dialog.Content class="flex h-[90vh] w-[90vw] max-w-none flex-col gap-0">
+    <Dialog.Header>
+      <Dialog.Title class="flex items-center gap-2 pt-2">
+        <Code class="text-muted-foreground size-4" />
+        <Input
+          bind:value={rename}
+          onblur={handleRename}
+          class="bg-background! max-w-[30vw] border-none text-lg!"
+          onkeydown={onRenameKeydown}
+          bind:ref={inputEl}
+          tabIndex={page.state.focus === 'rename' ? 0 : -1}
+        />
+
+        {#if isTainted}
+          <span class="text-muted-foreground text-xs">• Edited</span>
+        {/if}
+      </Dialog.Title>
+    </Dialog.Header>
+
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="mb-2 flex items-center justify-between">
+        <div class="flex items-center gap-5 pt-3">
+          <Route class="text-muted-foreground size-4 " />
+          <Badge
+            variant="secondary"
+            class="max-w-lg truncate font-mono text-xs"
+            title={data.file.path}
+          >
+            {data.file.path}
+          </Badge>
+          {#if isLargeFile}
+            <Badge variant="secondary" class="text-amber-600 dark:text-amber-400">Large file</Badge>
+          {/if}
+        </div>
+        {#if !isLargeFile}
+          <div class="flex items-center gap-2">
+            <Button variant="outline" size="sm" onclick={handleCopy}>
+              <Copy class="mr-2 h-4 w-4" />
+              {isCopied ? 'Copied!' : 'Copy'}
+            </Button>
+            <Button variant="default" size="sm" disabled={!isTainted} onclick={save}>Save</Button>
+          </div>
+        {/if}
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-hidden rounded-md border">
+        {#if isLargeFile}
+          <div class="flex h-full w-full items-center justify-center">
+            <div class="flex max-w-lg items-center gap-6">
+              <div class="flex flex-col gap-4">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-xl font-semibold">File Too Large to Edit</h3>
+                    <Badge variant="outline">
+                      Size {formatFileSize(data.file.size)}
+                    </Badge>
+                  </div>
+                  <p class="text-muted-foreground text-sm">
+                    This file exceeds the 30 MB limit for in-app editing. You can open it in your
+                    system's default editor.
+                  </p>
+                </div>
+
+                <div class="flex gap-4">
+                  <Button onclick={() => openEditor(data.file.path)}>Open in default Editor</Button>
+                  <Button variant="outline" onclick={() => handleOpenDir(data.file)}>
+                    <FolderOpen class="size-4" />
+                    Show in folder
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <MonacoEditor bind:value />
+        {/if}
+      </div>
+    </div></Dialog.Content
+  >
+</Dialog.Root>
+
+<ConfirmDialog
+  confirmDialogOpen={confirmOpen}
+  handleCancel={() => (confirmOpen = false)}
+  dialogTitle="Unsaved changes"
+  dialogDescription={`You have unsaved changes in "${data.file.name}". What would you like to do?`}
+  cancelText="Editing"
+>
+  {#snippet Confirm()}
+    <Button variant="outline" onclick={() => closeModal()}>Discard Changes</Button>
+    <Button onclick={saveAndClose}>Save & Close</Button>
+  {/snippet}
+</ConfirmDialog>

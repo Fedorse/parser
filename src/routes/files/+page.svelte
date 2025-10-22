@@ -1,7 +1,7 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import File from '@lucide/svelte/icons/file-text';
   import EditModal from '$lib/components/edit-modal.svelte';
-  import CardFiles from '$lib/components/card-files.svelte';
+  import Card from '@/lib/components/card-file.svelte';
   import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
   import { deleteFile, updateFile, getFileContent } from '$lib/tauri';
@@ -65,10 +65,10 @@
 
   <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     {#each data?.files as file (file.path)}
-      <CardFiles {file} {handleDelete} {openDialogEditor} previews={data.previews} />
+      <Card {file} {handleDelete} {openDialogEditor} previews={data.previews} />
     {/each}
   </div>
 </div>
 {#if isCodeDialogOpen}
   <EditModal {fileContent} {selectedFile} {updateFileContent} bind:isCodeDialogOpen />
-{/if}
+{/if} -->

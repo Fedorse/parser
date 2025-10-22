@@ -6,6 +6,14 @@
 	],
 	"/files": [
 		"src/routes/files/+page.ts",
+		"src/routes/files/+layout.ts",
+		"src/routes/+layout.ts",
+		"src/routes/files/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/files/[...path]/edit": [
+		"src/routes/files/[...path]/edit/+page.ts",
+		"src/routes/files/+layout.ts",
 		"src/routes/+layout.ts"
 	],
 	"/graph/[...path]": [
