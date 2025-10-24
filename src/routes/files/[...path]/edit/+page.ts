@@ -1,6 +1,7 @@
 import type { PageLoad } from './$types';
 
 import { getSavedFiles, getFileContent, type SavedFiles } from '$lib/tauri';
+import { redirect } from '@sveltejs/kit';
 const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
 export const load: PageLoad = async ({ params }) => {
@@ -9,7 +10,7 @@ export const load: PageLoad = async ({ params }) => {
   const file = all.find((f) => f.path === filePath) as SavedFiles | undefined;
 
   if (!file) {
-    throw new Error('File not found');
+    redirect(302, '/');
   }
   let content = '';
   if (file.size <= THIRTY_MB_SIZE) {

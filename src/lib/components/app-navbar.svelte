@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
   import ToggleThemeButton from '$lib/components/theme-switch-button.svelte';
 
-  const isHome = $derived($page.url.pathname === '/');
+  const isHome = $derived(page.url.pathname === '/');
 
   const getParentPath = (currentPath: string): string | null => {
     if (currentPath === '/') return null;
@@ -24,7 +24,7 @@
     return '/';
   };
 
-  const parentPath = $derived(getParentPath($page.url.pathname));
+  const parentPath = $derived(getParentPath(page.url.pathname));
 
   const goBack = () => {
     if (parentPath) {
