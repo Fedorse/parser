@@ -8,6 +8,8 @@
   import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
   import { goto, invalidateAll } from '$app/navigation';
   import { toast } from 'svelte-sonner';
+  import * as Kbd from '$lib/components/ui/kbd/index.js';
+
   import {
     updateFile,
     renameFile,
@@ -17,6 +19,7 @@
   } from '$lib/tauri';
   import { page } from '$app/state';
   import { formatFileSize } from '@/lib/utils';
+  import { onMount } from 'svelte';
 
   let { data } = $props() as { data: { file: SavedFiles; content: string } };
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
@@ -126,6 +129,18 @@
       inputEl?.setSelectionRange(inputEl.value.length, inputEl.value.length);
     }
   });
+  onMount(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isLargeFile && isTainted) save();
+      }
+    };
+
+    window.addEventListener('keydown', onKey, { capture: true });
+    return () => window.removeEventListener('keydown', onKey, { capture: true });
+  });
 </script>
 
 <Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
@@ -234,6 +249,11 @@
 
       {isCopied ? 'Copied!' : 'Copy'}
     </Button>
-    <Button variant="default" size="sm" disabled={!isTainted} onclick={save}>Save</Button>
+    <Button variant="outline" size="sm" disabled={!isTainted} onclick={save}>
+      Save
+      {#if isTainted}
+        <Kbd.Root class="text-muted-foreground">⌘ + S</Kbd.Root>
+      {/if}
+    </Button>
   </div>
 {/snippet}

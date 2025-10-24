@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy, tick } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
   import { setupThemes } from './utils';
   import { mode } from 'mode-watcher';
@@ -33,6 +33,66 @@
         verticalScrollbarSize: 10,
         horizontalScrollbarSize: 10,
         alwaysConsumeMouseWheel: false
+      },
+
+      contextmenu: true,
+      copyWithSyntaxHighlighting: false,
+      useShadowDOM: false
+    });
+
+    editor.addAction({
+      id: 'editor.action.clipboardCopyAction',
+      label: 'Copy ',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 1.5,
+      run: async (ed) => {
+        const selection = ed.getSelection();
+        if (selection) {
+          const text = ed.getModel()?.getValueInRange(selection) || '';
+          await navigator.clipboard.writeText(text);
+        }
+      }
+    });
+
+    editor.addAction({
+      id: 'custom-paste',
+      label: 'Paste ',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 2.5,
+      run: async (ed) => {
+        const text = await navigator.clipboard.readText();
+        ed.executeEdits('paste', [
+          {
+            range: ed.getSelection()!,
+            text: text,
+            forceMoveMarkers: true
+          }
+        ]);
+      }
+    });
+
+    editor.addAction({
+      id: 'custom-cut',
+      label: 'Cut ',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyX],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 0.5,
+      run: async (ed) => {
+        const selection = ed.getSelection();
+        if (selection) {
+          const text = ed.getModel()?.getValueInRange(selection) || '';
+
+          await navigator.clipboard.writeText(text);
+          ed.executeEdits('cut', [
+            {
+              range: selection,
+              text: '',
+              forceMoveMarkers: true
+            }
+          ]);
+        }
       }
     });
 
@@ -65,3 +125,14 @@
 </script>
 
 <div bind:this={editorContainer} class={`h-full w-full ${className}`} />
+
+<style>
+  :global(.monaco-menu .action-item:has(.action-label[aria-label='Copy'])),
+  :global(.monaco-menu .action-item:has(.action-label[aria-label='Paste'])),
+  :global(.monaco-menu .action-item:has(.action-label[aria-label='Cut'])) {
+    display: none !important;
+  }
+  /* :global(.monaco-menu .separator) {
+    display: none !important;
+  } */
+</style>
