@@ -39,12 +39,12 @@
       {#if Cancel}
         {@render Cancel()}
       {:else}
-        <AlertDialog.Cancel onclick={() => handleCancel()}>{cancelText}</AlertDialog.Cancel>
+        <AlertDialog.Cancel onclick={() => handleCancel?.()}>{cancelText}</AlertDialog.Cancel>
       {/if}
       {#if Confirm}
         {@render Confirm()}
       {:else}
-        <AlertDialog.Action onclick={() => handleConfirm()}>{confirmText}</AlertDialog.Action>
+        <AlertDialog.Action onclick={() => handleConfirm?.()}>{confirmText}</AlertDialog.Action>
       {/if}
     </AlertDialog.Footer>
   </AlertDialog.Content>

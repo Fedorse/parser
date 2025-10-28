@@ -1,7 +1,8 @@
+// @ts-nocheck
 import { getSavedFiles } from '@/lib/tauri';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async () => {
+export const load = async () => {
   try {
     const files = await getSavedFiles();
     const filtred = files.filter((file) => !file.name.startsWith('.DS_Store'));
@@ -11,3 +12,4 @@ export const load: PageLoad = async () => {
     return { recentFiles: [] };
   }
 };
+;null as any as PageLoad;

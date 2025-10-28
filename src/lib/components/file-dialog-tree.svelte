@@ -3,18 +3,18 @@
   import { Separator } from '$lib/components/ui/separator';
   import * as Dialog from '$lib/components/ui/dialog';
   import FileTreeItem from '$lib/components/file-tree-item.svelte';
-  import type { FileTreeNode } from '$lib/tauri.ts';
   import { setSelectedAll } from '$lib/utils';
+  import type { FileTree } from '$lib/type';
 
-  type Props = { filesTreeNodes: FileTreeNode[]; open: boolean; onParse: () => void };
+  type Props = { filesTree: FileTree[]; open: boolean; onParse: () => void };
 
-  let { filesTreeNodes, open = $bindable(false), onParse }: Props = $props();
+  let { filesTree, open = $bindable(false), onParse }: Props = $props();
 
   let allSelected = $state(true);
 
   const toggleAll = () => {
     allSelected = !allSelected;
-    setSelectedAll(filesTreeNodes, allSelected);
+    setSelectedAll(filesTree, allSelected);
   };
 </script>
 
@@ -28,7 +28,7 @@
     </Dialog.Header>
 
     <ul class=" h-full w-full flex-1 space-y-1 overflow-y-auto pr-2 text-sm">
-      {#each filesTreeNodes as node (node.path)}
+      {#each filesTree as node (node.path)}
         <FileTreeItem {node} isRoot={true} />
       {/each}
     </ul>

@@ -1,29 +1,31 @@
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
-  import { Button } from '$lib/components/ui/button/index';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import { toast } from 'svelte-sonner';
+  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
+  import { Button } from '$lib/components/ui/button/index';
+  import * as Card from '$lib/components/ui/card';
   import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
   import RecentFiles from '$lib/components/collaps-files.svelte';
-  import * as Card from '$lib/components/ui/card';
   import { Progress } from '$lib/components/ui/progress/index.js';
-  import { invalidateAll } from '$app/navigation';
-  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import type { FileTreeNode } from '$lib/tauri';
+  import type { FileTree } from '$lib/type';
 
   type DragEventPayload = {
     type: 'over' | 'drop' | 'leave' | 'enter';
     position: { x: number; y: number };
     paths: string[];
   };
+
   let { data } = $props();
 
-  let filesTreeNodes = $state<FileTreeNode[]>([]);
+  let filesTreeNodes = $state<FileTree[]>([]);
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
   let isLoading = $state(false);
+  let unlistenDrag: () => void;
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -68,8 +70,8 @@
       isLoading = false;
     }
   };
-  let unlistenDrag: () => void;
-  onMount(async () => {
+
+  const initDragAndDrop = async () => {
     try {
       const webview = await getCurrentWebview();
       unlistenDrag = await webview.onDragDropEvent((event) => {
@@ -92,9 +94,12 @@
     } catch (error) {
       console.error('Failed to initialize drag and drop:', error);
     }
-    return () => {
-      if (unlistenDrag) unlistenDrag();
-    };
+  };
+  onMount(() => {
+    initDragAndDrop();
+  });
+  onDestroy(() => {
+    if (unlistenDrag) unlistenDrag();
   });
 </script>
 
@@ -148,6 +153,10 @@
   </Card.Root>
 
   {#if filesTreeNodes.length > 0}
-    <FileDialogTree {filesTreeNodes} bind:open={isDialogOpen} onParse={parseSelectedNodes} />
+    <FileDialogTree
+      filesTree={filesTreeNodes}
+      bind:open={isDialogOpen}
+      onParse={parseSelectedNodes}
+    />
   {/if}
 </main>

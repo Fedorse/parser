@@ -1,15 +1,15 @@
 <script lang="ts">
-  import File from '@lucide/svelte/icons/file-text';
-  import Card from '@/lib/components/card-file.svelte';
-  import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
   import { deleteFile } from '$lib/tauri';
+  import { toast } from 'svelte-sonner';
+  import Files from '@lucide/svelte/icons/file-text';
+  import Card from '@/lib/components/card-file.svelte';
 
-  import type { SavedFiles } from '$lib/tauri';
+  import type { File } from '$lib/type';
 
   let { data, children } = $props();
 
-  const handleDelete = async (file: SavedFiles) => {
+  const handleDelete = async (file: File) => {
     try {
       await deleteFile(file);
       invalidateAll();
@@ -28,7 +28,7 @@
   </div>
   {#if data?.files?.length === 0}
     <div class="flex h-full w-full flex-col items-center justify-center">
-      <File class=" text-muted-foreground mb-4 size-12" />
+      <Files class=" text-muted-foreground mb-4 size-12" />
       <h3 class="mb-2 text-lg font-medium">No files found</h3>
       <p class="text-muted-foreground">You saved files will appear when you parse them</p>
     </div>

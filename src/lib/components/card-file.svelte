@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { openFileInfolder } from '$lib/tauri';
+  import { formatFileSize } from '$lib/utils';
+  import { goto } from '$app/navigation';
   import {
     Trash2,
     Code,
@@ -8,26 +11,21 @@
     Ellipsis,
     Pencil
   } from '@lucide/svelte/icons';
-
   import * as Card from '$lib/components/ui/card/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';
   import Badge from './ui/badge/badge.svelte';
   import * as Tooltip from '$lib/components/ui/tooltip/index.js';
   import { Button } from '$lib/components/ui/button/index';
-  import { formatFileSize } from '$lib/utils';
-  import { openFileInfolder } from '$lib/tauri';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
-  import { goto } from '$app/navigation';
-
-  import type { SavedFiles } from '$lib/tauri';
+  import type { File } from '$lib/type';
 
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
   type Props = {
-    file: SavedFiles;
-    handleDelete: (file: SavedFiles) => void;
+    file: File;
+    handleDelete: (file: File) => void;
   };
 
   let { file, handleDelete }: Props = $props();
@@ -42,14 +40,14 @@
     { label: 'Rename file', action: () => gotoEditRename(file), icon: Pencil, separator: true },
     {
       label: 'Delete',
-      action: () => handleDelete(file),
+      action: () => (open = true),
       icon: Trash2,
       variant: 'destructive',
       separator: true
     }
   ];
 
-  const handleOpenDir = async (file: SavedFiles) => {
+  const handleOpenDir = async (file: File) => {
     try {
       await openFileInfolder(file);
     } catch (err) {
@@ -57,8 +55,8 @@
     }
   };
   const gotoGraph = (file: { path: string }) => goto(`/graph/${file.path}`);
-  const gotoEdit = (file: SavedFiles) => goto(`/files/${encodeURIComponent(file.path)}/edit`);
-  const gotoEditRename = (file: SavedFiles) =>
+  const gotoEdit = (file: File) => goto(`/files/${encodeURIComponent(file.path)}/edit`);
+  const gotoEditRename = (file: File) =>
     goto(`/files/${encodeURIComponent(file.path)}/edit`, {
       state: { focus: 'rename' }
     });
@@ -77,38 +75,6 @@
       </p>
     </Card.Description>
   </Card.Header>
-  <!-- <Card.Content class="grid grid-cols-2 gap-3">
-    <div class="bg-muted/50 rounded-lg border p-3">
-      <div class="text-muted-foreground text-xs">Files</div>
-      <div class="mt-1 font-mono text-2xl font-semibold">1,890</div>
-    </div>
-    <div class="bg-muted/50 rounded-lg border p-3">
-      <div class="text-muted-foreground text-xs">Size</div>
-      <div class="mt-1 text-sm font-medium">{formatFileSize(file.size)}</div>
-    </div>
-  </Card.Content> -->
-
-  <!-- <Card.Content class="grid grid-cols-2 gap-2  text-sm">
-    <div class="bg-muted/50 flex items-center gap-2 rounded-md p-2">
-      <div class="bg-primary/10 rounded p-1.5">
-        <FileText class="text-primary h-4 w-4" />
-      </div>
-      <div>
-        <div class="font-semibold">1,890</div>
-        <div class="text-muted-foreground text-xs">files</div>
-      </div>
-    </div>
-    <div class="bg-muted/50 flex items-center gap-2 rounded-md p-2">
-      <div class="bg-primary/10 rounded p-1.5">
-        <HardDrive class="text-primary h-4 w-4" />
-      </div>
-      <div>
-        <div class="text-muted-foreground text-xs">Size</div>
-        <div class="font-mono text-xs">{formatFileSize(file.size)}</div>
-      </div>
-    </div>
-  </Card.Content> -->
-
   <Card.Content
     class="flex cursor-pointer flex-col items-center py-4"
     onclick={() => gotoEdit(file)}

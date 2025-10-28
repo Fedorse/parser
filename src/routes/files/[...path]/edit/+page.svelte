@@ -1,15 +1,7 @@
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog';
-  import { Button } from '$lib/components/ui/button';
-  import Badge from '$lib/components/ui/badge/badge.svelte';
-  import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
-  import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
-  import { Input } from '$lib/components/ui/input';
-  import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
   import { goto, invalidateAll } from '$app/navigation';
   import { toast } from 'svelte-sonner';
-  import * as Kbd from '$lib/components/ui/kbd/index.js';
-
+  import { onMount } from 'svelte';
   import {
     updateFile,
     renameFile,
@@ -19,9 +11,19 @@
   } from '$lib/tauri';
   import { page } from '$app/state';
   import { formatFileSize } from '@/lib/utils';
-  import { onMount } from 'svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import * as Dialog from '$lib/components/ui/dialog';
+  import Badge from '$lib/components/ui/badge/badge.svelte';
+  import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
+  import * as Kbd from '$lib/components/ui/kbd/index.js';
+  import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
+  import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
 
-  let { data } = $props() as { data: { file: SavedFiles; content: string } };
+  import type { PageProps } from './$types';
+
+  let { data }: PageProps = $props();
+
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
   let isOpen = $state(true);
@@ -35,10 +37,13 @@
   const isTainted = $derived(value !== snapshot);
   const isLargeFile = $derived(data.file.size > THIRTY_MB_SIZE);
 
-  const closeModal = () => {
-    goto('/files', { replaceState: true });
+  const closeModal = async () => {
     confirmOpen = false;
     isOpen = false;
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    goto('/files', { replaceState: true });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -124,7 +129,8 @@
   };
 
   $effect(() => {
-    if (page.state.focus === 'rename' && inputEl) {
+    const state = page.state as { focus?: string };
+    if (state.focus === 'rename' && inputEl) {
       inputEl?.focus();
       inputEl?.setSelectionRange(inputEl.value.length, inputEl.value.length);
     }
@@ -154,7 +160,7 @@
           class="max-w-[30vw] border border-transparent bg-transparent! text-lg! hover:border-blue-900! focus-visible:border-blue-900 focus-visible:ring-0"
           onkeydown={onRenameKeydown}
           bind:ref={inputEl}
-          tabIndex={page.state.focus === 'rename' ? 0 : -1}
+          tabindex={(page.state as { focus?: string }).focus === 'rename' ? 0 : -1}
         />
       </Dialog.Title>
     </Dialog.Header>
@@ -228,7 +234,7 @@
   handleCancel={() => (confirmOpen = false)}
   dialogTitle="Unsaved changes"
   dialogDescription={`You have unsaved changes in "${data.file.name}". What would you like to do?`}
-  cancelText="Editing"
+  cancelText="Continue Editing"
 >
   {#snippet Confirm()}
     <Button variant="outline" onclick={() => closeModal()}>Discard Changes</Button>

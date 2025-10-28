@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { Checkbox } from '$lib/components/ui/checkbox';
-  import { Label } from '$lib/components/ui/label';
-  import FileIcon from '@lucide/svelte/icons/file';
-  import FolderIcon from '@lucide/svelte/icons/folder';
-  import ChevronRight from '@lucide/svelte/icons/chevron-right';
-  import * as Collapsible from '$lib/components/ui/collapsible';
   import Self from '$lib/components/file-tree-item.svelte';
   import { setSelected } from '$lib/utils';
-  import type { FileTreeNode } from '$lib/tauri.ts';
+  import { Checkbox } from '$lib/components/ui/checkbox';
+  import { Label } from '$lib/components/ui/label';
+  import * as Collapsible from '$lib/components/ui/collapsible';
+  import { FileIcon, FolderIcon, ChevronRight } from '@lucide/svelte/icons';
+
+  import type { FileTree } from '$lib/type';
 
   let { node, isRoot = false } = $props();
 
@@ -22,8 +21,8 @@
       return { isChecked: node.selected, isIndeterminate: false };
     }
 
-    const allChildrenChecked = node.children.every((child: FileTreeNode) => child.selected);
-    const noChildrenChecked = node.children.every((child: FileTreeNode) => !child.selected);
+    const allChildrenChecked = node.children.every((child: FileTree) => child.selected);
+    const noChildrenChecked = node.children.every((child: FileTree) => !child.selected);
 
     return {
       isChecked: allChildrenChecked,

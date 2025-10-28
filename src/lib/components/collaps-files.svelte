@@ -4,9 +4,15 @@
   import { ChevronRight } from '@lucide/svelte';
   import FileText from '@lucide/svelte/icons/file-text';
   import Button from '$lib/components/ui/button/button.svelte';
-  import type { SavedFiles } from '$lib/tauri';
 
-  let { limit = 3, files = [] as SavedFiles[] } = $props<any>();
+  import type { File } from '$lib/type';
+
+  type Props = {
+    limit?: number;
+    files: File[];
+  };
+
+  let { limit = 3, files = [] }: Props = $props();
 
   let open = $state(true);
   let loading = $state(false);
@@ -31,6 +37,7 @@
   <Collapsible.Content>
     <div class="pt-3">
       {#if loading}
+        <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="bg-muted/40 h-16 w-full animate-pulse rounded-md" />
       {:else if recent.length}
         <ul class="divide-border border-border/70 divide-y rounded-md border">
