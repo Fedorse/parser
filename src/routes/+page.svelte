@@ -1,61 +1,31 @@
-<script lang="ts" module>
-  export type DragEventPayload = {
+<script lang="ts">
+  import { open } from '@tauri-apps/plugin-dialog';
+  import { getCurrentWebview } from '@tauri-apps/api/webview';
+  import { onDestroy, onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
+  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
+  import { Button } from '$lib/components/ui/button/index';
+  import * as Card from '$lib/components/ui/card';
+  import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
+  import RecentFiles from '$lib/components/collaps-files.svelte';
+  import { Progress } from '$lib/components/ui/progress/index.js';
+  import type { FileTree } from '$lib/type';
+
+  type DragEventPayload = {
     type: 'over' | 'drop' | 'leave' | 'enter';
     position: { x: number; y: number };
     paths: string[];
   };
-</script>
-
-<script lang="ts">
-  import { open } from '@tauri-apps/plugin-dialog';
-  import { Button } from '$lib/components/ui/button/index';
-  import { getCurrentWebview } from '@tauri-apps/api/webview';
-  import { onMount } from 'svelte';
-  import { toast } from 'svelte-sonner';
-  import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
-  import RecentFiles from '$lib/components/collaps-files.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Progress } from '$lib/components/ui/progress/index.js';
-  import { invalidateAll } from '$app/navigation';
-  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import type { FileTreeNode } from '$lib/tauri';
 
   let { data } = $props();
 
-  let filesTreeNodes = $state<FileTreeNode[]>([]);
+  let filesTreeNodes = $state<FileTree[]>([]);
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
   let isLoading = $state(false);
-
   let unlistenDrag: () => void;
-  onMount(async () => {
-    try {
-      const webview = await getCurrentWebview();
-      unlistenDrag = await webview.onDragDropEvent((event) => {
-        const { type, paths } = event.payload as DragEventPayload;
-        switch (type) {
-          case 'enter':
-            isDragging = true;
-            break;
-          case 'leave':
-            isDragging = false;
-            break;
-          case 'drop':
-            isDragging = false;
-            handleDroppedFiles(paths);
-            break;
-          default:
-            console.warn(`Unknown drag event type: ${type}`);
-        }
-      });
-    } catch (error) {
-      console.error('Failed to initialize drag and drop:', error);
-    }
-    return () => {
-      if (unlistenDrag) unlistenDrag();
-    };
-  });
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -87,6 +57,7 @@
 
   const handleOpenFiles = async () => {
     const selected = await open({ multiple: true, directory: true });
+
     if (!selected) return;
     isLoading = true;
     try {
@@ -99,10 +70,41 @@
       isLoading = false;
     }
   };
+
+  const initDragAndDrop = async () => {
+    try {
+      const webview = await getCurrentWebview();
+      unlistenDrag = await webview.onDragDropEvent((event) => {
+        const { type, paths } = event.payload as DragEventPayload;
+        switch (type) {
+          case 'enter':
+            isDragging = true;
+            break;
+          case 'leave':
+            isDragging = false;
+            break;
+          case 'drop':
+            isDragging = false;
+            handleDroppedFiles(paths);
+            break;
+          default:
+            console.warn(`Unknown drag event type: ${type}`);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to initialize drag and drop:', error);
+    }
+  };
+  onMount(() => {
+    initDragAndDrop();
+  });
+  onDestroy(() => {
+    if (unlistenDrag) unlistenDrag();
+  });
 </script>
 
 <main class="flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-28 2xl:pt-32">
-  <Card.Root class="bg-card/40  w-full max-w-5xl justify-between pt-6 pb-4">
+  <Card.Root class="bg-card/20  w-full max-w-5xl justify-between pt-6 pb-4">
     <Card.Header class="flex justify-between">
       <div class="flex flex-col gap-2">
         <Card.Title>Quick Start</Card.Title>
@@ -112,7 +114,7 @@
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <Button variant="default" onclick={() => handleOpenFiles()} disabled={isLoading}>
+        <Button variant="default" onclick={handleOpenFiles} disabled={isLoading}>
           {isLoading ? '…' : 'Upload files'}
         </Button>
       </div>
@@ -151,6 +153,10 @@
   </Card.Root>
 
   {#if filesTreeNodes.length > 0}
-    <FileDialogTree {filesTreeNodes} bind:open={isDialogOpen} onParse={parseSelectedNodes} />
+    <FileDialogTree
+      filesTree={filesTreeNodes}
+      bind:open={isDialogOpen}
+      onParse={parseSelectedNodes}
+    />
   {/if}
 </main>

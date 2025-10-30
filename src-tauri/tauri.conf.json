@@ -3,8 +3,14 @@
   "productName": "parser",
   "version": "0.1.0",
   "identifier": "com.parser.app",
+<<<<<<< HEAD
   "build": {
     "beforeDevCommand": "pnpm run dev",
+=======
+
+  "build": {
+    "beforeDevCommand": "npm run dev",
+>>>>>>> 989c74aacb9278b21c33ed600a2b6b8b044b8127
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
@@ -20,7 +26,11 @@
       }
     ],
     "security": {
+<<<<<<< HEAD
       "csp": null
+=======
+      "csp": "null"
+>>>>>>> 989c74aacb9278b21c33ed600a2b6b8b044b8127
     }
   },
   "bundle": {

@@ -10,9 +10,9 @@
 
 <Tooltip.Provider delayDuration={100}>
   <Toaster richColors={true} position="bottom-right" />
-  <div class="flex flex-col h-screen">
+  <div class="flex h-screen flex-col">
     <NavBar />
-    <main class="flex-1 flex p-4">
+    <main class="flex flex-1 p-4">
       <ModeWatcher />
       {@render children?.()}
     </main>

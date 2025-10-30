@@ -1,33 +1,34 @@
 <script lang="ts">
+  import Self from '$lib/components/file-tree-item.svelte';
+  import { setSelected } from '$lib/utils';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Label } from '$lib/components/ui/label';
-  import FileIcon from '@lucide/svelte/icons/file';
-  import FolderIcon from '@lucide/svelte/icons/folder';
-  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import * as Collapsible from '$lib/components/ui/collapsible';
-  import Self from '$lib/components/file-tree-item.svelte';
+  import { FileIcon, FolderIcon, ChevronRight } from '@lucide/svelte/icons';
 
-  type FileTreeNode = {
-    name: string;
-    path: string;
-    type: 'File' | 'Directory';
-    selected?: boolean;
-    children?: FileTreeNode[];
-  };
+  import type { FileTree } from '$lib/type';
 
   let { node, isRoot = false } = $props();
 
   let isOpen = $state(isRoot && node.type === 'Directory');
 
-  const cascadeSelection = (isChecked: boolean, node: FileTreeNode) => {
-    node.selected = isChecked;
-    node.children?.forEach((node) => cascadeSelection(isChecked, node));
+  const onToggle = (checked: boolean) => {
+    setSelected(node, checked);
   };
 
-  const onToggle = (checked: boolean) => {
-    node.selected = checked;
-    if (node.type === 'Directory') cascadeSelection(checked, node);
-  };
+  let checkboxState = $derived.by(() => {
+    if (node.type !== 'Directory' || !node.children?.length) {
+      return { isChecked: node.selected, isIndeterminate: false };
+    }
+
+    const allChildrenChecked = node.children.every((child: FileTree) => child.selected);
+    const noChildrenChecked = node.children.every((child: FileTree) => !child.selected);
+
+    return {
+      isChecked: allChildrenChecked,
+      isIndeterminate: !allChildrenChecked && !noChildrenChecked
+    };
+  });
 </script>
 
 {#if node.type === 'File'}
@@ -55,8 +56,9 @@
           }}
         />
         <Checkbox
-          bind:checked={node.selected}
+          checked={checkboxState.isChecked}
           onCheckedChange={onToggle}
+          indeterminate={checkboxState.isIndeterminate}
           onclick={(e) => e.stopPropagation()}
         />
         <div

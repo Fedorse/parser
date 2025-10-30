@@ -43,9 +43,10 @@ export const getPreviewTree = async (paths: string[]): Promise<FileTreeNode[]> =
 };
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTreeNode[]> => {
-  const tree = await getPreviewTree(paths); //
+  const tree = await getPreviewTree(paths);
   ensureChildrenArrays(tree);
   setSelectedRecursive(tree, true);
+
   return tree;
 };
 
@@ -56,4 +57,28 @@ export const getSavedFiles = async (): Promise<SavedFiles[]> => {
 
 export const parsePaths = async (paths: string[]): Promise<void> => {
   await invoke('parse', { paths });
+};
+
+export const deleteFile = async (file: SavedFiles) => {
+  await invoke('delete_file', { path: file.path });
+};
+
+export const updateFile = async (content: string, selectedFile: SavedFiles | null) => {
+  await invoke('update_file', { filePath: selectedFile?.path, content: content });
+};
+
+export const getFileContent = async (file: SavedFiles): Promise<string> => {
+  return await invoke('get_file_content', { filePath: file.path });
+};
+
+export const openDefaultEditor = async (path: string) => {
+  await invoke('open_in_default_editor', { filePath: path });
+};
+
+export const openFileInfolder = async (file: SavedFiles) => {
+  await invoke('open_in_folder', { filePath: file.path });
+};
+
+export const renameFile = async (file: SavedFiles, newName: string) => {
+  await invoke('rename_file', { filePath: file.path, newName: newName });
 };

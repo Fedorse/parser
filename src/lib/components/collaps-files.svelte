@@ -5,21 +5,29 @@
   import FileText from '@lucide/svelte/icons/file-text';
   import Button from '$lib/components/ui/button/button.svelte';
 
-  type SavedFiles = { name: string; path: string; preview: string; size: number };
+  import type { File } from '$lib/type';
 
-  let { limit = 3, files = [] as SavedFiles[] } = $props<any>();
-  let isOpen = $state(true);
+  type Props = {
+    limit?: number;
+    files: File[];
+  };
+
+  let { limit = 3, files = [] }: Props = $props();
+
+  let open = $state(true);
   let loading = $state(false);
 
   const recent = $derived(files.slice(0, limit));
+
+  const toggle = () => (open = !open);
 </script>
 
-<Collapsible.Root bind:open={isOpen} class="w-full ">
+<Collapsible.Root bind:open class="w-full ">
   <div class="flex items-center justify-between">
-    <button class="flex items-center gap-2" type="button" onclick={() => (isOpen = !isOpen)}>
+    <button class="flex items-center gap-2" type="button" onclick={toggle}>
       <ChevronRight
         class="text-muted-foreground size-5 shrink-0 transition-transform data-[state=open]:rotate-90"
-        data-state={isOpen ? 'open' : 'closed'}
+        data-state={open ? 'open' : 'closed'}
       />
       <div class="text-sm font-medium">Recent files</div>
     </button>
@@ -29,6 +37,7 @@
   <Collapsible.Content>
     <div class="pt-3">
       {#if loading}
+        <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="bg-muted/40 h-16 w-full animate-pulse rounded-md" />
       {:else if recent.length}
         <ul class="divide-border border-border/70 divide-y rounded-md border">
