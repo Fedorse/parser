@@ -670,6 +670,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "content_inspector"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7bda66e858c683005a53a9a60c69a4aca7eeaa45d124526e389f7aec8e62f38"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2693,9 +2702,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "content_inspector",
  "directories",
  "dirs 6.0.0",
  "log",
+ "open",
  "serde",
  "serde_json",
  "tauri",

@@ -78,67 +78,16 @@ pub fn delete_file(path: String) -> Result<(), CommandError> {
     Ok(())
 }
 
+
 #[tauri::command]
-pub fn open_in_folder(file_path: String) -> Result<(), CommandError> {
-    let path = std::path::Path::new(&file_path);
-
-    #[cfg(target_os = "macos")]
-    {
-        use std::process::Command;
-        Command::new("open")
-            .arg("-R")
-            .arg(path)
-            .spawn()
-            .map_err(|e| format!("Failed to open in Finder: {}", e))?;
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        use std::process::Command;
-        Command::new("explorer")
-            .arg("/select,")
-            .arg(path)
-            .spawn()
-            .map_err(|e| format!("Failed to open in Explorer: {}", e))?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        use std::process::Command;
-        Command::new("xdg-open")
-            .arg(path.parent().ok_or("No parent directory found")?)
-            .spawn()
-            .map_err(|e| format!("Failed to open folder: {}", e))?;
-    }
-
-    Ok(())
+pub fn open_in_default_editor(file_path: String) -> Result<(), String> {
+    utils::open_with_default_app(utils::OpenAction::OpenFile(PathBuf::from(file_path)))
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn open_in_default_editor(file_path: String) -> Result<(), CommandError> {
-        #[cfg(target_os = "windows")]
-        {
-            Command::new("cmd")
-                .args(["/C", "start", "", &file_path.to_string_lossy()])
-                .spawn()
-                .map_err(|e| format!("Failed to open file: {}", e))?;
-        }
+pub fn open_in_folder(file_path: String) -> Result<(), String> {
+    utils::open_with_default_app(utils::OpenAction::RevealInFolder(PathBuf::from(file_path)))
+        .map_err(|e| e.to_string())
+}
 
-        #[cfg(target_os = "macos")]
-        {
-            Command::new("open")
-                .arg(file_path)
-                .spawn()
-                .map_err(|e| format!("Failed to open file: {}", e))?;
-        }
-
-        #[cfg(target_os = "linux")]
-        {
-            Command::new("xdg-open")
-                .arg(file_path)
-                .spawn()
-                .map_err(|e| format!("Failed to open file: {}", e))?;
-        }
-
-        Ok(())
-    }

@@ -1,13 +1,14 @@
 use crate::consts::{
     APP_NAME, PARSED_FILES_DIR, PREVIEW_LINE_LIMIT,
 };
-use anyhow;
+use content_inspector::{inspect, ContentType};
+use anyhow::{self, Context, Result};
 use chrono::Local;
 use dirs;
 use serde::Serialize;
 use std::{
     fs::{self, File},
-    io::Write,
+    io::{self, BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -35,6 +36,21 @@ pub enum ParsedPath {
     }
 }
 
+fn is_text_file(path: &Path) -> anyhow::Result<bool> {
+    if !path.is_file() {
+        return Ok(false);
+    }
+
+    let mut file = File::open(path)
+        .with_context(|| format!("Opening {}", path.display()))?;
+
+    let mut buf = [0u8; 8192];
+    let sample = file.read(&mut buf)
+        .with_context(|| format!("Reading sample from {}", path.display()))?;
+
+    Ok(!matches!(inspect(&buf[..sample]), ContentType::BINARY))
+}
+
 pub fn init_app_structure() -> anyhow::Result<()> {
     let app_dir = get_app_dir()?;
 
@@ -57,20 +73,29 @@ pub fn create_output_file() -> anyhow::Result<File> {
 }
 
 pub fn write_parsed_files(paths: Vec<String>, output_file: &mut File) -> anyhow::Result<()> {
-    let combined_content = paths
-        .into_iter()
-        .filter_map(|path| {
-            fs::read_to_string(&path)
-                .map(|content| format!("===== {} =====\n{}", path, content))
-                .ok()
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
+    for path in paths {
+        let p = Path::new(&path);
 
-    writeln!(output_file, "{}", combined_content)?;
+        match is_text_file(&p) {
+            Ok(true) => {
+                writeln!(output_file, "===== {} =====", p.display())?;
 
+                let mut file = File::open(&p)
+                    .with_context(|| format!("Opening {}", p.display()))?;
+
+                io::copy(&mut file, output_file)
+                    .with_context(|| format!("Copying contents of {}", p.display()))?;
+
+                writeln!(output_file)?;
+            }
+            Ok(false) | Err(_) => {
+                // Skip non text files silently
+            }
+        }
+    }
     Ok(())
 }
+
 
 pub fn get_file_preview(file_path: PathBuf) -> anyhow::Result<FilePreview> {
     let meta = fs::metadata(&file_path)?;
@@ -124,31 +149,37 @@ pub fn get_app_dir() -> anyhow::Result<PathBuf> {
     Ok(home_dir)
 }
 
-pub fn open_with_default_app(path: &Path) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        Command::new("cmd")
-            .args(["/C", "start", "", &path.to_string_lossy()])
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
-    }
+pub enum OpenAction {
+    OpenFile(PathBuf),
+    RevealInFolder(PathBuf)
+}
 
+pub fn open_with_default_app(action: OpenAction) -> anyhow::Result<()> {
+    match action {
+        OpenAction::OpenFile(path) => open_file_default(&path),
+        OpenAction::RevealInFolder(path) => reveal_in_folder(&path),
+    }
+}
+
+fn open_file_default(path: &Path) -> anyhow::Result<()> {
+    open::that(path)?;
+    Ok(())
+}
+
+fn reveal_in_folder(path: &Path) -> anyhow::Result<()> {
     #[cfg(target_os = "macos")]
     {
-        Command::new("open")
-            .arg(path)
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
+        Command::new("open").args(["-R", &path.to_string_lossy()]).spawn()?;
     }
-
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer").arg("/select,").arg(path).spawn()?;
+    }
     #[cfg(target_os = "linux")]
     {
-        Command::new("xdg-open")
-            .arg(path)
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
+        let parent = path.parent().ok_or_else(|| anyhow!("No parent directory"))?;
+        Command::new("xdg-open").arg(parent).spawn()?;
     }
-
     Ok(())
 }
 
