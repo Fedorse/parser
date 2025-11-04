@@ -5,9 +5,16 @@
   import FolderIcon from '@lucide/svelte/icons/folder';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import * as Collapsible from '$lib/components/ui/collapsible';
+<<<<<<< Updated upstream
   import Self from '$lib/components/file-tree-item.svelte';
   import { setSelected } from '$lib/utils';
   import type { FileTreeNode } from '$lib/tauri.ts';
+=======
+  import { FileIcon, FolderIcon, ChevronRight } from '@lucide/svelte/icons';
+  import { formatFileSize } from '$lib/utils';
+
+  import type { FileTree } from '$lib/type';
+>>>>>>> Stashed changes
 
   let { node, isRoot = false } = $props();
 
@@ -44,6 +51,7 @@
     >
       <FileIcon class="size-5" />
       <span>{node.name}</span>
+      <span>{formatFileSize(node.size)}</span>
     </div>
   </li>
 {:else}
@@ -73,6 +81,9 @@
           <Label class="flex-1 cursor-pointer select-none">
             {node.name}
           </Label>
+          <span class="ml-2 text-xs opacity-70">
+            ({node.filesCount ?? 0} files • {formatFileSize(node.totalSize ?? 0)})
+          </span>
         </div>
       </li>
     </Collapsible.Trigger>

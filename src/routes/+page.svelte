@@ -1,5 +1,6 @@
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
+<<<<<<< Updated upstream
   import { Button } from '$lib/components/ui/button/index';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
   import { onMount } from 'svelte';
@@ -11,19 +12,56 @@
   import { invalidateAll } from '$app/navigation';
   import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
   import type { FileTreeNode } from '$lib/tauri';
+=======
+  import { getCurrentWebview } from '@tauri-apps/api/webview';
+  import { onDestroy, onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
+  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
+  import { Button } from '$lib/components/ui/button/index';
+  import * as Card from '$lib/components/ui/card';
+  import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
+  import RecentFiles from '$lib/components/collaps-files.svelte';
+  import { Progress } from '$lib/components/ui/progress/index.js';
+  import type { FileTree } from '$lib/type';
+>>>>>>> Stashed changes
 
   type DragEventPayload = {
     type: 'over' | 'drop' | 'leave' | 'enter';
     position: { x: number; y: number };
     paths: string[];
+<<<<<<< Updated upstream
+=======
+  };
+
+  let { data } = $props();
+
+  type ParsedFileListItem = {
+    id: string;
+    name: string;
+    directory_path: string;
+    file_size: number;
+    files_count: number;
+    total_size: number;
+    created_at: string;
+    last_modified: string;
+>>>>>>> Stashed changes
   };
   let { data } = $props();
 
+<<<<<<< Updated upstream
   let filesTreeNodes = $state<FileTreeNode[]>([]);
+=======
+  let filesTreeNodes = $state<FileTree[]>([]);
+>>>>>>> Stashed changes
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
   let isLoading = $state(false);
+<<<<<<< Updated upstream
+=======
+  let unlistenDrag: () => void;
+>>>>>>> Stashed changes
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -60,6 +98,11 @@
     isLoading = true;
     try {
       filesTreeNodes = await getPreviewTreeUI(selected);
+<<<<<<< Updated upstream
+=======
+      console.log('filesTreeNodes', filesTreeNodes);
+
+>>>>>>> Stashed changes
       isDialogOpen = true;
     } catch (err) {
       console.error(err);
@@ -68,8 +111,13 @@
       isLoading = false;
     }
   };
+<<<<<<< Updated upstream
   let unlistenDrag: () => void;
   onMount(async () => {
+=======
+
+  const initDragAndDrop = async () => {
+>>>>>>> Stashed changes
     try {
       const webview = await getCurrentWebview();
       unlistenDrag = await webview.onDragDropEvent((event) => {
@@ -92,9 +140,18 @@
     } catch (error) {
       console.error('Failed to initialize drag and drop:', error);
     }
+<<<<<<< Updated upstream
     return () => {
       if (unlistenDrag) unlistenDrag();
     };
+=======
+  };
+  onMount(() => {
+    initDragAndDrop();
+  });
+  onDestroy(() => {
+    if (unlistenDrag) unlistenDrag();
+>>>>>>> Stashed changes
   });
 </script>
 
@@ -148,6 +205,14 @@
   </Card.Root>
 
   {#if filesTreeNodes.length > 0}
+<<<<<<< Updated upstream
     <FileDialogTree {filesTreeNodes} bind:open={isDialogOpen} onParse={parseSelectedNodes} />
+=======
+    <FileDialogTree
+      filesTree={filesTreeNodes}
+      bind:open={isDialogOpen}
+      onParse={parseSelectedNodes}
+    />
+>>>>>>> Stashed changes
   {/if}
 </main>

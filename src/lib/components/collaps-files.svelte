@@ -6,7 +6,29 @@
   import Button from '$lib/components/ui/button/button.svelte';
   import type { SavedFiles } from '$lib/tauri';
 
+<<<<<<< Updated upstream
   let { limit = 3, files = [] as SavedFiles[] } = $props<any>();
+=======
+  import type { File } from '$lib/type';
+
+  type Props = {
+    limit?: number;
+    files: ParsedFileListItem[];
+  };
+
+  type ParsedFileListItem = {
+    id: string;
+    name: string;
+    directory_path: string;
+    file_size: number;
+    files_count: number;
+    total_size: number;
+    created_at: string;
+    last_modified: string;
+  };
+
+  let { limit = 3, files = [] }: Props = $props();
+>>>>>>> Stashed changes
 
   let open = $state(true);
   let loading = $state(false);
@@ -40,9 +62,9 @@
                 <FileText class="text-muted-foreground size-4" />
                 <div class="min-w-0 flex-1">
                   <div class="truncate text-sm font-medium">{f.name}</div>
-                  <div class="text-muted-foreground truncate text-xs">{f.path}</div>
+                  <div class="text-muted-foreground truncate text-xs">{f.directory_path}</div>
                 </div>
-                <div class="text-muted-foreground text-xs">{formatFileSize(f.size)}</div>
+                <div class="text-muted-foreground text-xs">{formatFileSize(f.total_size)}</div>
               </a>
             </li>
           {/each}

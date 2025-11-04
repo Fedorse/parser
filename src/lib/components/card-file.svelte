@@ -1,4 +1,10 @@
 <script lang="ts">
+<<<<<<< Updated upstream
+=======
+  import { openFileInfolder } from '$lib/tauri';
+  import { formatFileSize, formatDate } from '$lib/utils';
+  import { goto } from '$app/navigation';
+>>>>>>> Stashed changes
   import {
     Trash2,
     Code,
@@ -33,7 +39,7 @@
   let { file, handleDelete }: Props = $props();
 
   let open = $state(false);
-  let isLargeFile = $derived(file.size > THIRTY_MB_SIZE);
+  let isLargeFile = $derived(file.file_size > THIRTY_MB_SIZE);
 
   const menuItems = [
     { label: 'Edit', action: () => gotoEdit(file), icon: Code },
@@ -56,10 +62,17 @@
       console.error('Failed to open file:', err);
     }
   };
+<<<<<<< Updated upstream
   const gotoGraph = (file: { path: string }) => goto(`/graph/${file.path}`);
   const gotoEdit = (file: SavedFiles) => goto(`/files/${encodeURIComponent(file.path)}/edit`);
   const gotoEditRename = (file: SavedFiles) =>
     goto(`/files/${encodeURIComponent(file.path)}/edit`, {
+=======
+  const gotoGraph = (file: { id: string }) => goto(`/graph/${file.id}`);
+  const gotoEdit = (file: File) => goto(`/files/${file.id}/edit`);
+  const gotoEditRename = (file: File) =>
+    goto(`/files/${file.id}/edit`, {
+>>>>>>> Stashed changes
       state: { focus: 'rename' }
     });
 </script>
@@ -73,7 +86,7 @@
     <Card.Description>
       <p class="text-muted-foreground flex items-center gap-1.5 text-xs">
         <Clock class="size-3" />
-        <span>Updated 2h ago</span>
+        <span>{formatDate(file.last_modified)}</span>
       </p>
     </Card.Description>
   </Card.Header>
@@ -114,11 +127,11 @@
     onclick={() => gotoEdit(file)}
     title="Edit file"
   >
-    <div class="mb-2 font-mono text-3xl font-bold tracking-tight">1,890</div>
+    <div class="mb-2 font-mono text-3xl font-bold tracking-tight">{file.files_count}</div>
     <div class="text-muted-foreground mb-2 text-sm">files parsed</div>
     <div>
       <Badge variant="outline" class="text-muted-foreground ">
-        Size {formatFileSize(file.size)}
+        Size {formatFileSize(file.file_size)}
       </Badge>
       {#if isLargeFile}
         <span class="text-border">•</span>
