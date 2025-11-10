@@ -1,4 +1,4 @@
-import { getFileContent, getSavedFiles } from '$lib/tauri';
+import { getFileContent, getFileDetail, getFileMetadata } from '$lib/tauri';
 import { redirect } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -7,15 +7,23 @@ const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
 export const load: PageLoad = async ({ params }) => {
   const fileId = params.id;
-  const allFiles = await getSavedFiles();
-  const file = allFiles.find((f) => f.id === fileId);
+
+  console.time('load');
+
+  const file = await getFileDetail(fileId);
+  console.timeEnd('load');
 
   if (!file) {
     redirect(302, '/');
   }
   let content = '';
-  if (file.file_size <= THIRTY_MB_SIZE) {
-    content = await getFileContent(file);
+  if (file.metadata.total_size <= THIRTY_MB_SIZE) {
+    try {
+      content = await getFileContent(file);
+    } catch (err) {
+      console.error('Failed to load file content:', err);
+    }
   }
+
   return { file, content };
 };

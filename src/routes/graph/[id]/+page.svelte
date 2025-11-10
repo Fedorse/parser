@@ -3,6 +3,7 @@
   import Diagram from '@/lib/components/diagram.svelte';
 
   let { data } = $props();
+  console.log(data);
 </script>
 
 <SvelteFlowProvider>

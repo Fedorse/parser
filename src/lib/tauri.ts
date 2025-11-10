@@ -17,8 +17,8 @@ export type FileTree = {
   children?: FileTree[];
   size?: number;
   lastModified?: string;
-  totalSize?: number; // сумма размеров всех файлов внутри (рекурсивно)
-  filesCount?: number; // количество файлов внутри (рекурси
+  totalSize?: number;
+  filesCount?: number;
 };
 
 type ParsedFileListItem = {
@@ -90,6 +90,7 @@ export const getPreviewTree = async (paths: string[]): Promise<FileTreeNode[]> =
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTreeNode[]> => {
   const tree = await getPreviewTree(paths);
+  console.log('tree', tree);
   // ensureChildrenArrays(tree);
   setSelectedRecursive(tree, true);
   annotateAggregates(tree);
@@ -114,7 +115,7 @@ export const updateFile = async (content: string, selectedFile: SavedFiles | nul
 };
 
 export const getFileContent = async (file: SavedFiles): Promise<string> => {
-  return await invoke('get_file_content', { dirName: file.id });
+  return await invoke('get_file_content', { dirName: file.name });
 };
 
 export const openDefaultEditor = async (file: string) => {
@@ -139,9 +140,9 @@ export const renameFile = async (file: SavedFiles, newName: string) => {
   await invoke('rename_file', { dirName: file.id, newName: newName });
 };
 
-export const getFileDetail = async (file) => {
+export const getFileDetail = async (fileId) => {
   const detail = await invoke('get_file_detail', {
-    dirName: file.id
+    dirName: fileId
   });
   return detail;
 };
