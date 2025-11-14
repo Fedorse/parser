@@ -10,35 +10,11 @@
   import * as Card from '$lib/components/ui/card';
   import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
   import RecentFiles from '$lib/components/collaps-files.svelte';
-
-  import type { FileTree } from '$lib/type';
   import ParseQueue from '$lib/components/card-queue.svelte';
 
-  const addMockParseData = () => {
-    // Активный парсинг (45%)
-    parseQueue.set('2025-11-11_14-30-45', {
-      parse_id: '2025-11-11_14-30-45',
-      parse_progress: 45.7,
-      files_amount: 125,
-      result_file_path: null
-    });
+  import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
 
-    parseQueue.set('2025-11-11_14-31-12', {
-      parse_id: '2025-11-11_14-31-12',
-      parse_progress: 78.3,
-      files_amount: 89,
-      result_file_path: null
-    });
-
-    parseQueue.set('2025-11-11_14-29-03', {
-      parse_id: '2025-11-11_14-29-03',
-      parse_progress: 100,
-      files_amount: 234,
-      result_file_path: '/home/user/.tauri-parse-files/parsed_files/2025-11-11_14-29-03/content.txt'
-    });
-
-    parseQueue = new Map(parseQueue);
-  };
+  import type { FileTree } from '$lib/type';
 
   type DragEventPayload = {
     type: 'over' | 'drop' | 'leave' | 'enter';
@@ -46,33 +22,14 @@
     paths: string[];
   };
 
-  interface ParseProgress {
-    parse_id: string;
-    parse_progress: number;
-    files_amount: number;
-    result_file_path: string | null;
-  }
-
-  const MIN_STEP_PROGRESS = 0.5;
-
   let { data } = $props();
 
   let filesTreeNodes = $state<FileTree[]>([]);
-  let parseQueue = $state<Map<string, ParseProgress>>(new Map());
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
   let isLoadingPreview = $state(false);
   let unlistenDrag: () => void;
-  let unlistenProgress: () => void;
-
-  let activeParses = $derived(
-    Array.from(parseQueue.values()).filter((p) => p.parse_progress < 100)
-  );
-  let completedParses = $derived(
-    Array.from(parseQueue.values()).filter((p) => p.parse_progress === 100)
-  );
-  let hasActiveParsing = $derived(activeParses.length > 0);
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -124,20 +81,6 @@
     }
   };
 
-  const clearCompleted = () => {
-    for (const [id, parse] of parseQueue.entries()) {
-      if (parse.parse_progress === 100) {
-        parseQueue.delete(id);
-      }
-    }
-    parseQueue = new Map(parseQueue);
-  };
-
-  const removeFromQueue = (parseId: string) => {
-    parseQueue.delete(parseId);
-    parseQueue = new Map(parseQueue);
-  };
-
   const initDragAndDrop = async () => {
     try {
       const webview = await getCurrentWebview();
@@ -163,48 +106,12 @@
     }
   };
 
-  const initParseProgressListener = async () => {
-    try {
-      unlistenProgress = await listen<ParseProgress>('parse-progress', (event) => {
-        const progress = event.payload;
-
-        const prev = parseQueue.get(progress.parse_id);
-        const isComplete = progress.parse_progress === 100;
-
-        if (
-          !isComplete &&
-          prev &&
-          Math.abs(progress.parse_progress - prev.parse_progress) < MIN_STEP_PROGRESS
-        ) {
-          return;
-        }
-
-        parseQueue.set(progress.parse_id, progress);
-        parseQueue = new Map(parseQueue);
-
-        if (progress.parse_progress === 100) {
-          invalidateAll();
-
-          // Auto-remove after 5 seconds
-          // setTimeout(() => {
-          //   removeFromQueue(progress.parse_id);
-          // }, 5000);
-        }
-      });
-    } catch (error) {
-      console.error('Failed to initialize parse progress listener:', error);
-    }
-  };
-
   onMount(() => {
     initDragAndDrop();
-    initParseProgressListener();
-    addMockParseData();
   });
 
   onDestroy(() => {
     if (unlistenDrag) unlistenDrag();
-    if (unlistenProgress) unlistenProgress();
   });
 </script>
 
@@ -247,9 +154,11 @@
             <div class="flex flex-col items-center gap-2">
               <div class="mb-1 text-7xl leading-none">📁</div>
 
-              {#if hasActiveParsing}
+              {#if parseQueue.hasActiveParsing}
                 <p class="text-muted-foreground text-sm">
-                  {activeParses.length} parse{activeParses.length > 1 ? 's' : ''} in progress...
+                  {parseQueue.activeParses.length} parse{parseQueue.activeParses.length > 1
+                    ? 's'
+                    : ''} in progress...
                 </p>
               {/if}
             </div>
@@ -258,7 +167,7 @@
       </div>
     </Card.Content>
 
-    <ParseQueue {parseQueue} {removeFromQueue} />
+    <ParseQueue />
     <div class="border-border border-t px-6 pt-4">
       <RecentFiles files={data.recentFiles} />
     </div>

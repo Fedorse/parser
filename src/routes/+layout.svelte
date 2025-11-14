@@ -10,15 +10,6 @@
   let loading = setLoadingContext();
 </script>
 
-<!-- {#if loading.inProgress}
-  <div class="bg-muted fixed top-0 right-0 left-0 z-50 h-0.5">
-    <div
-      style="width: {loading.progress?.current || 0}%"
-      class="h-full bg-blue-200 transition-all"
-    />
-  </div>
-{/if} -->
-
 <Tooltip.Provider delayDuration={100}>
   <Toaster richColors={true} position="bottom-right" />
   <div class="flex h-screen flex-col">
