@@ -86,7 +86,7 @@ fn load_parse_directory(
     Ok(ParsedFileListItem {
         id: dir_name,
         name: metadata.name,
-        directory_path: path.to_string_lossy().to_string(),
+        directory_path: path.display().to_string(),
         file_size: content_size,
         files_count: metadata.files_count,
         total_size: metadata.total_size,
@@ -240,13 +240,11 @@ pub fn update_file(dir_name: String, content: String) -> Result<(), CommandError
 #[tauri::command]
 pub fn rename_file(dir_name: String, new_name: String) -> Result<(), CommandError> {
     let parsed_files_dir = utils::get_parse_dir(&dir_name)?;
-    let dir = parsed_files_dir.join(&dir_name);
 
-    // Никакого fs::rename — папка остаётся с тем же именем (timestamp / id)
-    let mut metadata = utils::load_metadata(&dir)?;
-    metadata.name = new_name.clone();
+    let mut metadata = utils::load_metadata(&parsed_files_dir)?;
+    metadata.name = new_name;
 
-    let metadata_path = utils::get_metadata_path(&dir);
+    let metadata_path = utils::get_metadata_path(&parsed_files_dir);
     utils::save_metadata(&metadata_path, &metadata)?;
 
     Ok(())

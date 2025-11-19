@@ -72,6 +72,48 @@ pub enum ParsedPath {
     },
 }
 
+fn emit_progress(
+    app: &AppHandle,
+    parse_id: &str,
+    current: usize,
+    total: usize,
+    file_path: Option<String>,
+) {
+    let progress = if total > 0 {
+        (current as f32 / total as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    if let Err(e) = app.emit("parse-progress", json!({
+        "parse_id": parse_id,
+        "parse_progress": progress,
+        "files_amount": total,
+        "result_file_path": file_path.unwrap_or(serde_json::Value::Null.to_string()),
+    })) {
+        eprintln!("Failed to emit progress: {}", e);
+    }
+}
+
+fn process_single_text_file(
+    path: &Path,
+    output_file: &mut File,
+    parsed_files: &mut Vec<FileMetadata>,
+    total_size: &mut u64,
+) -> Result<bool> {
+    if !is_text_file(path)? {
+        return Ok(false);
+    }
+
+    write_file_content(path, output_file)?;
+    let metadata = get_file_metadata(path)?;
+    *total_size += metadata.size;
+    parsed_files.push(metadata);
+
+    Ok(true)
+}
+
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -90,19 +132,13 @@ pub async fn parse_files_async(
 
     let total_files = count_text_files(&paths)?;
 
-    // Emit initial progress with parse_id
-    let _ = app.emit("parse-progress", json!({
-        "parse_id": parse_id,
-        "parse_progress": 0.0,
-        "files_amount": total_files,
-        "result_file_path": serde_json::Value::Null,
-    }));
+    emit_progress(&app, &parse_id, 0, total_files, None);
 
     let mut parsed_files = Vec::new();
     let mut total_size = 0u64;
-    let mut file_tree = Vec::new();
+    let mut current_count = 0;
 
-    // Build file tree
+    let mut file_tree = Vec::new();
     for path_str in &paths {
         let path = Path::new(path_str);
         if path.exists() {
@@ -110,7 +146,6 @@ pub async fn parse_files_async(
         }
     }
 
-    let mut current_count = 0;
 
     // Parse each file
     for path_str in paths {
@@ -125,26 +160,13 @@ pub async fn parse_files_async(
                 &mut current_count,
                 total_files,
                 &app,
-                &parse_id,  // ✅ Pass parse_id
+                &parse_id,
             )?;
-        } else if is_text_file(&path)? {
-            write_file_content(&path, &mut output_file)?;
-
-            let metadata = get_file_metadata(&path)?;
-            total_size += metadata.size;
-            parsed_files.push(metadata);
-
+        } else if process_single_text_file(&path, &mut output_file, &mut parsed_files, &mut total_size)? {
             current_count += 1;
-
-            // Emit progress update with parse_id
-            let progress = (current_count as f32 / total_files as f32) * 100.0;
-            let _ = app.emit("parse-progress", json!({
-                "parse_id": parse_id,
-                "parse_progress": progress,
-                "files_amount": total_files,
-                "result_file_path": serde_json::Value::Null,
-            }));
+            emit_progress(&app, &parse_id, current_count, total_files, None);
         }
+
     }
 
     // Create metadata
@@ -164,12 +186,13 @@ pub async fn parse_files_async(
 
     // Emit completion with file path and parse_id
     let content_path = get_content_path(&parse_dir);
-    let _ = app.emit("parse-progress", json!({
-        "parse_id": parse_id,  // ✅ Add this
-        "parse_progress": 100.0,
-        "files_amount": total_files,
-        "result_file_path": content_path.to_string_lossy().to_string(),
-    }));
+    emit_progress(
+        &app,
+        &parse_id,
+        total_files,
+        total_files,
+        Some(content_path.display().to_string()),
+    );
 
     Ok(metadata)
 }
@@ -200,22 +223,9 @@ fn process_directory_with_progress(
                     app,
                     parse_id,
                 )?;
-            } else if is_text_file(&path)? {
-                write_file_content(&path, output_file)?;
-
-                let metadata = get_file_metadata(&path)?;
-                *total_size += metadata.size;
-                parsed_files.push(metadata);
-
+            } else if process_single_text_file(&path, output_file, parsed_files, total_size)? {
                 *current_count += 1;
-
-                let progress = (*current_count as f32 / total_files as f32) * 100.0;
-                let _ = app.emit("parse-progress", json!({
-                    "parse_id": parse_id,
-                    "parse_progress": progress,
-                    "files_amount": total_files,
-                    "result_file_path": serde_json::Value::Null,
-                }));
+                emit_progress(app, parse_id, *current_count, total_files, None);
             }
         }
     }

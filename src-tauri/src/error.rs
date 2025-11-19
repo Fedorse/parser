@@ -1,15 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Error, Debug, Serialize, Deserialize)]
+#[error("{message}")]
 pub struct CommandError {
     message: String,
-}
-
-impl fmt::Display for CommandError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
 }
 
 impl From<anyhow::Error> for CommandError {
@@ -28,19 +23,3 @@ impl From<std::io::Error> for CommandError {
     }
 }
 
-
-impl From<String> for CommandError {
-    fn from(err: String) -> Self {
-        Self {
-            message: err.to_string(),
-        }
-    }
-}
-
-impl From<&str> for CommandError {
-    fn from(err: &str) -> Self {
-        Self {
-            message: err.to_string(),
-        }
-    }
-}
