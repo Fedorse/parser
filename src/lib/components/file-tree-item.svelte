@@ -10,9 +10,6 @@
   import { formatFileSize } from '@/lib/utils/utils';
 
   let { node, isRoot = false } = $props();
-  $effect(() => {
-    console.log('node', node);
-  });
 
   let isOpen = $state(isRoot && node.type === 'Directory');
 
@@ -25,8 +22,8 @@
       return { isChecked: node.selected, isIndeterminate: false };
     }
 
-    const allChildrenChecked = node.children.every((child) => child.selected);
-    const noChildrenChecked = node.children.every((child) => !child.selected);
+    const allChildrenChecked = node.children.every((child: FileTreeNode) => child.selected);
+    const noChildrenChecked = node.children.every((child: FileTreeNode) => !child.selected);
 
     return {
       isChecked: allChildrenChecked,
@@ -46,46 +43,55 @@
       }}
     >
       <FileIcon class="size-4.5 cursor-pointer stroke-1" />
-      {formatFileSize(node.size)}
+      <Label class="flex-1 cursor-pointer select-none">
+        {node.name}
+      </Label>
+      {#if node.size}
+        <span class="pr-4 text-xs opacity-70">
+          {formatFileSize(node.size)}
+        </span>
+      {/if}
     </div>
   </li>
 {:else}
   <Collapsible.Root class="flex flex-col" bind:open={isOpen}>
     <Collapsible.Trigger>
-      <ChevronRight
-        class={{
-          'size-4 cursor-pointer transition-transform duration-200': true,
-          'rotate-90': isOpen
-        }}
-      />
-      <Checkbox
-        checked={checkboxState.isChecked}
-        onCheckedChange={onToggle}
-        indeterminate={checkboxState.isIndeterminate}
-        onclick={(e) => e.stopPropagation()}
-      />
-      <div
-        class={{
-          'flex w-full items-center gap-2': true,
-          'text-primary': node.selected,
-          'text-primary/20': !node.selected
-        }}
-      >
-        {#if isOpen}
-          <FolderOpen class="size-5 cursor-pointer stroke-1" />
-        {:else}
-          <FolderIcon class="size-5 cursor-pointer stroke-1" />
-        {/if}
+      <li class="hover:bg-muted/50 flex flex-row items-center gap-2 transition-colors">
+        <ChevronRight
+          class={{
+            'size-4 cursor-pointer transition-transform duration-200': true,
+            'rotate-90': isOpen
+          }}
+        />
+        <Checkbox
+          checked={checkboxState.isChecked}
+          onCheckedChange={onToggle}
+          indeterminate={checkboxState.isIndeterminate}
+          onclick={(e) => e.stopPropagation()}
+        />
+        <div
+          class={{
+            'flex w-full items-center gap-2': true,
+            'text-primary': node.selected,
+            'text-primary/20': !node.selected
+          }}
+        >
+          {#if isOpen}
+            <FolderOpen class="size-5 cursor-pointer stroke-1" />
+          {:else}
+            <FolderIcon class="size-5 cursor-pointer stroke-1" />
+          {/if}
 
-        <Label class="flex-1 cursor-pointer select-none">
-          {node.name}
-        </Label>
-        {#if node.size}
-          <span class="ml-2 pr-4 text-xs opacity-70">
-            {formatFileSize(node.size)}
-          </span>
-        {/if}
-      </div>
+          <Label class="flex-1 cursor-pointer select-none">
+            {node.name}
+          </Label>
+          {#if node.size}
+            <span class="ml-2 pr-4 text-xs opacity-70">
+              {formatFileSize(node.size)}
+            </span>
+          {/if}
+        </div>
+      </li>
     </Collapsible.Trigger>
     <Collapsible.Content>
       {#if isOpen && node.children?.length}
