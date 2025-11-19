@@ -1,4 +1,3 @@
-use crate::consts::{APP_NAME, PARSED_FILES_DIR};
 use anyhow::{self, Context, Result};
 use chrono::{DateTime, Local};
 use content_inspector::{inspect, ContentType};
@@ -17,8 +16,11 @@ use tauri::{AppHandle, Emitter};
 // CONSTANTS
 // ============================================================================
 
-const CONTENT_FILENAME: &str = "content.txt";
-const METADATA_FILENAME: &str = "metadata.json";
+pub const APP_NAME: &str = "parser-ai";
+pub const PARSED_FILES_DIR: &str = "parsed-files";
+pub const PREVIEW_LINE_LIMIT: usize = 150;
+pub const CONTENT_FILENAME: &str = "content.txt";
+pub const METADATA_FILENAME: &str = "metadata.json";
 
 // ============================================================================
 // DATA STRUCTURES
@@ -86,12 +88,11 @@ pub async fn parse_files_async(
 ) -> Result<ParseMetadata> {
     let (parse_dir, mut output_file, parse_id) = create_parse_directory()?;
 
-    // Count total files first
     let total_files = count_text_files(&paths)?;
 
     // Emit initial progress with parse_id
     let _ = app.emit("parse-progress", json!({
-        "parse_id": parse_id,  // ✅ Add this
+        "parse_id": parse_id,
         "parse_progress": 0.0,
         "files_amount": total_files,
         "result_file_path": serde_json::Value::Null,
@@ -138,7 +139,7 @@ pub async fn parse_files_async(
             // Emit progress update with parse_id
             let progress = (current_count as f32 / total_files as f32) * 100.0;
             let _ = app.emit("parse-progress", json!({
-                "parse_id": parse_id,  // ✅ Add this
+                "parse_id": parse_id,
                 "parse_progress": progress,
                 "files_amount": total_files,
                 "result_file_path": serde_json::Value::Null,
@@ -182,7 +183,7 @@ fn process_directory_with_progress(
     current_count: &mut usize,
     total_files: usize,
     app: &AppHandle,
-    parse_id: &str,  // ✅ Add this parameter
+    parse_id: &str,
 ) -> Result<()> {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -197,7 +198,7 @@ fn process_directory_with_progress(
                     current_count,
                     total_files,
                     app,
-                    parse_id,  // ✅ Pass it along
+                    parse_id,
                 )?;
             } else if is_text_file(&path)? {
                 write_file_content(&path, output_file)?;
@@ -208,10 +209,9 @@ fn process_directory_with_progress(
 
                 *current_count += 1;
 
-                // Emit progress update with parse_id
                 let progress = (*current_count as f32 / total_files as f32) * 100.0;
                 let _ = app.emit("parse-progress", json!({
-                    "parse_id": parse_id,  // ✅ Add this
+                    "parse_id": parse_id,
                     "parse_progress": progress,
                     "files_amount": total_files,
                     "result_file_path": serde_json::Value::Null,
@@ -301,30 +301,6 @@ fn write_file_content(path: &Path, output_file: &mut File) -> Result<()> {
     Ok(())
 }
 
-/// Recursively process a directory and parse all text files
-fn process_directory(
-    dir: &Path,
-    output_file: &mut File,
-    parsed_files: &mut Vec<FileMetadata>,
-    total_size: &mut u64,
-) -> Result<()> {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-
-            if path.is_dir() {
-                process_directory(&path, output_file, parsed_files, total_size)?;
-            } else if is_text_file(&path)? {
-                write_file_content(&path, output_file)?;
-
-                let metadata = get_file_metadata(&path)?;
-                *total_size += metadata.size;
-                parsed_files.push(metadata);
-            }
-        }
-    }
-    Ok(())
-}
 
 /// Save metadata to JSON file
 pub fn save_metadata(path: &Path, metadata: &ParseMetadata) -> Result<()> {
@@ -360,6 +336,12 @@ pub fn get_app_dir() -> Result<PathBuf> {
         .ok_or(anyhow::anyhow!("Can't access home dir"))?
         .join(APP_NAME);
     Ok(home_dir)
+}
+
+pub fn get_parse_dir(dir_name: &str) -> Result<PathBuf> {
+    Ok(get_app_dir()?
+        .join(PARSED_FILES_DIR)
+        .join(dir_name))
 }
 
 // ============================================================================

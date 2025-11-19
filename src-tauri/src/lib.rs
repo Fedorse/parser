@@ -1,7 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod utils;
 pub mod commands;
-pub mod consts;
 pub mod error;
 
 use tauri_plugin_log;

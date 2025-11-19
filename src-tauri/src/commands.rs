@@ -1,6 +1,5 @@
-use crate::consts::PARSED_FILES_DIR;
 use crate::error::CommandError;
-use crate::utils::{self, ParseMetadata, ParsedPath};
+use crate::utils::{self, ParseMetadata, ParsedPath, PARSED_FILES_DIR};
 use anyhow::Result;
 use chrono::{DateTime, Local};
 use std::fs;
@@ -14,11 +13,12 @@ use std::path::PathBuf;
 #[tauri::command]
 pub async fn parse(
     paths: Vec<String>,
-    app: tauri::AppHandle,  // Add this parameter
+    app: tauri::AppHandle,
 ) -> Result<ParseMetadata, CommandError> {
     let metadata = utils::parse_files_async(paths, app).await?;  // Pass app to the function
     Ok(metadata)
 }
+
 /// Get preview tree before parsing
 #[tauri::command]
 pub async fn get_preview_tree(
@@ -172,12 +172,8 @@ pub struct ParsedFileDetail {
 /// - Full metadata with file tree
 #[tauri::command]
 pub async fn get_file_detail(dir_name: String) -> Result<ParsedFileDetail, CommandError> {
-    let parse_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR).join(&dir_name);
-
-    // Load content
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     let content = utils::load_content(&parse_dir)?;
-
-    // Load metadata
     let metadata = utils::load_metadata(&parse_dir)?;
 
     Ok(ParsedFileDetail {
@@ -191,7 +187,7 @@ pub async fn get_file_detail(dir_name: String) -> Result<ParsedFileDetail, Comma
 /// Get only content (alternative to get_file_detail)
 #[tauri::command]
 pub fn get_file_content(dir_name: String) -> Result<String, CommandError> {
-    let parse_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR).join(dir_name);
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     let content = utils::load_content(&parse_dir)?;
     Ok(content)
 }
@@ -199,7 +195,7 @@ pub fn get_file_content(dir_name: String) -> Result<String, CommandError> {
 /// Get only metadata (alternative to get_file_detail)
 #[tauri::command]
 pub fn get_file_metadata(dir_name: String) -> Result<ParseMetadata, CommandError> {
-    let parse_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR).join(dir_name);
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     let metadata = utils::load_metadata(&parse_dir)?;
     Ok(metadata)
 }
@@ -211,7 +207,7 @@ pub fn get_file_metadata(dir_name: String) -> Result<ParseMetadata, CommandError
 /// Update parsed file content
 #[tauri::command]
 pub fn update_file(dir_name: String, content: String) -> Result<(), CommandError> {
-    let parse_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR).join(dir_name);
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     utils::update_content(&parse_dir, &content)?;
     Ok(())
 }
@@ -243,7 +239,7 @@ pub fn update_file(dir_name: String, content: String) -> Result<(), CommandError
 
 #[tauri::command]
 pub fn rename_file(dir_name: String, new_name: String) -> Result<(), CommandError> {
-    let parsed_files_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR);
+    let parsed_files_dir = utils::get_parse_dir(&dir_name)?;
     let dir = parsed_files_dir.join(&dir_name);
 
     // Никакого fs::rename — папка остаётся с тем же именем (timestamp / id)
@@ -262,7 +258,7 @@ pub fn rename_file(dir_name: String, new_name: String) -> Result<(), CommandErro
 /// - Deletes entire directory and all contents
 #[tauri::command]
 pub fn delete_file(dir_name: String) -> Result<(), CommandError> {
-    let parse_dir = utils::get_app_dir()?.join(PARSED_FILES_DIR).join(dir_name);
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     fs::remove_dir_all(parse_dir)?;
     Ok(())
 }
@@ -273,26 +269,19 @@ pub fn delete_file(dir_name: String) -> Result<(), CommandError> {
 
 /// Open content.txt in default editor
 #[tauri::command]
-pub fn open_in_default_editor(dir_name: String) -> Result<(), String> {
-    let parse_dir = utils::get_app_dir()
-        .map_err(|e| e.to_string())?
-        .join(PARSED_FILES_DIR)
-        .join(dir_name);
-
+pub fn open_in_default_editor(dir_name: String) -> Result<(), CommandError> {
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
     let content_path = utils::get_content_path(&parse_dir);
 
-    utils::open_with_default_app(utils::OpenAction::OpenFile(content_path))
-        .map_err(|e| e.to_string())
+    utils::open_with_default_app(utils::OpenAction::OpenFile(content_path))?;
+    Ok(())
 }
 
 /// Reveal parse directory in file explorer
 #[tauri::command]
-pub fn open_in_folder(dir_name: String) -> Result<(), String> {
-    let parse_dir = utils::get_app_dir()
-        .map_err(|e| e.to_string())?
-        .join(PARSED_FILES_DIR)
-        .join(dir_name);
+pub fn open_in_folder(dir_name: String) -> Result<(), CommandError> {
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
 
-    utils::open_with_default_app(utils::OpenAction::RevealInFolder(parse_dir))
-        .map_err(|e| e.to_string())
+    utils::open_with_default_app(utils::OpenAction::RevealInFolder(parse_dir))?;
+    Ok(())
 }
