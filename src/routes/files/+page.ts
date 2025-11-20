@@ -1,5 +1,6 @@
-import type { PageLoad } from './$types';
 import { getSavedFiles } from '$lib/tauri';
+
+import type { PageLoad } from './$types';
 
 export const load: PageLoad = ({ depends }) => {
   depends('app:files');

@@ -7,19 +7,10 @@
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { pushState } from '$app/navigation';
 
-  type Props = {
-    files: Promise<ParsedFileListItem[]>;
-  };
+  import type { File } from '@/lib/type.ts';
 
-  type ParsedFileListItem = {
-    id: string;
-    name: string;
-    directory_path: string;
-    file_size: number;
-    files_count: number;
-    total_size: number;
-    created_at: string;
-    last_modified: string;
+  type Props = {
+    files: Promise<File[]>;
   };
 
   let { files }: Props = $props();
@@ -65,6 +56,8 @@
           {#if resolvedFiles.length > 0}
             {#each resolvedFiles as f}
               <li>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                   class="hover:bg-muted/40 flex cursor-pointer items-center gap-3 px-3 py-2"
                   onclick={() => openEdit(f)}

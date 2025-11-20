@@ -1,12 +1,9 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-  import { FileClock, FileCheck } from '@lucide/svelte/icons';
-  import { Button } from '$lib/components/ui/button';
-  import ToggleThemeButton from '$lib/components/theme-switch-button.svelte';
   import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
-  import { X } from '@lucide/svelte/icons';
+  import { FileClock, FileCheck, X, ArrowLeft } from '@lucide/svelte/icons';
+  import ToggleThemeButton from '$lib/components/theme-switch-button.svelte';
 
   const isHome = $derived(page.url.pathname === '/');
 
@@ -53,51 +50,56 @@
 
   <div class="flex items-center gap-2">
     {#if parseQueue.size > 0 && !isHome}
-      <div class="bg-card/80 flex items-center gap-3 rounded-md border px-3 py-1 shadow-2xs">
-        <div
-          class={{
-            'text-warn': parseQueue.hasActiveParsing,
-            'text-chart-2': !parseQueue.hasActiveParsing
-          }}
-        >
-          {#if parseQueue.hasActiveParsing}
-            <FileClock class="size-4.5 stroke-1" />
-          {:else}
-            <FileCheck class="size-4.5 stroke-1" />
-          {/if}
-        </div>
-
-        <div class="min-w-0">
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs tracking-tight">
-              {parseQueue.hasActiveParsing ? 'Parsing in progress' : 'Parses completed'}
-            </span>
-            {#if parseQueue.activeParses.length > 0}
-              <div class="relative flex size-1.5">
-                <span
-                  class="bg-warn/50 absolute inline-flex h-full w-full animate-ping rounded-full"
-                />
-                <span class="bg-warn relative inline-flex size-1.5 rounded-full" />
-              </div>
-            {/if}
-          </div>
-          <p class="text-muted-foreground truncate text-[10px]">
-            {parseQueue.size} queue
-            {parseQueue.completedParses.length} completed
-          </p>
-        </div>
-
-        {#if parseQueue.completedParses.length > 0}
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            onclick={() => parseQueue.clearCompleted()}
-          >
-            <X class="size-4" />
-          </button>
-        {/if}
-      </div>
+      {@render queueStatusBar()}
     {/if}
 
     <ToggleThemeButton />
   </div>
 </nav>
+
+{#snippet queueStatusBar()}
+  <div class="bg-card/20 flex items-center gap-3 rounded-md border px-3 py-1 shadow-2xs">
+    <div
+      class={{
+        'text-warn': parseQueue.hasActiveParsing,
+        'text-chart-2': !parseQueue.hasActiveParsing
+      }}
+    >
+      {#if parseQueue.hasActiveParsing}
+        <FileClock class="size-4.5 stroke-1" />
+      {:else}
+        <FileCheck class="size-4.5 stroke-1" />
+      {/if}
+    </div>
+
+    <div class="min-w-0">
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs tracking-tight">
+          {parseQueue.hasActiveParsing ? 'Parsing in progress' : 'Parses completed'}
+        </span>
+        {#if parseQueue.activeParses.length > 0}
+          <div class="relative flex size-1.5">
+            <!-- svelte-ignore element_invalid_self_closing_tag -->
+            <span class="bg-warn/50 absolute inline-flex h-full w-full animate-ping rounded-full" />
+            <!-- svelte-ignore element_invalid_self_closing_tag -->
+            <span class="bg-warn relative inline-flex size-1.5 rounded-full" />
+          </div>
+        {/if}
+      </div>
+      <p class="text-muted-foreground truncate text-[10px]">
+        {parseQueue.size} Total
+        <span class="text-muted-foreground/50">|</span>
+        {parseQueue.completedParses.length} Ready
+      </p>
+    </div>
+
+    {#if parseQueue.completedParses.length > 0}
+      <button
+        class="text-muted-foreground hover:text-foreground"
+        onclick={() => parseQueue.clearCompleted()}
+      >
+        <X class="size-4" />
+      </button>
+    {/if}
+  </div>
+{/snippet}

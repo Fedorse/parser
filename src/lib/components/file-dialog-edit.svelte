@@ -1,24 +1,23 @@
 <script lang="ts">
   import { goto, invalidate } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
+  import { toast } from 'svelte-sonner';
   import {
     updateFile,
     renameFile,
     openDefaultEditor,
     openFileInfolder,
-    type SavedFiles,
     getFileContent,
     getFileDetail
   } from '$lib/tauri';
-  import { page } from '$app/state';
   import { formatFileSize } from '@/lib/utils/utils';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import * as Dialog from '$lib/components/ui/dialog';
+  import * as Kbd from '$lib/components/ui/kbd/index.js';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
-  import * as Kbd from '$lib/components/ui/kbd/index.js';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
   import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
   import { Spinner } from '$lib/components/ui/spinner/index.js';
@@ -26,21 +25,33 @@
 
   let { fileId, searchPath, onClose } = $props();
 
+  import type { FileDetail } from '@/lib/type.ts';
+
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
-  let file = $state(null);
-  let isOpen = $state(true);
-  let value = $state<string>('');
-  let snapshot = $state<string>('');
-  let isCopied = $state(false);
+  let file = $state<FileDetail | null>(null);
   let rename = $state<string>('');
-  let inputEl = $state<HTMLInputElement | null>(null);
+  let snapshot = $state<string>('');
+  let value = $state<string>('');
+  let isOpen = $state(true);
   let confirmOpen = $state(false);
   let isMetaLoading = $state(false);
   let isContentLoading = $state(false);
+  let inputEl = $state<HTMLInputElement | null>(null);
 
   const isTainted = $derived(value !== snapshot);
   const isLargeFile = $derived(file ? file.metadata.total_size > THIRTY_MB_SIZE : false);
+
+  const saveContent = async () => {
+    try {
+      await updateFile(value, file);
+      snapshot = value;
+      toast.success('File updated successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update file content');
+    }
+  };
 
   const closeModal = async () => {
     confirmOpen = false;
@@ -57,19 +68,8 @@
     }
   };
 
-  const save = async () => {
-    try {
-      await updateFile(value, file);
-      snapshot = value;
-      toast.success('File updated successfully');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to update file content');
-    }
-  };
-
   const saveAndClose = async () => {
-    await save();
+    await saveContent();
     closeModal();
   };
 
@@ -77,6 +77,7 @@
     if (e.key === 'Enter') {
       inputEl?.blur();
     } else if (e.key === 'Escape') {
+      if (!file) return;
       e.preventDefault();
       e.stopPropagation();
       rename = file.metadata.name;
@@ -89,14 +90,12 @@
     isContentLoading = false;
     try {
       isMetaLoading = true;
-      const detail = await getFileDetail(String(fileId));
-
+      const detail = await getFileDetail(fileId);
       if (!detail) {
         toast.error('File not found');
         onClose();
         return;
       }
-
       file = detail;
       rename = detail.metadata.name;
     } catch (e) {
@@ -108,7 +107,6 @@
       isMetaLoading = false;
     }
 
-    // второй этап — грузим контент отдельно
     if (!file || file.metadata.total_size > THIRTY_MB_SIZE) {
       return;
     }
@@ -128,7 +126,7 @@
   };
 
   const handleRename = async () => {
-    if (rename === file.name) return;
+    if (!file || rename === file.name) return;
     try {
       await renameFile(file, rename.trim());
       await invalidate('app:files');
@@ -141,14 +139,16 @@
     }
   };
 
-  const openEditor = async (file) => {
+  const openEditor = async (file: FileDetail) => {
+    if (!file) return;
     try {
       await openDefaultEditor(file);
     } catch (err) {
       console.error('Failed to open file in editor:', err);
     }
   };
-  const handleOpenDir = async (file: SavedFiles) => {
+  const handleOpenDir = async (file: FileDetail) => {
+    if (!file) return;
     try {
       await openFileInfolder(file);
     } catch (err) {
@@ -159,8 +159,7 @@
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-      isCopied = true;
-      setTimeout(() => (isCopied = false), 2000);
+      toast.success('Copied to clipboard');
     } catch (e) {
       console.error(e);
       toast.error('Copy failed');
@@ -179,7 +178,7 @@
       if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         e.stopPropagation();
-        if (!isLargeFile && isTainted) save();
+        if (!isLargeFile && isTainted) saveContent();
       }
     };
 
@@ -195,7 +194,7 @@
 <Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
   <Dialog.Content class=" flex h-[90vh] w-[90vw] flex-col gap-0 pb-0">
     <Dialog.Header>
-      <Dialog.Title class="flex items-center gap-2 pt-2">
+      <Dialog.Title class="flex items-center gap-2 ">
         {#if isMetaLoading}
           <Skeleton class="h-9 w-7 rounded" />
           <Skeleton class="h-9 w-80 rounded" />
@@ -219,7 +218,7 @@
           {#if isMetaLoading}
             <Skeleton class="h-5 w-[355px] rounded" />
           {:else}
-            <Badge variant="secondary" class="max-w-lg truncate font-mono text-xs">
+            <Badge variant="outline" class="max-w-lg truncate font-mono text-xs">
               <Route class="text-muted-foreground size-4 " />
               <!-- {data.file?.directory_path} -->
               /Users/ivans/work/parser-ai/src-tauri/src/consts.rs
@@ -229,17 +228,6 @@
           {#if isLargeFile}
             <Badge variant="secondary" class="text-warn">Large file</Badge>
           {/if}
-          <!-- {#if isTainted}
-            <div class="flex items-center gap-1">
-              <div class="relative flex size-1.5">
-                <span
-                  class="bg-warn/50 absolute inline-flex h-full w-full animate-ping rounded-full"
-                />
-                <span class="bg-warn relative inline-flex size-1.5 rounded-full" />
-              </div>
-              <span class="text-muted-foreground text-xs">Edited</span>
-            </div>
-          {/if} -->
         </div>
 
         {#if !isLargeFile}
@@ -264,15 +252,18 @@
     </div>
     <div class="text-muted-foreground flex justify-between gap-3 py-2 text-xs">
       <div class="flex items-center gap-4">
-        {#if !isMetaLoading && !isContentLoading}
+        {#if isMetaLoading}
+          <Skeleton class="h-4 w-15 rounded" />
+          <Skeleton class="h-4 w-15 rounded" />
+        {:else}
           {#if isTainted}
-            <div class="animate-in fade-in flex items-center gap-1.5 font-medium text-amber-500">
-              <div class="size-1.5 rounded-full bg-amber-500"></div>
+            <div class="animate-in fade-in text-warn flex items-center gap-1.5 font-medium">
+              <div class="bg-warn size-1.5 rounded-full"></div>
               Unsaved
             </div>
           {:else}
             <div class="flex items-center gap-1.5">
-              <div class="size-1.5 rounded-full bg-emerald-500/50"></div>
+              <div class="bg-chart-2 size-1.5 rounded-full"></div>
               Ready
             </div>
           {/if}
@@ -306,7 +297,7 @@
   confirmDialogOpen={confirmOpen}
   handleCancel={() => (confirmOpen = false)}
   dialogTitle="Unsaved changes"
-  dialogDescription={`You have unsaved changes in "${file.name}". What would you like to do?`}
+  dialogDescription={`You have unsaved changes in "${file?.name || 'Unknown File'}". What would you like to do?`}
   cancelText="Continue Editing"
 >
   {#snippet Confirm()}
@@ -317,18 +308,17 @@
 
 {#snippet controls()}
   <div class="flex items-center gap-2">
+    <Button variant="outline" class="text-muted-foreground" size="sm" onclick={handleCopy}>
+      <Copy class="size-4 stroke-1" />
+    </Button>
     <Button
       variant="outline"
       size="sm"
-      onclick={() => goto(`/graph/${file.id}`)}
-      class="text-muted-foreground">View graph</Button
+      onclick={() => goto(`/graph/${file?.id}`)}
+      class="text-muted-foreground">Graph</Button
     >
-    <Button variant="outline" class="text-muted-foreground" size="sm" onclick={handleCopy}>
-      <Copy class=" mr-2 size-4 stroke-1" />
 
-      {isCopied ? 'Copied!' : 'Copy'}
-    </Button>
-    <Button variant="outline" size="sm" disabled={!isTainted} onclick={save}>Save</Button>
+    <Button variant="outline" size="sm" disabled={!isTainted} onclick={saveContent}>Save</Button>
   </div>
 {/snippet}
 
@@ -340,7 +330,7 @@
           <div class="flex items-center gap-2">
             <h3 class="text-xl font-semibold">File Too Large to Edit</h3>
             <Badge variant="outline">
-              Size {formatFileSize(file.total_size)}
+              Size {file ? formatFileSize(file.metadata.total_size) : '...'}
             </Badge>
           </div>
           <p class="text-muted-foreground text-sm">
@@ -350,8 +340,8 @@
         </div>
 
         <div class="flex gap-4">
-          <Button onclick={() => openEditor(file)}>Open in default Editor</Button>
-          <Button variant="outline" onclick={() => handleOpenDir(file)}>
+          <Button onclick={() => openEditor(file!)}>Open in default Editor</Button>
+          <Button variant="outline" onclick={() => handleOpenDir(file!)}>
             <FolderOpen class="size-4" />
             Show in folder
           </Button>

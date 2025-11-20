@@ -1,13 +1,15 @@
 <script lang="ts">
-  import Files from '@lucide/svelte/icons/file-text';
-  import Card from '@/lib/components/card-file.svelte';
-  import CardSkeleton from '@/lib/components/card-file-skeleton.svelte';
   import { toast } from 'svelte-sonner';
   import { deleteFile } from '@/lib/tauri.js';
+  import CardSkeleton from '@/lib/components/card-file-skeleton.svelte';
+  import Files from '@lucide/svelte/icons/file-text';
+  import Card from '@/lib/components/card-file.svelte';
+
+  import type { File } from '@/lib/type.ts';
 
   let { data } = $props();
 
-  let localFiles = $state([]);
+  let localFiles = $state<File[]>([]);
 
   const handleDelete = async (file: File) => {
     try {

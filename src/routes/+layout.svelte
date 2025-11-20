@@ -1,12 +1,11 @@
 <script lang="ts">
   import '../app.css';
-  import NavBar from '$lib/components/app-navbar.svelte';
+  import { page } from '$app/state';
   import { ModeWatcher } from 'mode-watcher';
+  import NavBar from '$lib/components/app-navbar.svelte';
+  import FileDialogEdit from '$lib/components/file-dialog-edit.svelte';
   import * as Tooltip from '$lib/components/ui/tooltip/index.js';
   import { Toaster } from '$lib/components/ui/sonner/index.js';
-  import { setLoadingContext } from '@/lib/state-utils/store-loading.svelte';
-  import { page } from '$app/state';
-  import FileDialogEdit from '@/lib/components/file-dialog-edit.svelte';
 
   let { children } = $props();
   const editFile = $derived(page.state.editFile);

@@ -1,13 +1,13 @@
 <script lang="ts">
+  import { formatFileSize } from '@/lib/utils/utils';
+  import * as Collapsible from '$lib/components/ui/collapsible';
+  import { FileIcon, FolderIcon, ChevronRight, FolderOpen } from '@lucide/svelte/icons';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Label } from '$lib/components/ui/label';
-  import * as Collapsible from '$lib/components/ui/collapsible';
   import Self from '$lib/components/file-tree-item.svelte';
   import { setSelected } from '@/lib/utils/utils';
-  import type { FileTreeNode } from '$lib/tauri.ts';
 
-  import { FileIcon, FolderIcon, ChevronRight, FolderOpen } from '@lucide/svelte/icons';
-  import { formatFileSize } from '@/lib/utils/utils';
+  import type { FileTree } from '@/lib/type.ts';
 
   let { node, isRoot = false } = $props();
 
@@ -22,8 +22,8 @@
       return { isChecked: node.selected, isIndeterminate: false };
     }
 
-    const allChildrenChecked = node.children.every((child: FileTreeNode) => child.selected);
-    const noChildrenChecked = node.children.every((child: FileTreeNode) => !child.selected);
+    const allChildrenChecked = node.children.every((child: FileTree) => child.selected);
+    const noChildrenChecked = node.children.every((child: FileTree) => !child.selected);
 
     return {
       isChecked: allChildrenChecked,
@@ -67,7 +67,7 @@
           checked={checkboxState.isChecked}
           onCheckedChange={onToggle}
           indeterminate={checkboxState.isIndeterminate}
-          onclick={(e) => e.stopPropagation()}
+          onclick={(e: MouseEvent) => e.stopPropagation()}
         />
         <div
           class={{

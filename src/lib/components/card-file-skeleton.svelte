@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Skeleton } from '$lib/components/ui/skeleton';
   import * as Card from '$lib/components/ui/card';
+  import { Skeleton } from '$lib/components/ui/skeleton';
 </script>
 
 <Card.Root class=" bg-card/20 max-w-96 overflow-hidden transition-all ">

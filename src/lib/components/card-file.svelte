@@ -1,7 +1,15 @@
 <script lang="ts">
+  import { goto, pushState } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
   import { openFileInfolder } from '$lib/tauri';
   import { formatFileSize, formatDate } from '@/lib/utils/utils';
-  import { goto } from '$app/navigation';
+  import * as Card from '$lib/components/ui/card/index.js';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+  import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+  import Badge from './ui/badge/badge.svelte';
+  import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
+  import { Separator } from '$lib/components/ui/separator/index.js';
+  import { Button } from '$lib/components/ui/button/index';
 
   import {
     Trash2,
@@ -13,23 +21,13 @@
     Pencil
   } from '@lucide/svelte/icons';
 
-  import * as Card from '$lib/components/ui/card/index.js';
-  import { Separator } from '$lib/components/ui/separator/index.js';
-  import Badge from './ui/badge/badge.svelte';
-  import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-  import { Button } from '$lib/components/ui/button/index';
-  import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-  import { page } from '$app/state';
-  import { pushState } from '$app/navigation';
-
-  import type { SavedFiles } from '$lib/tauri';
+  import type { File } from '@/lib/type.ts';
 
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
   type Props = {
-    file: SavedFiles;
-    handleDelete: (file: SavedFiles) => void;
+    file: File;
+    handleDelete: (file: File) => void;
   };
 
   let { file, handleDelete }: Props = $props();
@@ -51,11 +49,12 @@
     }
   ];
 
-  const handleOpenDir = async (file: SavedFiles) => {
+  const handleOpenDir = async (file: File) => {
     try {
       await openFileInfolder(file);
     } catch (err) {
       console.error('Failed to open file:', err);
+      toast.error('Failed to open file');
     }
   };
 
@@ -81,7 +80,7 @@
 
   <Card.Content
     class="flex cursor-pointer flex-col items-center py-4"
-    onclick={() => gotoEdit(file)}
+    onclick={() => openEditor(file)}
     title="Edit file"
   >
     <div class="mb-2 font-mono text-3xl font-bold tracking-tight">{file.files_count}</div>

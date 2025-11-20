@@ -1,39 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
-export type FileTreeNode = {
-  name: string;
-  path: string;
-  type: 'File' | 'Directory';
-  selected?: boolean;
-  children?: FileTreeNode[];
-};
+import type { File, FileDetail, FileTree } from '@/lib/type.ts';
 
-export type FileTree = {
-  name: string;
-  path: string;
-  type: 'File' | 'Directory';
-  selected?: boolean;
-  children?: FileTree[];
-  size?: number;
-  lastModified?: string;
-  totalSize?: number;
-  filesCount?: number;
-};
-
-type ParsedFileListItem = {
-  id: string;
-  name: string;
-  directory_path: string;
-  file_size: number;
-  files_count: number;
-  total_size: number;
-  created_at: string;
-  last_modified: string;
-};
-export type SavedFiles = { name: string; path: string; preview: string; size: number; id: number };
-
-export const ensureChildrenArrays = (nodes: FileTreeNode[]): FileTreeNode[] => {
+export const ensureChildrenArrays = (nodes: FileTree[]): FileTree[] => {
   for (const n of nodes) {
     if (!n.children) n.children = [];
     else ensureChildrenArrays(n.children);
@@ -41,7 +11,7 @@ export const ensureChildrenArrays = (nodes: FileTreeNode[]): FileTreeNode[] => {
   return nodes;
 };
 
-export const setSelectedRecursive = (nodes: FileTreeNode[], value = true): FileTreeNode[] => {
+export const setSelectedRecursive = (nodes: FileTree[], value = true): FileTree[] => {
   for (const n of nodes) {
     n.selected = value;
     if (n.type === 'Directory' && n.children?.length) setSelectedRecursive(n.children, value);
@@ -61,17 +31,15 @@ export const setSelectedRecursive = (nodes: FileTreeNode[], value = true): FileT
 //   return paths;
 // };
 
-export const collectSelectedPath = (nodes: FileTreeNode[]): string[] => {
+export const collectSelectedPath = (nodes: FileTree[]): string[] => {
   const paths: string[] = [];
 
   for (const n of nodes) {
-    // ✅ FIX: Check selected for BOTH files and directories
     if (n.selected) {
       paths.push(n.path);
-      continue; // Don't recurse into children if parent is selected
+      continue;
     }
 
-    // Only recurse if directory is NOT selected
     if (n.type === 'Directory' && n.children?.length) {
       paths.push(...collectSelectedPath(n.children));
     }
@@ -80,20 +48,20 @@ export const collectSelectedPath = (nodes: FileTreeNode[]): string[] => {
   return paths;
 };
 
-export const getPreviewTree = async (paths: string[]): Promise<FileTreeNode[]> => {
-  const tree = await invoke<FileTreeNode[]>('get_preview_tree', { paths });
+export const getPreviewTree = async (paths: string[]): Promise<FileTree[]> => {
+  const tree = await invoke<FileTree[]>('get_preview_tree', { paths });
   return Array.isArray(tree) ? tree : [];
 };
 
-export const getPreviewTreeUI = async (paths: string[]): Promise<FileTreeNode[]> => {
+export const getPreviewTreeUI = async (paths: string[]): Promise<FileTree[]> => {
   const tree = await getPreviewTree(paths);
   // ensureChildrenArrays(tree);
   setSelectedRecursive(tree, true);
   return tree;
 };
 
-export const getSavedFiles = async (limit?: number): Promise<ParsedFileListItem[]> => {
-  const files = await invoke<ParsedFileListItem[]>('get_files', { limit });
+export const getSavedFiles = async (limit?: number): Promise<File[]> => {
+  const files = await invoke<File[]>('get_files', { limit });
   return files;
 };
 
@@ -101,19 +69,19 @@ export const parsePaths = async (paths: string[]) => {
   await invoke('parse', { paths });
 };
 
-export const deleteFile = async (file: SavedFiles) => {
+export const deleteFile = async (file: File) => {
   await invoke('delete_file', { dirName: file.id });
 };
 
-export const updateFile = async (content: string, selectedFile: SavedFiles | null) => {
-  await invoke('update_file', { dirName: selectedFile?.id, content: content });
+export const updateFile = async (content: string, file: FileDetail | null) => {
+  await invoke('update_file', { dirName: file?.id, content: content });
 };
 
-export const getFileContent = async (file: SavedFiles): Promise<string> => {
+export const getFileContent = async (file: FileDetail): Promise<string> => {
   return await invoke('get_file_content', { dirName: file.id });
 };
 
-export const openDefaultEditor = async (file: string) => {
+export const openDefaultEditor = async (file: FileDetail) => {
   await invoke('open_in_default_editor', { dirName: file.id });
   const window = await getCurrentWindow();
   const isFullScreen = await window.isFullscreen();
@@ -122,7 +90,7 @@ export const openDefaultEditor = async (file: string) => {
   }
 };
 
-export const openFileInfolder = async (file: SavedFiles) => {
+export const openFileInfolder = async (file: File | FileDetail) => {
   await invoke('open_in_folder', { dirName: file.id });
   const window = await getCurrentWindow();
   const isFullScreen = await window.isFullscreen();
@@ -131,18 +99,18 @@ export const openFileInfolder = async (file: SavedFiles) => {
   }
 };
 
-export const renameFile = async (file: SavedFiles, newName: string) => {
-  await invoke('rename_file', { dirName: file.id, newName: newName });
+export const renameFile = async (file: FileDetail, newName: string) => {
+  await invoke('rename_file', { dirName: String(file.id), newName: newName });
 };
 
-export const getFileDetail = async (fileId) => {
-  const detail = await invoke('get_file_detail', {
+export const getFileDetail = async (fileId: string) => {
+  const detail = await invoke<FileDetail>('get_file_detail', {
     dirName: fileId
   });
   return detail;
 };
 
-export const getFileMetadata = async (dirName) => {
+export const getFileMetadata = async (dirName: string) => {
   const metadata = await invoke('get_file_metadata', { dirName });
   return metadata;
 };

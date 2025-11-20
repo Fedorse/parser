@@ -4,21 +4,15 @@
   import { onDestroy, onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import { Button } from '$lib/components/ui/button/index';
-  import * as Card from '$lib/components/ui/card';
   import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
+  import * as Card from '$lib/components/ui/card';
+  import * as Empty from '$lib/components/ui/empty/index.js';
   import RecentFiles from '$lib/components/collaps-files.svelte';
   import ParseQueue from '$lib/components/card-queue.svelte';
-  import * as Empty from '$lib/components/ui/empty/index.js';
+  import { Button } from '$lib/components/ui/button/index';
   import { Spinner } from '$lib/components/ui/spinner/index.js';
 
-  import type { FileTree } from '$lib/type';
-
-  type DragEventPayload = {
-    type: 'over' | 'drop' | 'leave' | 'enter';
-    position: { x: number; y: number };
-    paths: string[];
-  };
+  import type { FileTree, DragEventPayload } from '$lib/type';
 
   let { data } = $props();
 
@@ -39,7 +33,7 @@
       isDialogOpen = true;
     } catch (err) {
       console.error(err);
-      toast.error('Failed to open selected paths');
+      toast.error('Failed to open selected file');
     } finally {
       isLoadingPreview = false;
     }
@@ -76,7 +70,7 @@
       isDialogOpen = true;
     } catch (err) {
       console.error(err);
-      toast.error('Failed to open selected paths');
+      toast.error('Failed to open selected file');
     } finally {
       isLoadingPreview = false;
     }
