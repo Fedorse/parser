@@ -15,13 +15,15 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import * as Dialog from '$lib/components/ui/dialog';
-  import * as Kbd from '$lib/components/ui/kbd/index.js';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
-  import { Route, Code, Copy, FolderOpen } from '@lucide/svelte/icons';
+  import { Route, Code, Copy, FolderOpen, Save, Network } from '@lucide/svelte/icons';
   import { Spinner } from '$lib/components/ui/spinner/index.js';
   import { Skeleton } from '$lib/components/ui/skeleton';
+  import Srotcuts from '$lib/components/shortcuts-help.svelte';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import { Separator } from '$lib/components/ui/separator/index.js';
 
   import type { FileDetail } from '@/lib/type.ts';
 
@@ -130,6 +132,8 @@
     if (!file || rename === file.name) return;
     try {
       await renameFile(file, rename.trim());
+      file.metadata.name = rename.trim();
+
       toast.success('Renamed file');
     } catch (e) {
       console.error(e);
@@ -173,6 +177,7 @@
     }
   });
   onMount(() => {
+    loadFile();
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
@@ -184,19 +189,15 @@
     window.addEventListener('keydown', onKey, { capture: true });
     return () => window.removeEventListener('keydown', onKey, { capture: true });
   });
-
-  onMount(async () => {
-    loadFile();
-  });
 </script>
 
 <Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
-  <Dialog.Content class=" flex h-[90vh] w-[90vw] flex-col gap-0 pb-0">
-    <Dialog.Header>
-      <Dialog.Title class="flex items-center gap-2 ">
+  <Dialog.Content class=" flex h-[90vh] w-[90vw] max-w-[1400px] flex-col gap-0 pt-3 pb-0">
+    <Dialog.Header class="flex flex-row items-center justify-between space-y-0  px-6 py-3">
+      <Dialog.Title class="flex w-lg items-center gap-2 ">
         {#if isMetaLoading}
-          <Skeleton class="h-9 w-7 rounded" />
-          <Skeleton class="h-9 w-80 rounded" />
+          <Skeleton class="bg-muted/50 size-8 rounded" />
+          <Skeleton class="bg-muted/50 h-8 w-48 rounded" />
         {:else}
           <Code class="text-muted-foreground size-4" />
           <Input
@@ -209,21 +210,8 @@
           />
         {/if}
       </Dialog.Title>
-    </Dialog.Header>
-
-    <div class="flex min-h-0 flex-1 flex-col">
       <div class="mb-2 flex items-center justify-between">
         <div class="flex items-center gap-2 pt-3">
-          {#if isMetaLoading}
-            <Skeleton class="h-5 w-[355px] rounded" />
-          {:else}
-            <Badge variant="outline" class="max-w-lg truncate font-mono text-xs">
-              <Route class="text-muted-foreground size-4 " />
-              <!-- {data.file?.directory_path} -->
-              /Users/ivans/work/parser-ai/src-tauri/src/consts.rs
-            </Badge>
-          {/if}
-
           {#if isLargeFile}
             <Badge variant="secondary" class="text-warn">Large file</Badge>
           {/if}
@@ -233,7 +221,9 @@
           {@render controls()}
         {/if}
       </div>
+    </Dialog.Header>
 
+    <div class="flex min-h-0 flex-1 flex-col">
       <div class="min-h-0 flex-1 overflow-hidden rounded-md border">
         {#if isLargeFile}
           {@render largFileContent()}
@@ -249,16 +239,16 @@
         {/if}
       </div>
     </div>
+
     <div class="text-muted-foreground flex justify-between gap-3 py-2 text-xs">
       <div class="flex items-center gap-4">
         {#if isMetaLoading}
-          <Skeleton class="h-4 w-15 rounded" />
-          <Skeleton class="h-4 w-15 rounded" />
+          <Skeleton class="bg-muted/50 h-4 w-md rounded" />
         {:else}
           {#if isTainted}
             <div class="animate-in fade-in text-warn flex items-center gap-1.5 font-medium">
               <div class="bg-warn size-1.5 rounded-full"></div>
-              Unsaved
+              Unsaved changes
             </div>
           {:else}
             <div class="flex items-center gap-1.5">
@@ -267,29 +257,28 @@
             </div>
           {/if}
           {#if file}
-            <span class="text-muted-foreground/50">|</span>
+            <Separator orientation="vertical" class=" text-muted bg-foreground/20 h-4 max-h-4" />
             <span>{formatFileSize(file.metadata.total_size)}</span>
+            <Separator orientation="vertical" class=" text-muted bg-foreground/20 h-4 max-h-4" />
+
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
+              <Route class="text-muted-foreground size-3 stroke-1 " />
+              <span class="max-w-[500px] truncate">
+                <!-- {file?.metadata.directory_path} -->
+                /Users/ivans/work/parser-ai/src-tauri/Cargo.toml
+              </span>
+              {#if isLargeFile}
+                <span class="text-border px-1">•</span>
+                <span class="text-warn font-medium">Large File</span>
+              {/if}
+            </div>
           {/if}
         {/if}
       </div>
-      <div class="flex gap-3">
-        <div class="flex items-center gap-1">
-          <Kbd.Root>⌘ + F</Kbd.Root>
-          <span>Search</span>
-        </div>
 
-        <div class="flex items-center gap-1">
-          <Kbd.Root>⌘ + K</Kbd.Root>
-          <span>Cmd</span>
-        </div>
-
-        <div class="flex items-center gap-1">
-          <Kbd.Root>⌘ + S</Kbd.Root>
-          <span>Save</span>
-        </div>
-      </div>
-    </div>
-  </Dialog.Content>
+      <Srotcuts />
+    </div></Dialog.Content
+  >
 </Dialog.Root>
 
 <ConfirmDialog
@@ -306,18 +295,54 @@
 </ConfirmDialog>
 
 {#snippet controls()}
-  <div class="flex items-center gap-2">
-    <Button variant="outline" class="text-muted-foreground" size="sm" onclick={handleCopy}>
-      <Copy class="size-4 stroke-1" />
-    </Button>
-    <Button
-      variant="outline"
-      size="sm"
-      onclick={() => goto(`/graph/${file?.id}`)}
-      class="text-muted-foreground">Graph</Button
-    >
+  <div class="bg-muted/40 flex items-center gap-1 rounded-lg border p-1">
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="text-muted-foreground size-8"
+          onclick={() => goto(`/graph/${file?.id}`)}
+        >
+          <Network class="size-4" />
+        </Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>View in Graph</Tooltip.Content>
+    </Tooltip.Root>
 
-    <Button variant="outline" size="sm" disabled={!isTainted} onclick={saveContent}>Save</Button>
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="text-muted-foreground size-8"
+          onclick={() => openFileInfolder(file!)}
+        >
+          <FolderOpen class="size-4" />
+        </Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>Show in Finder</Tooltip.Content>
+    </Tooltip.Root>
+
+    <div class="bg-border mx-1 h-4 w-[1px]"></div>
+
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="text-muted-foreground size-8"
+          onclick={handleCopy}
+        >
+          <Copy class="size-4" />
+        </Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>Copy content</Tooltip.Content>
+    </Tooltip.Root>
+
+    <Button variant={'ghost'} size="sm" disabled={!isTainted} onclick={saveContent}>
+      <Save class="size-4" />
+    </Button>
   </div>
 {/snippet}
 

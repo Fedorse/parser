@@ -7,11 +7,11 @@ export const load: PageLoad = ({ depends }) => {
   const savedCount = parseInt(localStorage.getItem('files-count') || '4', 10);
   const filesPromise = getSavedFiles()
     .then((files) => {
-      const filtered = files.filter((file) => !file.name.startsWith('.DS_Store'));
+      const cleanFiles = files.filter((file) => !file.name.startsWith('.DS_Store'));
 
-      localStorage.setItem('files-count', filtered.length.toString());
+      localStorage.setItem('files-count', cleanFiles.length.toString());
 
-      return filtered;
+      return cleanFiles;
     })
     .catch((err) => {
       console.error('Failed to load files:', err);

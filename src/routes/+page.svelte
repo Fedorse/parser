@@ -4,25 +4,20 @@
   import { onDestroy, onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
+  import { uniq } from 'es-toolkit';
   import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
   import * as Card from '$lib/components/ui/card';
   import * as Empty from '$lib/components/ui/empty/index.js';
   import RecentFiles from '$lib/components/collaps-files.svelte';
-  import ParseQueue from '$lib/components/card-queue.svelte';
   import { Button } from '$lib/components/ui/button/index';
   import { Spinner } from '$lib/components/ui/spinner/index.js';
   import { parseQueue } from '@/lib/state-utils/store-parse-queue.svelte';
 
   import type { FileTree, DragEventPayload } from '$lib/type';
-  import ParseQueueDrawer from '@/lib/components/parse-queue-side-bar.svelte';
 
   let { data } = $props();
 
   let filesTreeNodes = $state<FileTree[]>([]);
-
-  $effect(() => {
-    console.log('filesTreeNodes', filesTreeNodes);
-  });
 
   let isDialogOpen = $state(false);
   let isDragging = $state(false);
@@ -32,10 +27,10 @@
 
   const handleDroppedFiles = async (paths: string[]) => {
     if (paths.length === 0) return;
-
+    const uniquePaths = uniq(paths);
     try {
       isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(paths);
+      filesTreeNodes = await getPreviewTreeUI(uniquePaths);
       isDialogOpen = true;
     } catch (err) {
       console.error(err);
@@ -66,14 +61,13 @@
   };
 
   const handleOpenFiles = async () => {
-    const selected = await open({ multiple: true, directory: true });
+    const selectedPaths = await open({ multiple: true, directory: true });
 
-    if (!selected) return;
+    if (!selectedPaths) return;
 
     try {
       isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(selected);
-
+      filesTreeNodes = await getPreviewTreeUI(selectedPaths);
       isDialogOpen = true;
     } catch (err) {
       console.error(err);

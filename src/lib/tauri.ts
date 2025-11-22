@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import type { File, FileDetail, FileTree, FileMetadata } from '@/lib/type.ts';
+import { orderBy } from 'es-toolkit'; // <--- Импортируем orderBy
 
 export const ensureChildrenArrays = (nodes: FileTree[]): FileTree[] => {
   for (const n of nodes) {
@@ -36,15 +37,31 @@ export const collectSelectedPath = (nodes: FileTree[]): string[] => {
   return paths;
 };
 
+export const sortTreeRecursive = (nodes: FileTree[]): FileTree[] => {
+  const sorted = orderBy(
+    nodes,
+    [(node) => (node.type === 'Directory' ? '0' : '1'), (node) => node.name.toLowerCase()],
+    ['asc', 'asc']
+  );
+
+  for (const node of sorted) {
+    if (node.children && node.children.length > 0) {
+      node.children = sortTreeRecursive(node.children);
+    }
+  }
+  return sorted;
+};
+
 export const getPreviewTree = async (paths: string[]): Promise<FileTree[]> => {
   const tree = await invoke<FileTree[]>('get_preview_tree', { paths });
   return Array.isArray(tree) ? tree : [];
 };
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTree[]> => {
-  const tree = await getPreviewTree(paths);
-  setSelectedRecursive(tree);
-  return tree;
+  let pathsTree = await getPreviewTree(paths);
+  setSelectedRecursive(pathsTree);
+  pathsTree = sortTreeRecursive(pathsTree);
+  return pathsTree;
 };
 
 export const getSavedFiles = async (limit?: number): Promise<File[]> => {

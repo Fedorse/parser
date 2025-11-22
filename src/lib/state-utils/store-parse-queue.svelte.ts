@@ -14,7 +14,7 @@ class ParseQueue {
 
   constructor() {
     this.initListener();
-    // this.seedMockData();
+    this.seedMockData();
   }
 
   async initListener() {
