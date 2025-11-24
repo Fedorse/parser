@@ -15,7 +15,7 @@
 
   let { files }: Props = $props();
 
-  let open = $state(true);
+  let open = $state(false);
 
   const toggle = () => (open = !open);
 

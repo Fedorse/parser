@@ -9,6 +9,7 @@
   import { setSelected } from '@/lib/utils/utils';
 
   import type { FileTree } from '@/lib/type.ts';
+  import { sumBy } from 'es-toolkit';
 
   let { node, isRoot = false } = $props();
 
@@ -32,6 +33,14 @@
     };
   });
 
+  const calculateSelectedSize = (node: FileTree) => {
+    if (node.type === 'File') {
+      return node.selected ? (node.size ?? 0) : 0;
+    }
+    return sumBy(node.children ?? [], calculateSelectedSize);
+  };
+  let currentSize = $derived(calculateSelectedSize(node));
+
   $effect(() => {
     if (node.type === 'Directory') {
       node.selected = checkboxState.checked;
@@ -40,11 +49,11 @@
 </script>
 
 {#if node.type === 'File'}
-  <li class="hover:bg-muted/50 flex items-center gap-2 pt-1 transition-all">
+  <li class="hover:bg-muted/50 flex items-center gap-2 pt-1">
     <Checkbox bind:checked={node.selected} />
     <div
       class={{
-        'flex w-full items-center gap-2': true,
+        'flex w-full items-center gap-2 transition-colors duration-100': true,
         'text-primary ': node.selected,
         'text-primary/20': !node.selected
       }}
@@ -63,7 +72,7 @@
 {:else}
   <Collapsible.Root class="flex flex-col" bind:open={isOpen}>
     <Collapsible.Trigger>
-      <li class="hover:bg-muted/50 flex flex-row items-center gap-2 transition-colors">
+      <li class="hover:bg-muted/50 flex flex-row items-center gap-2 transition-all">
         <ChevronRight
           class={{
             'size-4 cursor-pointer transition-transform duration-200': true,
@@ -80,7 +89,7 @@
 
         <div
           class={{
-            'flex w-full items-center gap-2': true,
+            'flex w-full items-center gap-2 transition-all  duration-100': true,
             'text-primary': checkboxState.indeterminate || checkboxState.checked,
             'text-primary/20': !checkboxState.indeterminate && !checkboxState.checked
           }}
@@ -96,7 +105,7 @@
           </Label>
           {#if node.size}
             <span class="ml-2 pr-4 text-xs opacity-70">
-              {formatFileSize(node.size)}
+              {formatFileSize(currentSize)}
             </span>
           {/if}
         </div>

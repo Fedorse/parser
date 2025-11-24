@@ -18,8 +18,16 @@
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
-  import { Route, Code, Copy, FolderOpen, Save, Network, Loader } from '@lucide/svelte/icons';
-  import { Spinner } from '$lib/components/ui/spinner/index.js';
+  import {
+    Route,
+    Code,
+    Copy,
+    FolderOpen,
+    Save,
+    Network,
+    Loader,
+    TriangleAlert
+  } from '@lucide/svelte/icons';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import Srotcuts from '$lib/components/shortcuts-help.svelte';
   import * as Tooltip from '$lib/components/ui/tooltip';
@@ -40,6 +48,7 @@
   let isMetaLoading = $state(false);
   let isContentLoading = $state(false);
   let inputEl = $state<HTMLInputElement | null>(null);
+  let searchFound = $state(true);
 
   const isTainted = $derived(value !== snapshot);
   const isLargeFile = $derived(file ? file.metadata.total_size > THIRTY_MB_SIZE : false);
@@ -48,7 +57,6 @@
     try {
       await updateFile(value, file);
       snapshot = value;
-      toast.success('File updated successfully');
     } catch (err) {
       console.error(err);
       toast.error('Failed to update file content');
@@ -192,7 +200,12 @@
 </script>
 
 <Dialog.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
-  <Dialog.Content class=" flex h-[90vh] w-[90vw] max-w-[1400px] flex-col gap-0 pt-3 pb-0">
+  <Dialog.Content
+    class=" flex h-[90vh] w-[90vw] max-w-[1400px] flex-col gap-0 pt-3 pb-0"
+    onOpenAutoFocus={(e: Event) => {
+      e.preventDefault();
+    }}
+  >
     <Dialog.Header class="flex flex-row items-center justify-between space-y-0  px-6 py-3">
       <Dialog.Title class="flex w-lg items-center gap-2 ">
         {#if isMetaLoading}
@@ -217,9 +230,7 @@
           {/if}
         </div>
 
-        {#if !isLargeFile}
-          {@render controls()}
-        {/if}
+        {@render controls()}
       </div>
     </Dialog.Header>
 
@@ -235,7 +246,7 @@
             </div>
           </div>
         {:else}
-          <MonacoEditor bind:value search={searchPath} />
+          <MonacoEditor bind:value search={searchPath} bind:searchFound />
         {/if}
       </div>
     </div>
@@ -272,6 +283,12 @@
                 <span class="text-warn font-medium">Large File</span>
               {/if}
             </div>
+            {#if !searchFound}
+              <div class="flex items-center gap-1.5">
+                <TriangleAlert class="text-warn size-3.5" />
+                <span class="text-warn">No results found</span>
+              </div>
+            {/if}
           {/if}
         {/if}
       </div>
@@ -367,9 +384,6 @@
         <div class="space-y-2">
           <div class="flex items-center gap-2">
             <h3 class="text-xl font-semibold">File Too Large to Edit</h3>
-            <Badge variant="outline">
-              Size {file ? formatFileSize(file.metadata.total_size) : '...'}
-            </Badge>
           </div>
           <p class="text-muted-foreground text-sm">
             This file exceeds the 30 MB limit for in-app editing. You can open it in your system's

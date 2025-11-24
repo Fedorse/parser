@@ -9,7 +9,5 @@ export const load: PageLoad = async ({ params }) => {
     redirect(302, '/files');
   }
 
-  console.log(metadata.file_tree);
-
   return { metadata, tree: metadata.file_tree };
 };

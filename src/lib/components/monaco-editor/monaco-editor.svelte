@@ -3,8 +3,14 @@
   import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
   import { setupThemes } from './utils';
   import { mode } from 'mode-watcher';
+  import { toast } from 'svelte-sonner';
 
-  let { value = $bindable(''), className = '', search = '' } = $props();
+  let {
+    value = $bindable(''),
+    className = '',
+    search = '',
+    searchFound = $bindable(true)
+  } = $props();
 
   let editor: Monaco.editor.IStandaloneCodeEditor | null = $state(null);
   let editorContainer: HTMLElement | null = $state(null);
@@ -131,11 +137,14 @@
       /* captureMatches */ false
     );
 
-    if (!match) return;
-
-    editor.revealRangeInCenter(match.range);
-    editor.setSelection(match.range);
-    editor.focus();
+    if (match) {
+      editor.revealRangeInCenter(match.range);
+      editor.setSelection(match.range);
+      editor.focus();
+      searchFound = true;
+    } else {
+      searchFound = false;
+    }
   });
 
   $effect(() => {

@@ -72,4 +72,5 @@ export type GraphData = {
   open?: boolean;
   dir: Direction;
   openEditor?: (path: string) => void;
+  largeFile?: boolean;
 };

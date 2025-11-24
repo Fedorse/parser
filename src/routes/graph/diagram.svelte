@@ -22,14 +22,16 @@
   import CustomNode from '@/routes/graph/node.svelte';
   import { ArrowLeftRight, ArrowUpDown, Fullscreen } from '@lucide/svelte';
 
-  import type { FileTree, GraphData, Direction, WithMeasured } from '@/lib/type';
+  import type { FileTree, GraphData, Direction, WithMeasured, FileMetadata } from '@/lib/type';
 
   const WIDTH_NODE = 180;
   const HEIGHT_NODE = 46;
+  const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
-  type Props = { tree?: FileTree[]; fileId: string };
+  type Props = { tree?: FileTree[]; fileId: string; metadata?: FileMetadata };
 
-  const { tree = [], fileId }: Props = $props();
+  const { tree = [], fileId, metadata }: Props = $props();
+  const isLargeFile = $derived(metadata ? metadata.total_size > THIRTY_MB_SIZE : false);
 
   const { fitView } = useSvelteFlow();
 
@@ -83,7 +85,8 @@
       onToggle: file.type === 'Directory' ? toggleDir : undefined,
       open: file.type === 'Directory' ? expandedDirs.has(file.path) : undefined,
       dir: direction,
-      openEditor: openInEditor
+      openEditor: openInEditor,
+      largeFile: isLargeFile
     },
     position: { x: 0, y: 0 }
   });
@@ -176,7 +179,14 @@
 </script>
 
 <div class="w-full" bind:this={parentEl}>
-  <SvelteFlow bind:nodes bind:edges {nodeTypes} colorMode={mode.current} {defaultEdgeOptions}>
+  <SvelteFlow
+    bind:nodes
+    bind:edges
+    {nodeTypes}
+    colorMode={mode.current}
+    {defaultEdgeOptions}
+    fitView
+  >
     <Controls position="bottom-left">
       <ControlButton title="Toggle Fullscreen" onclick={() => toggleFullscreen()}
         ><Fullscreen /></ControlButton

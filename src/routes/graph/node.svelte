@@ -49,14 +49,16 @@
   </Tooltip.Root>
 
   <div class="flex flex-1 justify-end gap-1">
-    <button
-      class="hover:bg-background inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5
+    {#if !data.largeFile}
+      <button
+        class="hover:bg-background inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5
                transition"
-      onclick={() => data?.openEditor?.(data.path)}
-      title="Open file in editor"
-    >
-      <SearchCode class="size-3.5" />
-    </button>
+        onclick={() => data?.openEditor?.(data.path)}
+        title={`Find "${data.label}" in file`}
+      >
+        <SearchCode class="size-3.5" />
+      </button>
+    {/if}
     {#if isDir}
       <button
         class="hover:bg-background inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5

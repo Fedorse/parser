@@ -1,11 +1,16 @@
 <script lang="ts">
-  import { setSelectedAll } from '@/lib/utils/utils';
+  import { formatFileSize, setSelectedAll } from '@/lib/utils/utils';
   import FileTreeItem from '$lib/components/file-tree-item.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
   import { Separator } from '$lib/components/ui/separator';
+  import { Switch } from '$lib/components/ui/switch'; // Импортируем Switch
+  import { Label } from '$lib/components/ui/label'; // Импортируем Label
 
   import type { FileTree } from '$lib/type';
+  import { CheckSquare, HardDrive, Square } from '@lucide/svelte';
+  import Badge from './ui/badge/badge.svelte';
+  import { sumBy } from 'es-toolkit';
 
   type Props = { filesTree: FileTree[]; open: boolean; onParse: () => void };
 
@@ -17,16 +22,28 @@
     allSelected = !allSelected;
     setSelectedAll(filesTree, allSelected);
   };
+
+  const calculateTotalSelectedSize = (nodes: FileTree[]): number => {
+    return sumBy(nodes, (node) => {
+      if (node.type === 'File') {
+        return node.selected ? (node.size ?? 0) : 0;
+      }
+      return calculateTotalSelectedSize(node.children ?? []);
+    });
+  };
+
+  let totalSize = $derived(calculateTotalSelectedSize(filesTree));
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="flex h-[70%] w-[60vw] flex-col">
-    <Dialog.Header class="flex items-start justify-between gap-2">
-      <div>
-        <Dialog.Title>Select to parse files</Dialog.Title>
-        <Dialog.Description>Choose which files you want to parse.</Dialog.Description>
-      </div>
+  <Dialog.Content class="flex h-[80vh] w-[60vw] flex-col">
+    <Dialog.Header class="flex gap-2">
+      <Dialog.Title class="text-lg ">Select Files to Parse</Dialog.Title>
+      <Dialog.Description class="text-xs">
+        Review the directory structure and select content for parse.
+      </Dialog.Description>
     </Dialog.Header>
+    <!-- <Separator orientation="horizontal" /> -->
 
     <ul class=" h-full w-full flex-1 space-y-1 overflow-y-auto pr-2 text-sm">
       {#each filesTree as node (node.path)}
@@ -36,11 +53,36 @@
 
     <Separator orientation="horizontal" />
 
-    <div class="flex gap-4">
-      <Button onclick={onParse}>Parse</Button>
-      <Button variant="secondary" class="self-end" onclick={toggleAll}>
-        {allSelected ? 'Deselect All' : 'Select All'}
-      </Button>
-    </div>
-  </Dialog.Content>
+    <div class="flex items-center justify-between">
+      <div class="flex gap-3">
+        <Badge variant="outline" class="h-8 min-w-[140px] text-xs ">
+          <HardDrive class="text-muted-foreground size-3.5 stroke-1" />
+          <span class="text-muted-foreground">Total:</span>
+          <span class="text-foreground">
+            {formatFileSize(totalSize)}
+          </span>
+        </Badge>
+        <div class="flex items-center gap-3">
+          <label
+            class="group border-border bg-background hover:bg-accent hover:border-accent-foreground/20 flex cursor-pointer items-center gap-3 rounded-md border py-1.5 pr-1.5 pl-4 transition-all active:scale-95"
+          >
+            <span
+              class="text-muted-foreground group-hover:text-foreground text-xs transition-colors select-none"
+            >
+              {allSelected ? 'Select All' : 'Deselect All'}
+            </span>
+            <Switch
+              checked={allSelected}
+              onCheckedChange={toggleAll}
+              class="data-[state=checked]:bg-primary scale-90 shadow-none"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <Button variant="outline" onclick={() => (open = false)}>Cancel</Button>
+        <Button onclick={onParse} disabled={totalSize === 0}>Start Parsing</Button>
+      </div>
+    </div></Dialog.Content
+  >
 </Dialog.Root>
