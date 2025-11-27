@@ -178,7 +178,7 @@
   onMount(rebuildAndLayout);
 </script>
 
-<div class="w-full">
+<div class="h-full min-h-[450px] w-full">
   <SvelteFlow
     bind:nodes
     bind:edges
