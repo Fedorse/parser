@@ -241,8 +241,8 @@
     <Dialog.Header class="flex flex-row items-center justify-between space-y-0  px-6 py-3">
       <Dialog.Title class="flex w-lg items-center gap-2 ">
         {#if isMetaLoading}
-          <Skeleton class="bg-muted/50 size-8 rounded" />
-          <Skeleton class="bg-muted/50 h-8 w-48 rounded" />
+          <Skeleton class="bg-muted/80 size-8 rounded" />
+          <Skeleton class="bg-muted/80 h-8 w-48 rounded" />
         {:else}
           <Code class="text-muted-foreground size-4" />
           <Input
@@ -293,7 +293,7 @@
     <div class="text-muted-foreground flex justify-between gap-3 py-2 text-xs">
       <div class="flex items-center gap-4">
         {#if isMetaLoading}
-          <Skeleton class="bg-muted/50 h-4 w-md rounded" />
+          <Skeleton class="bg-muted/80 h-4 w-md rounded" />
         {:else}
           {#if isTainted}
             <div class="animate-in fade-in text-warn flex items-center gap-1.5">
