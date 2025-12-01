@@ -9,8 +9,9 @@
   import Self from './file-tree-item.svelte';
 
   import type { FileTree } from '@/lib/type.ts';
+  import { slide } from 'svelte/transition';
 
-  let { node, isRoot = false } = $props();
+  let { node = $bindable(), isRoot = false } = $props();
 
   let isOpen = $state(isRoot && node.type === 'Directory');
 
@@ -110,11 +111,14 @@
         </div>
       </li>
     </Collapsible.Trigger>
-    <Collapsible.Content>
+    <Collapsible.Content forceMount>
       {#if isOpen && node.children?.length}
-        <ul class="border-border relative ml-1 space-y-1 border-l pl-8">
-          {#each node.children as child (child.path)}
-            <Self node={child} />
+        <ul
+          class="border-border relative ml-1 space-y-1 border-l pl-8"
+          transition:slide={{ duration: 200 }}
+        >
+          {#each node.children as child, i (child.path)}
+            <Self bind:node={node.children[i]} />
           {/each}
         </ul>
       {/if}

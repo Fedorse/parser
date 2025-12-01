@@ -36,7 +36,9 @@
     <Button href="/files" variant="link">Show all files</Button>
   </div>
 
-  <Collapsible.Content>
+  <Collapsible.Content
+    class="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden"
+  >
     <div class="pt-3">
       {#await files}
         <div class="divide-border border-border/70 divide-y rounded-md border">
@@ -67,7 +69,9 @@
                     <div class="truncate text-sm font-medium">{f.name}</div>
                     <div class="text-muted-foreground truncate text-xs">{f.directory_path}</div>
                   </div>
-                  <div class="text-muted-foreground text-xs">{formatFileSize(f.total_size)}</div>
+                  <div class="text-muted-foreground text-xs">
+                    {formatFileSize(f.total_size)}
+                  </div>
                 </div>
               </li>
             {/each}
@@ -78,6 +82,6 @@
           {/if}
         </ul>
       {/await}
-    </div></Collapsible.Content
-  >
+    </div>
+  </Collapsible.Content>
 </Collapsible.Root>

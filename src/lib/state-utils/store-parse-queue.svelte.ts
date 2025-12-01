@@ -1,5 +1,7 @@
 import { invalidateAll } from '$app/navigation';
-import { listen } from '@tauri-apps/api/event';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { toast } from 'svelte-sonner';
+import { set } from 'zod';
 
 export type ParseProgress = {
   parse_id: string;
@@ -10,25 +12,39 @@ export type ParseProgress = {
 class ParseQueue {
   queue = $state<Map<string, ParseProgress>>(new Map());
   isSideBarOpen = $state(false);
-  isPending = $state(false);
+  pendingCount = $state(0);
+  autoOpen = $state(true);
 
-  unlisten: (() => void) | undefined;
+  private unlistenFn: UnlistenFn | undefined;
+  private processedIds = new Set<string>();
 
-  constructor() {
-    this.initListener();
-    // this.seedMockData();
-  }
+  constructor() {}
 
-  async initListener() {
+  async mount() {
+    const storedAutoOpen = localStorage.getItem('parse-queue-auto-open');
+    if (storedAutoOpen !== null) {
+      this.autoOpen = storedAutoOpen === 'true' ? true : false;
+    }
+
+    if (this.unlistenFn) return;
+
     try {
-      this.unlisten = await listen<ParseProgress>('parse-progress', (event) => {
+      this.unlistenFn = await listen<ParseProgress>('parse-progress', (event) => {
         const progress = event.payload;
-        const prev = this.queue.get(progress.parse_id);
-        const isComplete = progress.parse_progress === 100;
-        if (this.isPending) {
-          this.isPending = false;
+        const id = progress.parse_id;
+        const isComplete = progress.parse_progress >= 100;
+
+        if (this.processedIds.has(id)) return;
+
+        if (!this.queue.has(id)) {
+          if (this.pendingCount > 0) {
+            this.pendingCount--;
+          }
         }
 
+        // throtle for progress updates
+
+        const prev = this.queue.get(id);
         const MIN_STEP = 0.5;
         if (
           !isComplete &&
@@ -41,11 +57,19 @@ class ParseQueue {
         this.add(progress);
 
         if (isComplete) {
+          this.processedIds.add(id);
+          toast.success(`Parsing completed`);
           invalidateAll();
         }
       });
     } catch (error) {
       console.error('Failed to initialize parse progress listener:', error);
+    }
+  }
+  unmount() {
+    if (this.unlistenFn) {
+      this.unlistenFn();
+      this.unlistenFn = undefined;
     }
   }
 
@@ -62,13 +86,24 @@ class ParseQueue {
   }
 
   get hasActiveParsing() {
-    return this.activeParses.length > 0;
+    return this.activeParses.length > 0 || this.pendingCount > 0;
   }
 
-  setPending(value: boolean) {
-    this.isPending = true;
-    if (value) {
+  toggleAutoOpen() {
+    this.autoOpen = !this.autoOpen;
+    localStorage.setItem('parse-queue-auto-open', String(this.autoOpen));
+  }
+
+  addPendingRequest() {
+    this.pendingCount += 1;
+    if (this.autoOpen) {
       this.setOpen(true);
+    }
+  }
+
+  cancelPendingRequest() {
+    if (this.pendingCount > 0) {
+      this.pendingCount -= 1;
     }
   }
 
@@ -86,33 +121,6 @@ class ParseQueue {
     this.queue = new Map(this.queue);
   }
 
-  seedMockData() {
-    const mock: ParseProgress[] = [
-      {
-        parse_id: '2025-11-11_14-30-45',
-        parse_progress: 42.7,
-        files_amount: 125,
-        result_file_path: null
-      },
-      {
-        parse_id: '2025-11-11_14-31-12',
-        parse_progress: 78.3,
-        files_amount: 89,
-        result_file_path: null
-      },
-      {
-        parse_id: '2025-11-11_14-29-03',
-        parse_progress: 100,
-        files_amount: 234,
-        result_file_path:
-          '/home/user/.tauri-parse-files/parsed_files/2025-11-11_14-29-03/content.txt'
-      }
-    ];
-
-    for (const item of mock) {
-      this.add(item);
-    }
-  }
   clearCompleted() {
     for (const [id, parse] of this.queue.entries()) {
       if (parse.parse_progress === 100) {

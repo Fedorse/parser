@@ -13,7 +13,7 @@
 
   type Props = { filesTree: FileTree[]; open: boolean; onParse: () => void };
 
-  let { filesTree, open = $bindable(false), onParse }: Props = $props();
+  let { filesTree = $bindable(), open = $bindable(false), onParse }: Props = $props();
 
   let allSelected = $state(true);
 
@@ -45,8 +45,8 @@
     <!-- <Separator orientation="horizontal" /> -->
 
     <ul class=" h-full w-full flex-1 space-y-1 overflow-y-auto pr-2 text-sm">
-      {#each filesTree as node (node.path)}
-        <FileTreeItem {node} isRoot={true} />
+      {#each filesTree as node, i (node.path)}
+        <FileTreeItem bind:node={filesTree[i]} isRoot={true} />
       {/each}
     </ul>
 
@@ -70,6 +70,8 @@
             >
               {allSelected ? 'Select All' : 'Deselect All'}
             </span>
+            <div class="bg-border mx-1 h-4 w-[1px]"></div>
+
             <Switch
               checked={allSelected}
               onCheckedChange={toggleAll}

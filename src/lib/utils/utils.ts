@@ -1,6 +1,9 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 export type WithoutChildrenOrChild<T> = Omit<T, 'children' | 'child'>;
+export type WithoutChildren<T> = Omit<T, 'children'>;
+
+export type WithElementRef<T, E = HTMLElement> = T & { ref?: E | null };
 
 import type { FileTree } from '@/lib/type.ts';
 

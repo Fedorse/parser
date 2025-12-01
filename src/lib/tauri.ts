@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { orderBy } from 'es-toolkit';
 
-import type { File, FileDetail, FileTree, FileMetadata } from '@/lib/type.ts';
+import type { File, FileTree, FileMetadata } from '@/lib/type.ts';
 
 export const ensureChildrenArrays = (nodes: FileTree[]): FileTree[] => {
   for (const n of nodes) {
@@ -56,6 +56,10 @@ export const getPreviewTree = async (paths: string[]): Promise<FileTree[]> => {
   const tree = await invoke<FileTree[]>('get_preview_tree', { paths });
   return Array.isArray(tree) ? tree : [];
 };
+export const getFileTree = async (dirName: string): Promise<FileTree[]> => {
+  const tree = await invoke<FileTree[]>('get_file_tree', { dirName });
+  return tree;
+};
 
 export const getPreviewTreeUI = async (paths: string[]): Promise<FileTree[]> => {
   let pathsTree = await getPreviewTree(paths);
@@ -77,15 +81,15 @@ export const deleteFile = async (file: File): Promise<void> => {
   await invoke('delete_file', { dirName: file.id });
 };
 
-export const updateFile = async (content: string, file: FileDetail | null): Promise<void> => {
+export const updateFile = async (content: string, file: FileMetadata | null): Promise<void> => {
   await invoke('update_file', { dirName: file?.id, content: content });
 };
 
-export const getFileContent = async (file: FileDetail): Promise<string> => {
+export const getFileContent = async (file: FileMetadata): Promise<string> => {
   return await invoke('get_file_content', { dirName: file.id });
 };
 
-export const openDefaultEditor = async (file: FileDetail): Promise<void> => {
+export const openDefaultEditor = async (file: FileMetadata): Promise<void> => {
   await invoke('open_in_default_editor', { dirName: file.id });
   const window = await getCurrentWindow();
   const isFullScreen = await window.isFullscreen();
@@ -105,12 +109,12 @@ export const openFileInfolder = async (file: FileWithId): Promise<void> => {
   }
 };
 
-export const renameFile = async (file: FileDetail, newName: string): Promise<void> => {
+export const renameFile = async (file: FileMetadata, newName: string): Promise<void> => {
   await invoke('rename_file', { dirName: String(file.id), newName: newName });
 };
 
-export const getFileDetail = async (fileId: string): Promise<FileDetail | null> => {
-  const detail = await invoke<FileDetail>('get_file_detail', {
+export const getFileDetail = async (fileId: string): Promise<FileMetadata | null> => {
+  const detail = await invoke<FileMetadata>('get_file_detail', {
     dirName: fileId
   });
   return detail;

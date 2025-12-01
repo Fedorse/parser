@@ -1,10 +1,10 @@
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
+  import { uniq } from 'es-toolkit';
   import { onDestroy, onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import { uniq } from 'es-toolkit';
   import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
   import * as Card from '$lib/components/ui/card';
   import RecentFiles from '$lib/components/collaps-files.svelte';
@@ -51,9 +51,8 @@
     filesTreeNodes = [];
 
     try {
-      parseQueue.setPending(true);
+      parseQueue.addPendingRequest();
       await parsePaths(paths);
-      toast.success('Parse successfully completed');
     } catch (err) {
       console.error(err);
       toast.error('Parse failed');
@@ -155,10 +154,10 @@
                 class="bg-muted/30 group-hover:bg-muted rounded-full p-4 transition-all duration-300 group-hover:scale-110"
               >
                 {#if isDragging}
-                  <FolderOpen class="text-primary size-16 stroke-[1.5]" />
+                  <FolderOpen class="text-primary size-16 stroke-1" />
                 {:else}
                   <Folder
-                    class="text-muted-foreground/50 group-hover:text-foreground size-12 transition-colors"
+                    class="text-muted-foreground/80 group-hover:text-foreground size-12 transition-colors"
                   />
                 {/if}
               </button>
@@ -175,7 +174,7 @@
 
   {#if filesTreeNodes.length > 0}
     <FileDialogTree
-      filesTree={filesTreeNodes}
+      bind:filesTree={filesTreeNodes}
       bind:open={isDialogOpen}
       onParse={parseSelectedNodes}
     />

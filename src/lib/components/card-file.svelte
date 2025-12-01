@@ -6,10 +6,10 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-  import Badge from './ui/badge/badge.svelte';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
   import { Separator } from '$lib/components/ui/separator/index.js';
   import { Button } from '$lib/components/ui/button/index';
+  import { Badge } from '@/lib/components/ui/badge/index.js';
 
   import {
     Trash2,

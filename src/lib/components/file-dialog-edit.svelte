@@ -10,13 +10,12 @@
     openDefaultEditor,
     openFileInfolder,
     getFileContent,
-    getFileDetail
+    getFileMetadata
   } from '$lib/tauri';
   import { formatFileSize } from '@/lib/utils/utils';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import * as Dialog from '$lib/components/ui/dialog';
-  import Badge from '$lib/components/ui/badge/badge.svelte';
   import MonacoEditor from '$lib/components/monaco-editor/monaco-editor.svelte';
   import ConfirmDialog from '$lib/components/confirm-dialog.svelte';
   import {
@@ -36,7 +35,7 @@
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { Separator } from '$lib/components/ui/separator/index.js';
 
-  import type { FileDetail } from '@/lib/type.ts';
+  import type { FileMetadata } from '@/lib/type.ts';
 
   let { fileId, searchPath, onClose } = $props();
 
@@ -48,9 +47,9 @@
     .max(255, 'Name cannot be longer than 255 characters')
     .regex(/^[^\\/:*?"<>|]+$/, 'Invalid characters in filename');
 
-  let file = $state<FileDetail | null>(null);
+  let file = $state<FileMetadata | null>(null);
 
-  let rename = $state<string>('');
+  let rename = $state<string | undefined>('');
   let renameError = $state<string | null>('');
   let renameSuccess = $state(false);
 
@@ -66,7 +65,7 @@
   let inputEl = $state<HTMLInputElement | null>(null);
 
   const isTainted = $derived(value !== snapshot);
-  const isLargeFile = $derived(file ? file.metadata.total_size > THIRTY_MB_SIZE : false);
+  const isLargeFile = $derived(file ? file.total_size > THIRTY_MB_SIZE : false);
 
   const saveContent = async () => {
     try {
@@ -82,7 +81,7 @@
     confirmOpen = false;
     isOpen = false;
     onClose();
-    if (rename !== file?.metadata.name) await invalidate('app:files');
+    if (rename !== file?.name) await invalidate('app:files');
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -106,7 +105,7 @@
       if (!file) return;
       e.preventDefault();
       e.stopPropagation();
-      rename = file.metadata.name;
+      rename = file.name;
       renameError = null;
       inputEl?.blur();
     }
@@ -117,30 +116,32 @@
     isContentLoading = false;
     try {
       isMetaLoading = true;
-      const detail = await getFileDetail(fileId);
+      const detail = await getFileMetadata(fileId);
       if (!detail) {
         toast.error('File not found');
         onClose();
         return;
       }
       file = detail;
-      rename = detail.metadata.name;
+      rename = detail.name;
     } catch (e) {
       console.error('Failed to load file:', e);
       toast.error('Failed to load file');
-      onClose();
       return;
     } finally {
       isMetaLoading = false;
     }
 
-    if (file && file.metadata.total_size <= THIRTY_MB_SIZE) {
+    if (file && file.total_size <= THIRTY_MB_SIZE) {
       try {
         isContentLoading = true;
         const content = await getFileContent(file);
         value = content;
         snapshot = content;
       } catch (err) {
+        value = 'Failed to load file content';
+        snapshot = 'Failed to load file content';
+
         console.error('Failed to load file content:', err);
       } finally {
         isContentLoading = false;
@@ -149,9 +150,7 @@
   };
 
   const handleRename = async () => {
-    if (!file) return;
-
-    if (rename === file.metadata.name) {
+    if (rename === file?.name) {
       renameError = null;
       return;
     }
@@ -165,7 +164,7 @@
     try {
       renameError = null;
       const newName = validation.data;
-      await renameFile(file, newName);
+      await renameFile(file!, newName);
       rename = newName;
       renameSuccess = true;
 
@@ -175,14 +174,14 @@
     } catch (e) {
       console.error(e);
       renameError = 'System failed to rename file';
-      rename = file.metadata.name;
+      rename = file?.name;
     }
   };
   const onRenameInput = () => {
     if (renameError) renameError = null;
   };
 
-  const openEditor = async (file: FileDetail) => {
+  const openEditor = async (file: FileMetadata) => {
     if (!file) return;
     try {
       await openDefaultEditor(file);
@@ -190,7 +189,7 @@
       console.error('Failed to open file in editor:', err);
     }
   };
-  const handleOpenDir = async (file: FileDetail) => {
+  const handleOpenDir = async (file: FileMetadata) => {
     if (!file) return;
     try {
       await openFileInfolder(file);
@@ -238,7 +237,7 @@
       e.preventDefault();
     }}
   >
-    <Dialog.Header class="flex flex-row items-center justify-between space-y-0  px-6 py-3">
+    <Dialog.Header class="flex flex-row items-center justify-between space-y-0  px-6 pt-1 pb-3">
       <Dialog.Title class="flex w-lg items-center gap-2 ">
         {#if isMetaLoading}
           <Skeleton class="bg-muted/80 size-8 rounded" />
@@ -262,15 +261,8 @@
           />
         {/if}
       </Dialog.Title>
-      <div class="mb-2 flex items-center justify-between">
-        <div class="flex items-center gap-2 pt-3">
-          {#if isLargeFile}
-            <Badge variant="secondary" class="text-warn">Large file</Badge>
-          {/if}
-        </div>
 
-        {@render controls()}
-      </div>
+      {@render controls()}
     </Dialog.Header>
 
     <div class="flex min-h-0 flex-1 flex-col">
@@ -295,21 +287,23 @@
         {#if isMetaLoading}
           <Skeleton class="bg-muted/80 h-4 w-md rounded" />
         {:else}
-          {#if isTainted}
+          {#if isLargeFile}
+            <span class="text-warn">Large File</span>
+          {:else if isTainted}
             <div class="animate-in fade-in text-warn flex items-center gap-1.5">
               <div class="bg-warn size-1.5 rounded-full"></div>
               Unsaved changes
             </div>
           {:else}
             <div class="animate-in fade-in flex items-center gap-1.5">
-              <div class="bg-chart-2 size-1.5 rounded-full"></div>
+              <div class="bg-success size-1.5 rounded-full"></div>
               Ready
             </div>
           {/if}
 
           {#if file}
             <Separator orientation="vertical" class="bg-foreground/20 h-4 max-h-4" />
-            <span>{formatFileSize(file.metadata.total_size)}</span>
+            <span>{formatFileSize(file.total_size)}</span>
             <Separator orientation="vertical" class="bg-foreground/20 h-4 max-h-4" />
 
             <div
@@ -320,16 +314,15 @@
               <span
                 class="min-w-0 truncate text-left"
                 style="direction: rtl;"
-                title={file.metadata.directory_path}
+                title={file.directory_path}
               >
-                <!-- &lrm;{file.metadata.directory_path} -->
-                &lrm;/Users/ivans/work/parser-ai/src-tauri/Cargo.toml/Users/ivans/work/parser-ai/src-tauri/Cargo.toml
+                &lrm;{file.directory_path}
               </span>
 
-              {#if isLargeFile}
+              <!-- {#if isLargeFile}
                 <span class="text-border shrink-0 px-1">•</span>
                 <span class="text-warn shrink-0 font-medium">Large File</span>
-              {/if}
+              {/if} -->
             </div>
 
             {#if renameError}

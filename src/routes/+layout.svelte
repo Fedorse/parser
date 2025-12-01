@@ -7,19 +7,28 @@
   import ParseQueueSideBar from '@/lib/components/parse-queue-side-bar.svelte';
   import * as Tooltip from '$lib/components/ui/tooltip/index.js';
   import { Toaster } from '$lib/components/ui/sonner/index.js';
-  import { fly } from 'svelte/transition';
-  import { expoOut, expoIn, sineIn } from 'svelte/easing';
+  import PageTranstion from '@/lib/components/page-transtion.svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
 
   let { children } = $props();
+
   const editFile = $derived(page.state.editFile);
 
   const handleCloseEditor = () => {
     history.back();
   };
 
-  // 1
-  //   in:fly={{ y: 20, duration: 200, easing: cubicOut, delay: 200 }}
-  // out:fly={{ y: -20, duration: 200, easing: sineIn }}
+  // 1. При загрузке приложения включаем "радиоприемник"
+  onMount(() => {
+    parseQueue.mount();
+  });
+
+  // 2. При перезагрузке/удалении компонента выключаем его!
+  // Это самое важное для предотвращения дублей при разработке.
+  onDestroy(() => {
+    parseQueue.unmount();
+  });
 </script>
 
 <Tooltip.Provider delayDuration={1000}>
@@ -27,19 +36,9 @@
   <div class="flex h-screen w-screen flex-col">
     <NavBar />
     <ModeWatcher />
-
-    <main class=" grid flex-1">
-      {#key page.url.pathname}
-        <div
-          class="col-start-1 row-start-1 h-full w-full"
-          in:fly={{ x: 20, duration: 200, easing: expoOut, delay: 200 }}
-          out:fly={{ x: -20, duration: 200, easing: sineIn }}
-        >
-          {@render children?.()}
-        </div>
-      {/key}
-    </main>
-
+    <PageTranstion>
+      {@render children?.()}
+    </PageTranstion>
     {#if editFile}
       <FileDialogEdit
         fileId={editFile.id}

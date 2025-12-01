@@ -2,10 +2,10 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
-  import { ArrowLeft, MonitorCog } from '@lucide/svelte/icons';
+  import { ArrowLeft, Settings, Monitor } from '@lucide/svelte/icons';
   import ToggleThemeButton from '$lib/components/theme-switch-button.svelte';
   import { Button } from '$lib/components/ui/button/index';
-  import CubeLoader from '$lib/components/cube-loader.svelte';
+  import { Badge } from '@/lib/components/ui/badge/index.js';
 
   const isHome = $derived(page.url.pathname === '/');
 
@@ -43,52 +43,40 @@
   </div>
 
   <div class="flex items-center gap-3">
-    {#if parseQueue.size > 0}
-      {@render queueStatusBar()}
-    {:else}
-      <Button onclick={toggleSidebar} variant="nav" class="cursor-pointer p-5" size="icon">
-        <MonitorCog class="size-4 " />
-      </Button>
-    {/if}
-
+    {@render controlSystemActiv()}
     <ToggleThemeButton />
   </div>
 </nav>
 
-{#snippet queueStatusBar()}
-  <button
-    onclick={toggleSidebar}
-    class={{
-      'group hover:bg-accent/50 bg-card/20 flex h-10 cursor-pointer items-center gap-3 rounded-md border pr-4 shadow-sm transition-all active:scale-95': true
-    }}
-  >
-    <div
-      class={{
-        'flex h-full items-center justify-center rounded border-r-1 px-3  ': true
-      }}
-    >
-      {#if parseQueue.hasActiveParsing}
-        <CubeLoader class="h-full w-full" variant="loading" size="16px" />
+{#snippet controlSystemActiv()}
+  <Button onclick={toggleSidebar} variant="nav" class="cursor-pointer p-5" size="icon">
+    <div class="relative">
+      <Monitor class="size-4" />
+      {#if parseQueue.completedParses.length > 0 && !parseQueue.hasActiveParsing}
+        <div
+          class={{
+            'bg-background absolute -top-2.5 -right-1.5 rounded-full ': true
+          }}
+        >
+          <Badge class="h-3 w-3 rounded-full p-1  text-[10px] tabular-nums"
+            >{parseQueue.completedParses.length}</Badge
+          >
+        </div>
       {:else}
-        <CubeLoader class="h-full w-full" variant="success" size="16px" />
+        <div
+          class={{
+            'bg-background absolute -top-1.5 -right-1.5 rounded-full p-[1px]': true
+          }}
+        >
+          <Settings
+            class={{
+              ' size-3': true,
+              'text-warn animate-spin': parseQueue.hasActiveParsing,
+              'text-foreground': !parseQueue.hasActiveParsing
+            }}
+          />
+        </div>
       {/if}
     </div>
-
-    <div class="flex flex-col items-start justify-center gap-0 leading-none">
-      <div class="flex items-center gap-2">
-        <span class="text-foreground text-xs">
-          {parseQueue.hasActiveParsing ? 'Processing files' : 'Queue Ready'}
-        </span>
-      </div>
-
-      <div class="text-muted-foreground flex items-center gap-1.5 text-[10px]">
-        <span>
-          {parseQueue.completedParses.length}
-          <span class="opacity-50">/</span>
-          {parseQueue.size}
-          {parseQueue.size === 1 ? 'file' : 'files'}
-        </span>
-      </div>
-    </div>
-  </button>
+  </Button>
 {/snippet}

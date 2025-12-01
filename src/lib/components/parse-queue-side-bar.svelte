@@ -4,9 +4,11 @@
   import * as ScrollArea from '$lib/components/ui/scroll-area';
   import { Button } from '$lib/components/ui/button';
   import { Progress } from '$lib/components/ui/progress';
-  import { Terminal, Trash2, Hash, X } from '@lucide/svelte/icons';
+  import { Terminal, Trash2, Hash, X, PanelRightOpen, PanelRightClose } from '@lucide/svelte/icons';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import CubeLoader from '$lib/components/cube-loader.svelte';
+  import { Switch } from '$lib/components/ui/switch';
+  import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 
   import type { ParseProgress } from '$lib/state-utils/store-parse-queue.svelte';
 
@@ -25,7 +27,7 @@
       <Sheet.Description>Current parsing queue status.</Sheet.Description>
     </Sheet.Header>
 
-    {#if parseQueue.size === 0 && !parseQueue.isPending}
+    {#if parseQueue.size === 0 && parseQueue.pendingCount === 0}
       <div class="flex flex-1 flex-col items-center justify-center p-6 text-center opacity-50">
         <div class="bg-muted mb-4 rounded-full p-4">
           <Terminal class="size-8 stroke-1" />
@@ -34,17 +36,19 @@
         <p class="text-muted-foreground mt-1 text-xs">Processed files log will appear here.</p>
       </div>
     {:else}
-      {#if parseQueue.isPending}
-        <div class="border-b px-4 py-4">
-          <div class="flex items-center gap-3">
-            <Skeleton class="bg-muted/80 h-4 w-4 rounded" />
-            <div class="flex w-full flex-col gap-1.5">
-              <Skeleton class="bg-muted/80 h-4 w-3/4" />
-              <Skeleton class="bg-muted/80 h-3 w-1/2" />
+      {#if parseQueue.pendingCount > 0}
+        {#each Array(parseQueue.pendingCount) as _, i (i)}
+          <div class="border-b px-4 py-4">
+            <div class="flex items-center gap-3">
+              <Skeleton class="bg-muted/80 h-4 w-4 rounded" />
+              <div class="flex w-full flex-col gap-1.5">
+                <Skeleton class="bg-muted/80 h-4 w-3/4" />
+                <Skeleton class="bg-muted/80 h-3 w-1/2" />
+              </div>
             </div>
+            <Skeleton class="bg-muted/80 mt-3 h-1.5 w-full" />
           </div>
-          <Skeleton class="bg-muted/80 mt-3 h-1.5 w-full" />
-        </div>
+        {/each}
       {/if}
       <ScrollArea.Root class="flex-1">
         <div class="flex flex-col px-2">
@@ -57,12 +61,46 @@
       </ScrollArea.Root>
     {/if}
 
-    <Sheet.Footer class="border-t p-4">
+    <Sheet.Footer class="flex flex-row justify-between border-t  p-4">
+      <div class="flex items-center gap-3">
+        <label
+          class="group border-border bg-background hover:bg-accent hover:border-accent-foreground/20 flex cursor-pointer items-center gap-3 rounded-md border py-1.5 pr-1.5 pl-4 transition-all active:scale-95"
+        >
+          <span
+            class={{
+              'text-foreground group-hover:text-foreground text-xs transition-colors select-none': true,
+              'text-muted-foreground': !parseQueue.autoOpen
+            }}
+          >
+            Auto-open system activity
+          </span>
+          <div class="bg-border mx-0.5 h-4 w-[1px]"></div>
+
+          <Switch
+            checked={parseQueue.autoOpen}
+            onCheckedChange={() => parseQueue.toggleAutoOpen()}
+            class="data-[state=checked]:bg-primary scale-90 shadow-none"
+          />
+        </label>
+        <!-- <Tooltip.Root>
+          <Tooltip.Trigger>
+            <Button size="icon" variant="ghost" onclick={() => parseQueue.toggleAutoOpen()}>
+              {#if parseQueue.autoOpen}
+                <PanelRightClose class="size-4" />
+              {:else}
+                <PanelRightOpen class="size-4" />
+              {/if}
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Auto-open system activity</Tooltip.Content>
+        </Tooltip.Root> -->
+      </div>
+
       {#if hasCompleted}
         <Button
           variant="ghost"
           size="sm"
-          class="text-muted-foreground hover:text-destructive h-8 gap-2 text-xs"
+          class="text-muted-foreground hover:text-destructive h-8 flex-1 gap-2 text-xs"
           onclick={() => parseQueue.clearCompleted()}
         >
           <Trash2 class="size-3.5" />
