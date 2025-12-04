@@ -57,8 +57,8 @@ class ParseQueue {
 
         if (isComplete) {
           this.processedIds.add(id);
-          toast.success(`Parsing completed`);
           invalidateAll();
+          if (!this.isSideBarOpen) toast.success(`Parsing completed`);
         }
       });
     } catch (error) {

@@ -3,7 +3,6 @@
   import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
   import { setupThemes } from './utils';
   import { mode } from 'mode-watcher';
-  import { toast } from 'svelte-sonner';
 
   let {
     value = $bindable(''),
