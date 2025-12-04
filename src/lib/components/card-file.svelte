@@ -64,7 +64,9 @@
     pushState('', { editFile: { id: file.id }, focus: 'rename' });
 </script>
 
-<Card.Root class="bg-card/20 max-w-96  gap-2 pb-2 ">
+<Card.Root
+  class="bg-card/20 hover:bg-card/30  max-w-96 gap-2 pb-2 transition-all duration-300 hover:-translate-y-1"
+>
   <Card.Header>
     <Card.Title class="max-w-80 truncate">
       {file.name}

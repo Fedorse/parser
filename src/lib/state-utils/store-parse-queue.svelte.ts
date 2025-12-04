@@ -1,7 +1,6 @@
 import { invalidateAll } from '$app/navigation';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { toast } from 'svelte-sonner';
-import { set } from 'zod';
 
 export type ParseProgress = {
   parse_id: string;
@@ -58,8 +57,8 @@ class ParseQueue {
 
         if (isComplete) {
           this.processedIds.add(id);
-          toast.success(`Parsing completed`);
           invalidateAll();
+          if (!this.isSideBarOpen) toast.success(`Parsing completed`);
         }
       });
     } catch (error) {
