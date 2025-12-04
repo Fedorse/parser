@@ -32,7 +32,6 @@ pub struct FileMetadata {
     pub path: String,
     pub name: String,
     pub size: u64,
-    // Removed last_modified as requested
 }
 
 /// Session Metadata (Saved to metadata.json)
@@ -47,20 +46,12 @@ pub struct ParseMetadata {
     pub total_size: u64,
 }
 
-/// Heavy tree structure (Saved to tree.json)
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ParseTree {
-    pub files: Vec<FileMetadata>,
-    pub file_tree: Vec<ParsedPath>,
-}
-
 /// Combined struct for the Frontend Detail View
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompleteParseDetail {
     #[serde(flatten)]
     pub metadata: ParseMetadata,
-    #[serde(flatten)]
-    pub tree: ParseTree,
+    pub tree: Vec<ParsedPath>,
 }
 
 /// Tree structure for files and directories
@@ -71,7 +62,6 @@ pub enum ParsedPath {
         name: String,
         path: String,
         size: u64,
-        // Removed last_modified here too
     },
     Directory {
         name: String,
@@ -101,17 +91,16 @@ pub fn parse_files(
     let mut current_count = 0;
     let mut file_tree = Vec::new();
 
-    // 1. Build Tree
+    // Building Tree
     for path_str in &paths {
         let path = Path::new(path_str);
         if path.exists() {
-            // Check for symlinks at root level too
             if path.is_symlink() { continue; }
             file_tree.push(build_file_tree(&path)?);
         }
     }
 
-    // 2. Process Files
+    // Processing Files
     for path_str in paths {
         let path = Path::new(&path_str);
 
@@ -142,12 +131,6 @@ pub fn parse_files(
         total_size,
     };
 
-    // 4. Create Heavy Tree Data
-    let tree_data = ParseTree {
-        files: parsed_files,
-        file_tree,
-    };
-
     // 5. Save Files
     let metadata_path = parse_dir.join(METADATA_FILENAME);
     let meta_file = File::create(&metadata_path)?;
@@ -155,7 +138,7 @@ pub fn parse_files(
 
     let tree_path = parse_dir.join(TREE_FILENAME);
     let tree_file = File::create(&tree_path)?;
-    serde_json::to_writer_pretty(tree_file, &tree_data)?;
+    serde_json::to_writer_pretty(tree_file, &file_tree)?;
 
     let content_path = get_content_path(&parse_dir);
     emit_progress(&app, &parse_id, total_files, total_files, Some(content_path.display().to_string()));
@@ -317,7 +300,6 @@ pub fn build_file_tree(path: &Path) -> Result<ParsedPath> {
         })
     } else {
         let metadata = get_file_metadata(path)?;
-        // FIX: Removed '?' here because is_text_file returns bool
         let size = if is_text_file(path) { metadata.size } else { 0 };
 
         Ok(ParsedPath::File {
@@ -328,9 +310,6 @@ pub fn build_file_tree(path: &Path) -> Result<ParsedPath> {
     }
 }
 
-// ============================================================================
-// UPDATE LOGIC
-// ============================================================================
 
 /// Update content in a parse directory AND update the metadata timestamp
 pub fn update_content(parse_dir: &Path, content: &str) -> Result<()> {
@@ -346,8 +325,6 @@ pub fn update_content(parse_dir: &Path, content: &str) -> Result<()> {
 
     Ok(())
 }
-
-// --- Copy these specific helpers to ensure they match ---
 
 fn emit_progress(app: &AppHandle, parse_id: &str, current: usize, total: usize, file_path: Option<String>) {
     let progress = if total > 0 { (current as f32 / total as f32) * 100.0 } else { 0.0 };
@@ -378,14 +355,6 @@ fn count_text_files_in_dir(dir: &Path) -> Result<usize> {
     }
     Ok(count)
 }
-
-// fn write_file_content(path: &Path, output_file: &mut File) -> Result<()> {
-//     writeln!(output_file, "===== {} =====", path.display())?;
-//     let mut file = File::open(&path).with_context(|| format!("Opening {}", path.display()))?;
-//     io::copy(&mut file, output_file)?;
-//     writeln!(output_file)?;
-//     Ok(())
-// }
 
 pub fn save_metadata(path: &Path, metadata: &ParseMetadata) -> Result<()> {
     let file = File::create(path)?;
@@ -422,7 +391,6 @@ pub fn load_content(parse_dir: &Path) -> Result<String> {
     Ok(fs::read_to_string(get_content_path(parse_dir))?)
 }
 
-// ... Keep init_app_structure, get_app_dir, get_parse_dir, open_with_default_app ...
 pub fn init_app_structure() -> Result<()> {
     let app_dir = get_app_dir()?;
     if !app_dir.exists() { fs::create_dir(&app_dir)?; }
