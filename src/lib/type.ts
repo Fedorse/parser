@@ -13,7 +13,7 @@ export type FileTree = {
 export type FileMetadata = {
   id: string;
   name: string;
-  directory_path?: string;
+  path?: string;
   files_count: number;
   total_size: number;
   created_at: string;

@@ -311,18 +311,9 @@
             >
               <Route class="text-muted-foreground size-3 shrink-0 stroke-1" />
 
-              <span
-                class="min-w-0 truncate text-left"
-                style="direction: rtl;"
-                title={file.directory_path}
-              >
-                &lrm;{file.directory_path}
+              <span class="min-w-0 truncate text-left" style="direction: rtl;" title={file.path}>
+                &lrm;{file.path}
               </span>
-
-              <!-- {#if isLargeFile}
-                <span class="text-border shrink-0 px-1">•</span>
-                <span class="text-warn shrink-0 font-medium">Large File</span>
-              {/if} -->
             </div>
 
             {#if renameError}

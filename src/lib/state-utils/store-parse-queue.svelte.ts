@@ -1,7 +1,6 @@
 import { invalidateAll } from '$app/navigation';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { toast } from 'svelte-sonner';
-import { set } from 'zod';
 
 export type ParseProgress = {
   parse_id: string;
