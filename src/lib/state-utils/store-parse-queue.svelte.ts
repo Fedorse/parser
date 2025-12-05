@@ -1,7 +1,6 @@
 import { invalidateAll } from '$app/navigation';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { toast } from 'svelte-sonner';
-import { set } from 'zod';
 
 export type ParseProgress = {
   parse_id: string;
@@ -23,7 +22,7 @@ class ParseQueue {
   async mount() {
     const storedAutoOpen = localStorage.getItem('parse-queue-auto-open');
     if (storedAutoOpen !== null) {
-      this.autoOpen = storedAutoOpen === 'true' ? true : false;
+      this.autoOpen = storedAutoOpen === 'true';
     }
 
     if (this.unlistenFn) return;
@@ -130,4 +129,5 @@ class ParseQueue {
     this.queue = new Map(this.queue);
   }
 }
+
 export const parseQueue = new ParseQueue();

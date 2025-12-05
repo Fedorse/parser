@@ -189,6 +189,7 @@
       console.error('Failed to open file in editor:', err);
     }
   };
+
   const handleOpenDir = async (file: FileMetadata) => {
     if (!file) return;
     try {
@@ -215,6 +216,7 @@
       inputEl?.setSelectionRange(inputEl.value.length, inputEl.value.length);
     }
   });
+
   onMount(() => {
     loadFile();
     const onKey = (e: KeyboardEvent) => {
@@ -318,11 +320,6 @@
               >
                 &lrm;{file.directory_path}
               </span>
-
-              <!-- {#if isLargeFile}
-                <span class="text-border shrink-0 px-1">•</span>
-                <span class="text-warn shrink-0 font-medium">Large File</span>
-              {/if} -->
             </div>
 
             {#if renameError}
