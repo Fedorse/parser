@@ -28,7 +28,7 @@
   };
 </script>
 
-<nav class="flex h-20 w-full items-center justify-between px-6 py-10">
+<nav class="flex h-20 w-full items-center justify-between px-6 py-10" id="tour-navbar">
   <div>
     {#if !isHome}
       <button

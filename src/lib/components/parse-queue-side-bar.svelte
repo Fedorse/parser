@@ -1,19 +1,24 @@
 <script lang="ts">
+  import { pushState } from '$app/navigation';
   import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
   import * as Sheet from '$lib/components/ui/sheet';
   import * as ScrollArea from '$lib/components/ui/scroll-area';
   import { Button } from '$lib/components/ui/button';
   import { Progress } from '$lib/components/ui/progress';
-  import { Terminal, Trash2, Hash, X } from '@lucide/svelte/icons';
+  import { Terminal, Trash2, Hash, X, FileText } from '@lucide/svelte/icons';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import CubeLoader from '$lib/components/cube-loader.svelte';
   import { Switch } from '$lib/components/ui/switch';
   import type { ParseProgress } from '$lib/state-utils/store-parse-queue.svelte';
-  import { pushState } from '$app/navigation';
 
   type PropsCardQueue = { item: ParseProgress; isDone: boolean };
 
   let hasCompleted = $derived(parseQueue.completedParses.length > 0);
+
+  const openEdit = (parseId: string) => {
+    parseQueue.setOpen(false);
+    pushState('', { editFile: { id: parseId } });
+  };
 </script>
 
 <Sheet.Root bind:open={parseQueue.isSideBarOpen}>
@@ -81,18 +86,6 @@
             class="data-[state=checked]:bg-primary scale-90 shadow-none"
           />
         </label>
-        <!-- <Tooltip.Root>
-          <Tooltip.Trigger>
-            <Button size="icon" variant="ghost" onclick={() => parseQueue.toggleAutoOpen()}>
-              {#if parseQueue.autoOpen}
-                <PanelRightClose class="size-4" />
-              {:else}
-                <PanelRightOpen class="size-4" />
-              {/if}
-            </Button>
-          </Tooltip.Trigger>
-          <Tooltip.Content>Auto-open system activity</Tooltip.Content>
-        </Tooltip.Root> -->
       </div>
 
       {#if hasCompleted}
@@ -142,22 +135,25 @@
       </div>
 
       {#if isDone}
-        <Button
-          variant="ghost"
-          size="icon"
-          class="text-muted-foreground/50 hover:text-destructive size-4 shrink-0 self-center"
-          onclick={() => pushState('', { editFile: { id: item.parse_id } })}
-        >
-          Open
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="text-muted-foreground/50 hover:text-destructive size-4 shrink-0 self-center"
-          onclick={() => parseQueue.remove(item.parse_id)}
-        >
-          <X class="size-4" />
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground/50 hover:text-primary size-10 shrink-0"
+            onclick={() => openEdit(item.parse_id)}
+            title="Open in Editor"
+          >
+            <FileText class="text-muted-foreground size-6 stroke-1" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground/50 hover:text-destructive size-4 shrink-0 self-center"
+            onclick={() => parseQueue.remove(item.parse_id)}
+          >
+            <X class="size-4" />
+          </Button>
+        </div>
       {/if}
     </div>
 
