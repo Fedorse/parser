@@ -27,6 +27,8 @@ pub fn run() {
             commands::delete_file,
             commands::open_in_default_editor,
             commands::open_in_folder,
+            commands::expand_folder,
+            commands::expand_parsed_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

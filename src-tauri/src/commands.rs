@@ -7,6 +7,17 @@ use std::path::PathBuf;
 use tokio::fs as tokio_fs;
 use futures::future::join_all;
 
+#[derive(serde::Serialize)]
+pub struct ParsedFileListItem {
+    pub id: String,
+    pub name: String,
+    pub directory_path: String,
+    pub file_size: u64,
+    pub files_count: usize,
+    pub total_size: u64,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
+}
 
 #[tauri::command]
 pub async fn parse(paths: Vec<String>, app: tauri::AppHandle) -> Result<ParseMetadata, CommandError> {
@@ -24,23 +35,76 @@ pub async fn parse(paths: Vec<String>, app: tauri::AppHandle) -> Result<ParseMet
 #[tauri::command]
 pub async fn get_preview_tree(paths: Vec<String>) -> Result<Vec<ParsedPath>, CommandError> {
     let mut result = Vec::new();
-    for input in paths {
-        let path = PathBuf::from(input);
-        if path.exists() { result.push(utils::build_file_tree(&path)?); }
+
+    let tasks: Vec<_> = paths.into_iter().map(|input| {
+        tokio::task::spawn_blocking(move || {
+            let path = PathBuf::from(input);
+            if path.exists() {
+                return Some(utils::build_file_tree_shallow(&path));
+            }
+            None
+        })
+    }).collect();
+
+    let results = join_all(tasks).await;
+
+    for res in results {
+        if let Ok(Some(Ok(tree))) = res {
+            result.push(tree);
+        }
     }
+
     Ok(result)
 }
 
-#[derive(serde::Serialize)]
-pub struct ParsedFileListItem {
-    pub id: String,
-    pub name: String,
-    pub directory_path: String,
-    pub file_size: u64,
-    pub files_count: usize,
-    pub total_size: u64,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
+#[tauri::command]
+pub async fn expand_folder(path: String) -> Result<Vec<ParsedPath>, CommandError> {
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let path_buf = PathBuf::from(path);
+
+        let mut children = Vec::new();
+        if path_buf.is_dir() {
+            if let Ok(entries) = fs::read_dir(&path_buf) {
+                for entry in entries.flatten() {
+                    let child_path = entry.path();
+                    if child_path.is_symlink() { continue; }
+
+                    if let Ok(_node) = utils::build_file_tree_shallow(&child_path) {
+                         if let Ok(node) = utils::create_shallow_node(&child_path) {
+                             children.push(node);
+                         }
+                    }
+                }
+            }
+        }
+
+        children.sort_by(|a, b| {
+             let is_a_dir = matches!(a, ParsedPath::Directory { .. });
+             let is_b_dir = matches!(b, ParsedPath::Directory { .. });
+             match (is_a_dir, is_b_dir) {
+                 (true, false) => std::cmp::Ordering::Less,
+                 (false, true) => std::cmp::Ordering::Greater,
+                 _ => a.path().cmp(b.path()),
+             }
+        });
+
+        children
+    })
+    .await
+    .map_err(|e| CommandError::from(anyhow::anyhow!("Thread join error: {}", e)))?;
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub fn expand_parsed_folder(dir_name: String, path: String) -> Result<Vec<ParsedPath>, CommandError> {
+    let parse_dir = utils::get_parse_dir(&dir_name)?;
+    let full_tree = utils::load_tree(&parse_dir)?;
+
+    match utils::find_children_in_tree(&full_tree, &path) {
+        Some(children) => Ok(children),
+        None => Ok(Vec::new()),
+    }
 }
 
 #[tauri::command]
@@ -115,14 +179,6 @@ async fn load_list_item(path: PathBuf) -> Result<ParsedFileListItem, anyhow::Err
     })
 }
 
-#[derive(serde::Serialize)]
-pub struct ParsedFileDetail {
-    pub id: String,
-    pub name: String,
-    pub content: String,
-    pub metadata: utils::CompleteParseDetail,
-}
-
 #[tauri::command]
 pub fn update_file(dir_name: String, content: String) -> Result<(), CommandError> {
     let parse_dir = utils::get_parse_dir(&dir_name)?;
@@ -145,7 +201,14 @@ pub fn get_file_metadata(dir_name: String) -> Result<ParseMetadata, CommandError
 #[tauri::command]
 pub fn get_file_tree(dir_name: String) -> Result<Vec<ParsedPath>, CommandError> {
     let parse_dir = utils::get_parse_dir(&dir_name)?;
-    Ok(utils::load_tree(&parse_dir)?)
+    let full_tree = utils::load_tree(&parse_dir)?;
+
+    let shallow_tree: Vec<ParsedPath> = full_tree
+        .iter()
+        .map(utils::to_shallow_node)
+        .collect();
+
+    Ok(shallow_tree)
 }
 
 #[tauri::command]

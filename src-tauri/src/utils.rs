@@ -36,11 +36,13 @@ pub struct ParseMetadata {
     pub total_size: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CompleteParseDetail {
-    #[serde(flatten)]
-    pub metadata: ParseMetadata,
-    pub tree: Vec<ParsedPath>,
+impl ParsedPath {
+    pub fn path(&self) -> &str {
+        match self {
+            ParsedPath::File { path, .. } => path,
+            ParsedPath::Directory { path, .. } => path,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -299,6 +301,87 @@ pub fn build_file_tree(path: &Path) -> Result<ParsedPath> {
     }
 }
 
+/////
+pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
+    let name = path
+        .file_name()
+        .ok_or(anyhow::anyhow!("Failed to extract filename"))?
+        .to_string_lossy()
+        .to_string();
+    let file_path = path.to_string_lossy().to_string();
+
+    if path.is_dir() {
+        let mut children = Vec::new();
+        let mut current_level_size = 0u64;
+
+        if let Ok(entries) = fs::read_dir(path) {
+            for entry in entries.flatten() {
+                let child_path = entry.path();
+                if child_path.is_symlink() {
+                    continue;
+                }
+
+                let child_node = create_shallow_node(&child_path)?;
+
+                if let ParsedPath::File { size, .. } = child_node {
+                    current_level_size += size;
+                }
+
+                children.push(child_node);
+            }
+        }
+
+        children.sort_by(|a, b| {
+            match (a, b) {
+                (ParsedPath::Directory { .. }, ParsedPath::File { .. }) => std::cmp::Ordering::Less,
+                (ParsedPath::File { .. }, ParsedPath::Directory { .. }) => std::cmp::Ordering::Greater,
+                _ => a.path().cmp(b.path())
+            }
+        });
+
+        Ok(ParsedPath::Directory {
+            name,
+            children,
+            path: file_path,
+            size: current_level_size,
+        })
+    } else {
+        let metadata = get_file_metadata(path)?;
+        Ok(ParsedPath::File {
+            name,
+            size: metadata.size,
+            path: file_path,
+        })
+    }
+}
+
+pub fn create_shallow_node(path: &Path) -> Result<ParsedPath> {
+    let name = path
+        .file_name()
+        .ok_or(anyhow::anyhow!("Failed to extract filename"))?
+        .to_string_lossy()
+        .to_string();
+    let file_path = path.to_string_lossy().to_string();
+
+    if path.is_dir() {
+        Ok(ParsedPath::Directory {
+            name,
+            path: file_path,
+            size: 0,
+            children: Vec::new(),
+        })
+    } else {
+        let metadata = fs::metadata(path)?;
+        Ok(ParsedPath::File {
+            name,
+            path: file_path,
+            size: metadata.len(),
+        })
+    }
+}
+
+
+////
 pub fn update_content(parse_dir: &Path, content: &str) -> Result<()> {
     let content_path = get_content_path(parse_dir);
     let mut file = File::create(content_path)?;
@@ -395,6 +478,35 @@ pub fn load_tree(parse_dir: &Path) -> Result<Vec<ParsedPath>> {
     let path = parse_dir.join(TREE_FILENAME);
     let file = File::open(path)?;
     Ok(serde_json::from_reader(io::BufReader::new(file))?)
+}
+
+pub fn to_shallow_node(node: &ParsedPath) -> ParsedPath {
+    match node {
+        ParsedPath::File { .. } => node.clone(),
+        ParsedPath::Directory { name, path, size, .. } => ParsedPath::Directory {
+            name: name.clone(),
+            path: path.clone(),
+            size: *size,
+            children: Vec::new(),
+        },
+    }
+}
+
+pub fn find_children_in_tree(tree: &[ParsedPath], target_path: &str) -> Option<Vec<ParsedPath>> {
+    for node in tree {
+        if node.path() == target_path {
+            if let ParsedPath::Directory { children, .. } = node {
+                return Some(children.iter().map(to_shallow_node).collect());
+            }
+        }
+
+        if let ParsedPath::Directory { children, .. } = node {
+            if let Some(result) = find_children_in_tree(children, target_path) {
+                return Some(result);
+            }
+        }
+    }
+    None
 }
 
 pub fn load_content(parse_dir: &Path) -> Result<String> {

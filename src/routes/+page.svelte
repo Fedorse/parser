@@ -1,202 +1,247 @@
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
-  import { getCurrentWebview } from '@tauri-apps/api/webview';
-  import { uniq } from 'es-toolkit';
-  import { onDestroy, onMount } from 'svelte';
-  import { toast } from 'svelte-sonner';
-  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import RecentFiles from '$lib/components/collaps-files.svelte';
-  import { Button } from '$lib/components/ui/button/index';
-  import { Folder, FolderOpen } from '@lucide/svelte';
-  import CubeLoader from '@/lib/components/cube-loader.svelte';
-  import { parseQueue } from '@/lib/state-utils/store-parse-queue.svelte';
+  import { invoke } from '@tauri-apps/api/core';
+  import { onMount } from 'svelte';
 
-  import type { FileTree, DragEventPayload } from '$lib/type';
-
-  let { data } = $props();
-
-  let filesTreeNodes = $state<FileTree[]>([]);
-
-  let isDialogOpen = $state(false);
-  let isDragging = $state(false);
-  let isLoadingPreview = $state(false);
-
-  let unlistenDrag: () => void;
-
-  const handleDroppedFiles = async (paths: string[]) => {
-    if (paths.length === 0) return;
-    const uniquePaths = uniq(paths);
-    try {
-      isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(uniquePaths);
-      isDialogOpen = true;
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to open selected file');
-    } finally {
-      isLoadingPreview = false;
-    }
+  // --- Types matching Rust ---
+  type ParsedPath = {
+    type: 'File' | 'Directory';
+    name: string;
+    path: string;
+    size: number;
+    children?: ParsedPath[];
+    // We add this for UI state, not from Rust initially
+    isExpanded?: boolean;
   };
 
-  const parseSelectedNodes = async () => {
-    const paths = collectSelectedPath(filesTreeNodes);
-    if (paths.length === 0) {
-      toast.error('No files selected');
+  type HistoryItem = {
+    id: string;
+    name: string;
+    created_at: string;
+  };
+
+  // --- State ---
+  let previewTree = $state<ParsedPath[]>([]); // Files selected from OS
+  let historyList = $state<HistoryItem[]>([]); // Result of get_files
+  let parsedTree = $state<ParsedPath[]>([]); // Tree of a specific parsed result
+  let currentParsedId = $state<string>(''); // ID of the parsed result being viewed
+
+  // --- 1. File Selection & System Expansion ---
+
+  async function selectFiles() {
+    console.log('1. Opening Dialog...');
+    const selected = await open({ multiple: true, directory: true });
+
+    if (selected) {
+      console.log('2. Selected Paths:', selected);
+      // Initial Shallow Load
+      const res = await invoke<ParsedPath[]>('get_preview_tree', { paths: selected });
+      console.log('3. get_preview_tree result:', res);
+      previewTree = res;
+    }
+  }
+
+  async function expandSystemFolder(node: ParsedPath) {
+    if (node.type !== 'Directory') return;
+
+    // Toggle close
+    if (node.isExpanded) {
+      node.isExpanded = false;
       return;
     }
 
-    isDialogOpen = false;
-    filesTreeNodes = [];
-
+    console.log(`> Expanding System Folder: ${node.path}`);
     try {
-      parseQueue.addPendingRequest();
-      await parsePaths(paths);
-    } catch (err) {
-      console.error(err);
-      toast.error('Parse failed');
+      // CALL RUST: expand_folder
+      const children = await invoke<ParsedPath[]>('expand_folder', { path: node.path });
+      console.log('< Result:', children);
+
+      node.children = children;
+      node.isExpanded = true;
+    } catch (e) {
+      console.error('Expand Error', e);
     }
-  };
+  }
 
-  const handleOpenFiles = async () => {
-    const selectedPaths = await open({ multiple: true, directory: true });
+  // --- 2. Parsing ---
 
-    if (!selectedPaths) return;
-
-    try {
-      isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(selectedPaths);
-      isDialogOpen = true;
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to open selected file');
-    } finally {
-      isLoadingPreview = false;
+  async function runParse() {
+    // For this test, we just parse the top-level paths found in previewTree
+    const pathsToParse = previewTree.map((n) => n.path);
+    if (pathsToParse.length === 0) {
+      alert('No files selected');
+      return;
     }
-  };
 
-  const initDragAndDrop = async () => {
+    console.log('4. Parsing paths:', pathsToParse);
     try {
-      const webview = await getCurrentWebview();
-      unlistenDrag = await webview.onDragDropEvent((event) => {
-        const { type, paths } = event.payload as DragEventPayload;
-        switch (type) {
-          case 'enter':
-            isDragging = true;
-            break;
-          case 'leave':
-            isDragging = false;
-            break;
-          case 'drop':
-            isDragging = false;
-            handleDroppedFiles(paths);
-            break;
-          default:
-            console.warn(`Unknown drag event type: ${type}`);
-        }
+      const res = await invoke('parse', { paths: pathsToParse, app: null }); // app handle usually injected by Tauri automagically or ignored in frontend args depending on setup
+      console.log('5. Parse success:', res);
+      await loadHistory(); // Refresh list
+      previewTree = []; // Clear selection
+    } catch (e) {
+      console.error('Parse Error', e);
+    }
+  }
+
+  // --- 3. History & Parsed Tree Expansion ---
+
+  async function loadHistory() {
+    console.log('Loading History...');
+    const res = await invoke<HistoryItem[]>('get_files', { limit: 10 });
+    historyList = res;
+    console.log('History loaded:', res);
+  }
+
+  async function loadParsedTree(id: string) {
+    console.log(`Loading Tree for ID: ${id}`);
+    currentParsedId = id;
+    try {
+      // Initial Shallow Load of persisted tree
+      const res = await invoke<ParsedPath[]>('get_file_tree', { dirName: id });
+      console.log('Tree loaded:', res);
+      parsedTree = res;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function expandParsedFolder(node: ParsedPath) {
+    if (node.type !== 'Directory') return;
+
+    if (node.isExpanded) {
+      node.isExpanded = false;
+      return;
+    }
+
+    console.log(`> Expanding Parsed DB Folder: ${node.path} (ID: ${currentParsedId})`);
+    try {
+      // CALL RUST: expand_parsed_folder
+      const children = await invoke<ParsedPath[]>('expand_parsed_folder', {
+        dirName: currentParsedId,
+        path: node.path
       });
-    } catch (error) {
-      console.error('Failed to initialize drag and drop:', error);
+      console.log('< Result:', children);
+
+      node.children = children;
+      node.isExpanded = true;
+    } catch (e) {
+      console.error('Expand Error', e);
     }
-  };
+  }
 
   onMount(() => {
-    initDragAndDrop();
-  });
-
-  onDestroy(() => {
-    if (unlistenDrag) unlistenDrag();
+    loadHistory();
   });
 </script>
 
-<main
-  class="flex w-full flex-col items-center gap-4 overflow-y-auto pt-6 sm:pt-12 md:pt-16 lg:pt-24 xl:pt-32 2xl:pt-40
-"
->
-  <Card.Root class="bg-card/20 w-full max-w-5xl justify-between pt-6 pb-4">
-    <Card.Header class="flex justify-between">
-      <div class="flex flex-col gap-2">
-        <Card.Title>
-          <p>Quick Start</p>
-        </Card.Title>
+<!-- --- UI --- -->
 
-        <Card.Description>
-          <p>Drag & drop or choose a source. All files are pre-selected by default.</p>
-        </Card.Description>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <Button
-          variant="default"
-          onclick={handleOpenFiles}
-          disabled={isLoadingPreview}
-          class="cursor-pointer"
-        >
-          Upload files
-        </Button>
-      </div>
-    </Card.Header>
-    <Card.Content class="py-4">
-      <div
-        class={{
-          'h-48 w-full rounded-2xl border  border-dashed text-center transition-all ': true,
-          'border-border border-[1.5px]': !isDragging,
-          'bg-card/40 border-highlight ring-primary/40 ring-2': isDragging
-        }}
+<div class="mx-auto max-w-4xl space-y-8 p-8 font-mono text-sm">
+  <!-- SECTION A: Select Files -->
+  <section class="rounded border bg-gray-50 p-4">
+    <h2 class="mb-4 text-lg font-bold">A. File System Selection</h2>
+    <div class="mb-4 flex gap-4">
+      <button
+        onclick={selectFiles}
+        class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
       >
-        <div
-          class="animate-in fade-in zoom-in-95 flex h-full w-full flex-col items-center justify-center gap-8 py-6 duration-300"
-        >
-          {#if isLoadingPreview}
-            {@render loadingTree()}
-          {:else}
-            <div class="group flex flex-col items-center transition-all">
+        1. Select Files/Folders
+      </button>
+      <button
+        onclick={runParse}
+        class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+      >
+        2. Run Parse
+      </button>
+    </div>
+
+    <div class="max-h-[300px] min-h-[100px] overflow-auto border bg-white p-4">
+      {#if previewTree.length === 0}
+        <p class="text-gray-400 italic">No files selected</p>
+      {:else}
+        <!-- Render the Tree Snippet -->
+        <ul>
+          {#each previewTree as node}
+            {@render treeNode(node, 'system')}
+          {/each}
+        </ul>
+      {/if}
+    </div>
+  </section>
+
+  <!-- SECTION B: Parsed History & Deep Inspection -->
+  <section class="rounded border bg-gray-50 p-4">
+    <h2 class="mb-4 text-lg font-bold">B. Parsed History (Lazy Load)</h2>
+    <button onclick={loadHistory} class="mb-4 rounded bg-gray-200 px-2 py-1 text-xs"
+      >Refresh List</button
+    >
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- List -->
+      <div class="h-[400px] overflow-auto border bg-white p-2">
+        <h3 class="mb-2 border-b font-bold">History List</h3>
+        <ul>
+          {#each historyList as item}
+            <li class="mb-2">
               <button
-                onclick={handleOpenFiles}
-                class="bg-muted/30 group-hover:bg-muted rounded-full p-4 transition-all duration-300 group-hover:scale-110"
+                onclick={() => loadParsedTree(item.id)}
+                class="w-full rounded p-1 text-left text-xs hover:bg-blue-50"
+                class:bg-blue-100={currentParsedId === item.id}
               >
-                {#if isDragging}
-                  <FolderOpen class="text-primary size-16 stroke-1" />
-                {:else}
-                  <Folder
-                    class="text-muted-foreground/80 group-hover:text-foreground size-12 transition-colors"
-                  />
-                {/if}
+                <div class="font-bold">{item.name}</div>
+                <div class="text-gray-500">{item.id}</div>
               </button>
-            </div>
-          {/if}
-        </div>
+            </li>
+          {/each}
+        </ul>
       </div>
-    </Card.Content>
 
-    <div class="border-border border-t px-6 pt-4">
-      <RecentFiles files={data.recentFiles} />
+      <!-- Tree View -->
+      <div class="h-[400px] overflow-auto border bg-white p-2">
+        <h3 class="mb-2 border-b font-bold">Tree View</h3>
+        {#if parsedTree.length === 0}
+          <p class="text-gray-400 italic">Select an item to view tree</p>
+        {:else}
+          <ul>
+            {#each parsedTree as node}
+              {@render treeNode(node, 'parsed')}
+            {/each}
+          </ul>
+        {/if}
+      </div>
     </div>
-  </Card.Root>
+  </section>
+</div>
 
-  {#if filesTreeNodes.length > 0}
-    <FileDialogTree
-      bind:filesTree={filesTreeNodes}
-      bind:open={isDialogOpen}
-      onParse={parseSelectedNodes}
-    />
-  {/if}
-</main>
-
-{#snippet loadingTree()}
-  <div
-    class="animate-in fade-in zoom-in-95 flex h-full w-full flex-col items-center justify-center py-6 duration-300"
-  >
-    <CubeLoader class="h-full w-full" size="32px" variant="default" />
-
-    <div class="flex flex-col items-center gap-1 pt-6 text-center">
-      <h3 class="text-foreground text-sm font-semibold tracking-tight">
-        Scanning Directory Structure...
-      </h3>
-      <p class="text-muted-foreground max-w-[260px] text-xs">
-        Large directories may take a moment.
-      </p>
+<!-- --- RECURSIVE SNIPPET --- -->
+{#snippet treeNode(node: ParsedPath, mode: 'system' | 'parsed')}
+  <li class="my-1 border-l border-gray-200 pl-4">
+    <div class="flex items-center gap-2">
+      <!-- Folder Toggle / File Icon -->
+      {#if node.type === 'Directory'}
+        <button
+          class="flex h-5 w-5 items-center justify-center rounded bg-gray-200 font-bold hover:bg-gray-300"
+          onclick={() => (mode === 'system' ? expandSystemFolder(node) : expandParsedFolder(node))}
+        >
+          {node.isExpanded ? '-' : '+'}
+        </button>
+        <span class="font-bold text-blue-800">📂 {node.name}</span>
+      {:else}
+        <span class="h-5 w-5"></span>
+        <!-- Spacer -->
+        <span class="text-gray-700">📄 {node.name}</span>
+        <span class="text-xs text-gray-400">({node.size}b)</span>
+      {/if}
     </div>
-  </div>
+
+    <!-- Children (Recursive) -->
+    {#if node.isExpanded && node.children}
+      <ul class="ml-2">
+        {#each node.children as child}
+          {@render treeNode(child, mode)}
+        {/each}
+      </ul>
+    {/if}
+  </li>
 {/snippet}
