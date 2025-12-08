@@ -64,9 +64,7 @@
     pushState('', { editFile: { id: file.id }, focus: 'rename' });
 </script>
 
-<Card.Root
-  class="bg-card/20 hover:bg-card/30  max-w-96 gap-2 pb-2 transition-all duration-300 hover:-translate-y-1"
->
+<Card.Root class="bg-card/20 hover:bg-card/30  group max-w-96 gap-2 pb-2">
   <Card.Header>
     <Card.Title class="max-w-80 truncate">
       {file.name}
@@ -85,7 +83,11 @@
     onclick={() => openEditor(file)}
     title="Edit file"
   >
-    <div class="mb-2 font-mono text-3xl font-bold tracking-tight">{file.files_count}</div>
+    <div
+      class="mb-2 font-mono text-3xl font-bold tracking-tight transition-all duration-300 group-hover:scale-110"
+    >
+      {file.files_count}
+    </div>
     <div class="text-muted-foreground mb-2 text-sm">files parsed</div>
     <div>
       <Badge variant="outline" class="text-muted-foreground ">

@@ -49,10 +49,10 @@
   });
 </script>
 
-<main class="grid flex-1">
+<div class="grid flex-1 px-6">
   {#key page.url.pathname}
     <div class=" col-start-1 row-start-1 h-full w-full" in:fly={inParams} out:fly={outParams}>
       {@render children()}
     </div>
   {/key}
-</main>
+</div>

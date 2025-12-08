@@ -110,7 +110,10 @@
   });
 </script>
 
-<main class="flex w-full flex-col items-center gap-4 pt-4 md:pt-8 xl:pt-28 2xl:pt-32">
+<main
+  class="flex w-full flex-col items-center gap-4 overflow-y-auto pt-6 sm:pt-12 md:pt-16 lg:pt-24 xl:pt-32 2xl:pt-40
+"
+>
   <Card.Root class="bg-card/20 w-full max-w-5xl justify-between pt-6 pb-4">
     <Card.Header class="flex justify-between">
       <div class="flex flex-col gap-2">

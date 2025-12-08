@@ -23,7 +23,6 @@
     "@xyflow/svelte": "^1.2.4",
     "clsx": "^2.1.1",
     "d3-hierarchy": "^3.1.2",
-    "driver.js": "^1.4.0",
     "es-toolkit": "^1.42.0",
     "monaco-editor": "^0.54.0",
     "monaco-themes": "^0.4.7",

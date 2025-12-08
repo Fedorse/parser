@@ -28,11 +28,13 @@
   });
 </script>
 
-<div class="flex h-full w-full flex-col px-10">
-  <div class="mb-6">
-    <h1 class="text-xl font-semibold">Saved Files</h1>
-    <p class="text-muted-foreground">Manage your saved files and documents</p>
-  </div>
+<div class="flex h-full w-full flex-col">
+  <!-- {#if localFiles.length}
+    <div class="mb-6">
+      <h1 class="text-xl font-semibold">Saved Files</h1>
+      <p class="text-muted-foreground">Manage your saved files and documents</p>
+    </div>
+  {/if} -->
 
   {#await data.files}
     <div

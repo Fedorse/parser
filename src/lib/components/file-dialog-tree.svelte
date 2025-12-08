@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { sumBy } from 'es-toolkit';
-  import { formatFileSize, setSelectedAll } from '@/lib/utils/utils';
+  // import { sumBy } from 'es-toolkit';
+  import { setSelectedAll } from '@/lib/utils/utils';
   import FileTreeItem from '$lib/components/file-tree-item.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
   import { Separator } from '$lib/components/ui/separator';
   import { Switch } from '$lib/components/ui/switch';
-  import { HardDrive } from '@lucide/svelte';
-  import Badge from '$lib/components/ui/badge/badge.svelte';
+  // import { HardDrive } from '@lucide/svelte';
+  // import Badge from '$lib/components/ui/badge/badge.svelte';
 
   import type { FileTree } from '$lib/type';
 
@@ -22,16 +22,16 @@
     setSelectedAll(filesTree, allSelected);
   };
 
-  const calculateTotalSelectedSize = (nodes: FileTree[]): number => {
-    return sumBy(nodes, (node) => {
-      if (node.type === 'File') {
-        return node.selected ? (node.size ?? 0) : 0;
-      }
-      return calculateTotalSelectedSize(node.children ?? []);
-    });
-  };
+  // const calculateTotalSelectedSize = (nodes: FileTree[]): number => {
+  //   return sumBy(nodes, (node) => {
+  //     if (node.type === 'File') {
+  //       return node.selected ? (node.size ?? 0) : 0;
+  //     }
+  //     return calculateTotalSelectedSize(node.children ?? []);
+  //   });
+  // };
 
-  let totalSize = $derived(calculateTotalSelectedSize(filesTree));
+  // let totalSize = $derived(calculateTotalSelectedSize(filesTree));
 </script>
 
 <Dialog.Root bind:open>
@@ -54,13 +54,13 @@
 
     <div class="flex items-center justify-between">
       <div class="flex gap-3">
-        <Badge variant="outline" class="h-8 min-w-[140px] text-xs ">
+        <!-- <Badge variant="outline" class="h-8 min-w-[140px] text-xs ">
           <HardDrive class="text-muted-foreground size-3.5 stroke-1" />
           <span class="text-muted-foreground">Total:</span>
           <span class="text-foreground">
             {formatFileSize(totalSize)}
           </span>
-        </Badge>
+        </Badge> -->
         <div class="flex items-center gap-3">
           <label
             class="group border-border bg-background hover:bg-accent hover:border-accent-foreground/20 flex cursor-pointer items-center gap-3 rounded-md border py-1.5 pr-1.5 pl-4 transition-all active:scale-95"
@@ -82,7 +82,7 @@
       </div>
       <div class="flex gap-3">
         <Button variant="outline" onclick={() => (open = false)}>Cancel</Button>
-        <Button onclick={onParse} disabled={totalSize === 0}>Start Parsing</Button>
+        <Button onclick={onParse}>Start Parsing</Button>
       </div>
     </div></Dialog.Content
   >

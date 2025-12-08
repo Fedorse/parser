@@ -110,7 +110,15 @@
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">
         {#if isDone}
-          <CubeLoader class="h-full w-full" size="16px" variant="success" />
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground hover:text-primary size-10 shrink-0"
+            onclick={() => openEdit(item.parse_id)}
+            title="Open in Editor"
+          >
+            <FileText class="text-or size-6 stroke-1" />
+          </Button>
         {:else}
           <CubeLoader class="h-full w-full" size="16px" variant="loading" />
         {/if}
@@ -135,25 +143,14 @@
       </div>
 
       {#if isDone}
-        <div class="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            class="text-muted-foreground/50 hover:text-primary size-10 shrink-0"
-            onclick={() => openEdit(item.parse_id)}
-            title="Open in Editor"
-          >
-            <FileText class="text-muted-foreground size-6 stroke-1" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="text-muted-foreground/50 hover:text-destructive size-4 shrink-0 self-center"
-            onclick={() => parseQueue.remove(item.parse_id)}
-          >
-            <X class="size-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="text-muted-foreground/50 hover:text-destructive size-4 shrink-0 self-center"
+          onclick={() => parseQueue.remove(item.parse_id)}
+        >
+          <X class="size-4" />
+        </Button>
       {/if}
     </div>
 

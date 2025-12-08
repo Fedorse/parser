@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sumBy } from 'es-toolkit';
+  // import { sumBy } from 'es-toolkit';
   import { formatFileSize } from '@/lib/utils/utils';
   import * as Collapsible from '$lib/components/ui/collapsible';
   import { FileIcon, FolderIcon, ChevronRight, FolderOpen } from '@lucide/svelte/icons';
@@ -33,13 +33,13 @@
     };
   });
 
-  const calculateSelectedSize = (node: FileTree) => {
-    if (node.type === 'File') {
-      return node.selected ? (node.size ?? 0) : 0;
-    }
-    return sumBy(node.children ?? [], calculateSelectedSize);
-  };
-  let currentSize = $derived(calculateSelectedSize(node));
+  // const calculateSelectedSize = (node: FileTree) => {
+  //   if (node.type === 'File') {
+  //     return node.selected ? (node.size ?? 0) : 0;
+  //   }
+  //   return sumBy(node.children ?? [], calculateSelectedSize);
+  // };
+  // let currentSize = $derived(calculateSelectedSize(node));
 
   $effect(() => {
     if (node.type === 'Directory') {
@@ -105,7 +105,7 @@
           </Label>
           {#if node.size}
             <span class="ml-2 pr-4 text-xs opacity-70">
-              {formatFileSize(currentSize)}
+              {formatFileSize(node.size)}
             </span>
           {/if}
         </div>
