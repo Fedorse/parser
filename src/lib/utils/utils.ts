@@ -51,3 +51,32 @@ export const setSelected = (node: FileTree, value: boolean) => {
 export const setSelectedAll = (nodes: FileTree[], value: boolean) => {
   nodes.forEach((n) => setSelected(n, value));
 };
+
+const isDirFullySelectedRecursive = (node: FileTree): boolean => {
+  if (!node.selected) return false;
+  if (!node.children || node.children.length === 0) {
+    return true;
+  }
+  return node.children.every((child) => isDirFullySelectedRecursive(child));
+};
+
+export const collectSelectedPathsRecursive = (nodes: FileTree[]): string[] => {
+  let paths: string[] = [];
+
+  for (const node of nodes) {
+    if (isDirFullySelectedRecursive(node)) {
+      paths.push(node.path);
+    } else if (node.children && node.children.length > 0) {
+      paths.push(...collectSelectedPathsRecursive(node.children));
+    }
+  }
+  return paths;
+};
+
+export const setSelectedRecursive = (node: FileTree): FileTree => {
+  return {
+    ...node,
+    selected: true,
+    children: node.children?.map(setSelectedRecursive)
+  };
+};

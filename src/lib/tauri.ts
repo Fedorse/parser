@@ -1,71 +1,34 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { orderBy } from 'es-toolkit';
+import { setSelectedRecursive } from '@/lib/utils/utils';
 
 import type { File, FileTree, FileMetadata } from '@/lib/type.ts';
 
-export const ensureChildrenArrays = (nodes: FileTree[]): FileTree[] => {
-  for (const n of nodes) {
-    if (!n.children) n.children = [];
-    else ensureChildrenArrays(n.children);
+export const getPreviewTreeNodes = async (paths: string[]): Promise<FileTree[]> => {
+  const nodes = await invoke<FileTree[]>('get_preview_tree', { paths });
+  return nodes.map((node) => {
+    const selectedNode = setSelectedRecursive(node);
+    return {
+      ...selectedNode,
+      isExpanded: true
+    };
+  });
+};
+
+export const expandNode = async (path: string): Promise<FileTree[]> => {
+  try {
+    const children = await invoke<FileTree[]>('expand_folder', { path });
+
+    return children.map((n) => ({ ...n, isExpanded: false, selected: true }));
+  } catch (e) {
+    console.error(`Failed to expand ${path}`, e);
+    return [];
   }
-  return nodes;
 };
 
-export const setSelectedRecursive = (nodes: FileTree[]): FileTree[] => {
-  for (const n of nodes) {
-    n.selected = true;
-    if (n.type === 'Directory' && n.children?.length) setSelectedRecursive(n.children);
-  }
-  return nodes;
-};
-
-export const collectSelectedPath = (nodes: FileTree[]): string[] => {
-  const paths: string[] = [];
-
-  for (const n of nodes) {
-    if (n.selected) {
-      paths.push(n.path);
-      continue;
-    }
-
-    if (n.type === 'Directory' && n.children?.length) {
-      paths.push(...collectSelectedPath(n.children));
-    }
-  }
-
-  return paths;
-};
-
-export const sortTreeRecursive = (nodes: FileTree[]): FileTree[] => {
-  const sorted = orderBy(
-    nodes,
-    [(node) => (node.type === 'Directory' ? '0' : '1'), (node) => node.name.toLowerCase()],
-    ['asc', 'asc']
-  );
-
-  for (const node of sorted) {
-    if (node.children && node.children.length > 0) {
-      node.children = sortTreeRecursive(node.children);
-    }
-  }
-  return sorted;
-};
-
-export const getPreviewTree = async (paths: string[]): Promise<FileTree[]> => {
-  const tree = await invoke<FileTree[]>('get_preview_tree', { paths });
-  return Array.isArray(tree) ? tree : [];
-};
 export const getFileTree = async (dirName: string): Promise<FileTree[]> => {
   const tree = await invoke<FileTree[]>('get_file_tree', { dirName });
   return tree;
-};
-
-export const getPreviewTreeUI = async (paths: string[]): Promise<FileTree[]> => {
-  let pathsTree = await getPreviewTree(paths);
-  setSelectedRecursive(pathsTree);
-  pathsTree = sortTreeRecursive(pathsTree);
-  return pathsTree;
 };
 
 export const getSavedFiles = async (limit?: number): Promise<File[]> => {
@@ -73,8 +36,8 @@ export const getSavedFiles = async (limit?: number): Promise<File[]> => {
   return files;
 };
 
-export const parsePaths = async (paths: string[]): Promise<void> => {
-  await invoke('parse', { paths });
+export const parseNodes = async (paths: string[]): Promise<void> => {
+  await invoke('parse', { paths, app: null, remoteUrl: null });
 };
 
 export const deleteFile = async (file: File): Promise<void> => {

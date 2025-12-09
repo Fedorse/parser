@@ -1,202 +1,361 @@
 <script lang="ts">
   import { open } from '@tauri-apps/plugin-dialog';
-  import { getCurrentWebview } from '@tauri-apps/api/webview';
-  import { uniq } from 'es-toolkit';
-  import { onDestroy, onMount } from 'svelte';
-  import { toast } from 'svelte-sonner';
-  import { collectSelectedPath, parsePaths, getPreviewTreeUI } from '$lib/tauri';
-  import FileDialogTree from '$lib/components/file-dialog-tree.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import RecentFiles from '$lib/components/collaps-files.svelte';
-  import { Button } from '$lib/components/ui/button/index';
-  import { Folder, FolderOpen } from '@lucide/svelte';
-  import CubeLoader from '@/lib/components/cube-loader.svelte';
-  import { parseQueue } from '@/lib/state-utils/store-parse-queue.svelte';
+  import { invoke } from '@tauri-apps/api/core';
+  import { onMount } from 'svelte';
 
-  import type { FileTree, DragEventPayload } from '$lib/type';
-
-  let { data } = $props();
-
-  let filesTreeNodes = $state<FileTree[]>([]);
-
-  let isDialogOpen = $state(false);
-  let isDragging = $state(false);
-  let isLoadingPreview = $state(false);
-
-  let unlistenDrag: () => void;
-
-  const handleDroppedFiles = async (paths: string[]) => {
-    if (paths.length === 0) return;
-    const uniquePaths = uniq(paths);
-    try {
-      isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(uniquePaths);
-      isDialogOpen = true;
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to open selected file');
-    } finally {
-      isLoadingPreview = false;
-    }
+  // --- Types ---
+  type ParsedPath = {
+    type: 'File' | 'Directory';
+    name: string;
+    path: string;
+    size: number;
+    children?: ParsedPath[];
+    isExpanded?: boolean; // UI state
   };
 
-  const parseSelectedNodes = async () => {
-    const paths = collectSelectedPath(filesTreeNodes);
-    if (paths.length === 0) {
-      toast.error('No files selected');
+  type HistoryItem = {
+    id: string;
+    name: string;
+    remote_url: string; // Added this field
+    created_at: string;
+  };
+
+  // --- State ---
+  let previewTree = $state<ParsedPath[]>([]);
+  let historyList = $state<HistoryItem[]>([]);
+  let parsedTree = $state<ParsedPath[]>([]);
+  let currentParsedId = $state<string>('');
+
+  $effect(() => {
+    console.log('preview-tree', previewTree);
+  });
+
+  // Remote / Cloning State
+  let repoUrl = $state('');
+  let isCloning = $state(false);
+  let isParsing = $state(false);
+
+  // --- 1. SELECTION PHASE ---
+
+  // Option A: Local Files
+  async function selectLocalFiles() {
+    // 1. Clear Remote state to ensure we are in "Local Mode"
+    repoUrl = '';
+
+    console.log('1. Opening Dialog...');
+    const selected = await open({ multiple: true, directory: true });
+
+    if (selected) {
+      console.log('2. Selected Local Paths:', selected);
+      // Shallow Load from OS
+      const res = await invoke<ParsedPath[]>('get_preview_tree', { paths: selected });
+      previewTree = res;
+    }
+  }
+
+  // Option B: Remote GitHub
+  async function cloneRepo() {
+    if (!repoUrl) return alert('Please enter a GitHub URL');
+
+    isCloning = true;
+    previewTree = []; // Clear previous tree
+
+    try {
+      console.log(`Cloning ${repoUrl}...`);
+
+      // 1. Call Rust to clone. Returns the temp folder path.
+      const tempPath = await invoke<string>('parse_repository', { url: repoUrl });
+      console.log('Cloned to temp path:', tempPath);
+
+      // 2. Load shallow preview of that temp folder just like a local folder
+      const res = await invoke<ParsedPath[]>('get_preview_tree', { paths: [tempPath] });
+      previewTree = res;
+    } catch (e) {
+      console.error('Clone failed:', e);
+      alert('Failed to clone repository');
+    } finally {
+      isCloning = false;
+    }
+  }
+
+  // Common: Expand Folders (Works for both Local and Temp/Remote paths)
+  async function expandSystemFolder(node: ParsedPath) {
+    if (node.type !== 'Directory') return;
+    if (node.isExpanded) {
+      node.isExpanded = false;
       return;
     }
 
-    isDialogOpen = false;
-    filesTreeNodes = [];
-
     try {
-      parseQueue.addPendingRequest();
-      await parsePaths(paths);
-    } catch (err) {
-      console.error(err);
-      toast.error('Parse failed');
+      const children = await invoke<ParsedPath[]>('expand_folder', { path: node.path });
+      node.children = children;
+      node.isExpanded = true;
+    } catch (e) {
+      console.error('Expand Error', e);
     }
-  };
+  }
 
-  const handleOpenFiles = async () => {
-    const selectedPaths = await open({ multiple: true, directory: true });
+  // --- 2. PARSING PHASE ---
 
-    if (!selectedPaths) return;
-
-    try {
-      isLoadingPreview = true;
-      filesTreeNodes = await getPreviewTreeUI(selectedPaths);
-      isDialogOpen = true;
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to open selected file');
-    } finally {
-      isLoadingPreview = false;
+  async function runParse() {
+    const pathsToParse = previewTree.map((n) => n.path);
+    if (pathsToParse.length === 0) {
+      alert('No files to parse');
+      return;
     }
-  };
 
-  const initDragAndDrop = async () => {
+    isParsing = true;
+    console.log('Parsing paths:', pathsToParse);
+
     try {
-      const webview = await getCurrentWebview();
-      unlistenDrag = await webview.onDragDropEvent((event) => {
-        const { type, paths } = event.payload as DragEventPayload;
-        switch (type) {
-          case 'enter':
-            isDragging = true;
-            break;
-          case 'leave':
-            isDragging = false;
-            break;
-          case 'drop':
-            isDragging = false;
-            handleDroppedFiles(paths);
-            break;
-          default:
-            console.warn(`Unknown drag event type: ${type}`);
-        }
+      // If we cloned a repo, `repoUrl` is set.
+      // Rust uses this to tag metadata and trigger auto-cleanup of the temp folder.
+      const res = await invoke('parse', {
+        paths: pathsToParse,
+        app: null,
+        remoteUrl: repoUrl || null
       });
-    } catch (error) {
-      console.error('Failed to initialize drag and drop:', error);
+
+      console.log('Parse success:', res);
+
+      // Reset UI
+      previewTree = [];
+      repoUrl = '';
+      await loadHistory();
+    } catch (e) {
+      console.error('Parse Error', e);
+      alert('Parse failed');
+    } finally {
+      isParsing = false;
     }
-  };
+  }
+
+  // --- 3. HISTORY PHASE ---
+
+  async function loadHistory() {
+    const res = await invoke<HistoryItem[]>('get_files', { limit: 10 });
+    historyList = res;
+  }
+
+  async function loadParsedTree(id: string) {
+    currentParsedId = id;
+    try {
+      // Shallow load from JSON structure
+      const res = await invoke<ParsedPath[]>('get_parsed_preview_tree', { dirName: id });
+      parsedTree = res;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function expandParsedFolder(node: ParsedPath) {
+    if (node.type !== 'Directory') return;
+    if (node.isExpanded) {
+      node.isExpanded = false;
+      return;
+    }
+
+    try {
+      const children = await invoke<ParsedPath[]>('expand_parsed_folder', {
+        dirName: currentParsedId,
+        path: node.path
+      });
+      node.children = children;
+      node.isExpanded = true;
+    } catch (e) {
+      console.error('Expand Error', e);
+    }
+  }
+
+  async function openFolder(id: string) {
+    await invoke('open_in_folder', { dirName: id });
+  }
 
   onMount(() => {
-    initDragAndDrop();
-  });
-
-  onDestroy(() => {
-    if (unlistenDrag) unlistenDrag();
+    loadHistory();
   });
 </script>
 
-<main
-  class="flex w-full flex-col items-center gap-4 overflow-y-auto pt-6 sm:pt-12 md:pt-16 lg:pt-24 xl:pt-32 2xl:pt-40
-"
->
-  <Card.Root class="bg-card/20 w-full max-w-5xl justify-between pt-6 pb-4">
-    <Card.Header class="flex justify-between">
-      <div class="flex flex-col gap-2">
-        <Card.Title>
-          <p>Quick Start</p>
-        </Card.Title>
+<!-- --- UI --- -->
 
-        <Card.Description>
-          <p>Drag & drop or choose a source. All files are pre-selected by default.</p>
-        </Card.Description>
+<div class="mx-auto max-w-5xl space-y-8 p-8 font-mono text-sm text-gray-800">
+  <!-- SECTION A: SOURCE SELECTION -->
+  <section class="rounded border border-gray-200 bg-gray-50 p-6 shadow-sm">
+    <h2 class="mb-4 text-lg font-bold text-gray-900">1. Select Source</h2>
+
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <!-- Option 1: Local -->
+      <div class="space-y-2">
+        <h3 class="font-bold text-gray-700">Option A: Local Files</h3>
+        <p class="text-xs text-gray-500">Select files from your computer.</p>
+        <button
+          onclick={selectLocalFiles}
+          disabled={isCloning || isParsing}
+          class="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:opacity-50"
+        >
+          Select Local Paths
+        </button>
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <Button
-          variant="default"
-          onclick={handleOpenFiles}
-          disabled={isLoadingPreview}
-          class="cursor-pointer"
-        >
-          Upload files
-        </Button>
-      </div>
-    </Card.Header>
-    <Card.Content class="py-4">
-      <div
-        class={{
-          'h-48 w-full rounded-2xl border  border-dashed text-center transition-all ': true,
-          'border-border border-[1.5px]': !isDragging,
-          'bg-card/40 border-highlight ring-primary/40 ring-2': isDragging
-        }}
-      >
-        <div
-          class="animate-in fade-in zoom-in-95 flex h-full w-full flex-col items-center justify-center gap-8 py-6 duration-300"
-        >
-          {#if isLoadingPreview}
-            {@render loadingTree()}
-          {:else}
-            <div class="group flex flex-col items-center transition-all">
-              <button
-                onclick={handleOpenFiles}
-                class="bg-muted/30 group-hover:bg-muted rounded-full p-4 transition-all duration-300 group-hover:scale-110"
-              >
-                {#if isDragging}
-                  <FolderOpen class="text-primary size-16 stroke-1" />
-                {:else}
-                  <Folder
-                    class="text-muted-foreground/80 group-hover:text-foreground size-12 transition-colors"
-                  />
-                {/if}
-              </button>
-            </div>
-          {/if}
+      <!-- Option 2: Remote -->
+      <div class="space-y-2 border-l border-gray-300 pl-8">
+        <h3 class="font-bold text-gray-700">Option B: GitHub Repo</h3>
+        <p class="text-xs text-gray-500">Clone a public repository temporarily.</p>
+        <div class="flex gap-2">
+          <input
+            type="text"
+            bind:value={repoUrl}
+            disabled={isCloning || isParsing}
+            placeholder="https://github.com/user/repo"
+            class="flex-1 rounded border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
+          <button
+            onclick={cloneRepo}
+            disabled={isCloning || isParsing || !repoUrl}
+            class="min-w-[100px] rounded bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700 disabled:opacity-50"
+          >
+            {isCloning ? 'Cloning...' : 'Load'}
+          </button>
         </div>
       </div>
-    </Card.Content>
-
-    <div class="border-border border-t px-6 pt-4">
-      <RecentFiles files={data.recentFiles} />
     </div>
-  </Card.Root>
+  </section>
 
-  {#if filesTreeNodes.length > 0}
-    <FileDialogTree
-      bind:filesTree={filesTreeNodes}
-      bind:open={isDialogOpen}
-      onParse={parseSelectedNodes}
-    />
-  {/if}
-</main>
+  <!-- SECTION B: PREVIEW & PARSE -->
+  <section class="rounded border border-gray-200 bg-gray-50 p-6 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900">2. Preview & Parse</h2>
+        {#if repoUrl}
+          <span class="text-xs font-bold text-purple-600">Active Mode: Remote Repo</span>
+        {:else if previewTree.length > 0}
+          <span class="text-xs font-bold text-blue-600">Active Mode: Local Files</span>
+        {/if}
+      </div>
 
-{#snippet loadingTree()}
-  <div
-    class="animate-in fade-in zoom-in-95 flex h-full w-full flex-col items-center justify-center py-6 duration-300"
-  >
-    <CubeLoader class="h-full w-full" size="32px" variant="default" />
-
-    <div class="flex flex-col items-center gap-1 pt-6 text-center">
-      <h3 class="text-foreground text-sm font-semibold tracking-tight">
-        Scanning Directory Structure...
-      </h3>
-      <p class="text-muted-foreground max-w-[260px] text-xs">
-        Large directories may take a moment.
-      </p>
+      <button
+        onclick={runParse}
+        disabled={previewTree.length === 0 || isParsing || isCloning}
+        class="rounded bg-green-600 px-6 py-2 font-bold text-white transition hover:bg-green-700 disabled:bg-gray-400"
+      >
+        {isParsing ? 'PARSING...' : 'RUN PARSE'}
+      </button>
     </div>
-  </div>
+
+    <!-- File Tree -->
+    <div
+      class="max-h-[300px] min-h-[150px] overflow-auto rounded border border-gray-200 bg-white p-4"
+    >
+      {#if previewTree.length === 0}
+        <div class="flex h-full items-center justify-center text-gray-400 italic">
+          No source loaded yet. Select Local Files or Clone a Repo.
+        </div>
+      {:else}
+        <ul>
+          {#each previewTree as node}
+            {@render treeNode(node, 'system')}
+          {/each}
+        </ul>
+      {/if}
+    </div>
+  </section>
+
+  <!-- SECTION C: HISTORY -->
+  <section class="rounded border border-gray-200 bg-gray-50 p-6 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-gray-900">3. Parsed History</h2>
+      <button onclick={loadHistory} class="text-xs text-blue-600 hover:underline"
+        >Refresh List</button
+      >
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <!-- List -->
+      <div class="h-[400px] overflow-auto rounded border border-gray-200 bg-white p-2">
+        <h3 class="mb-2 border-b p-1 text-xs font-bold text-gray-500 uppercase">
+          Available Parsings
+        </h3>
+        <ul>
+          {#each historyList as item}
+            <li class="mb-2 border-b pb-2 last:border-0">
+              <div class="flex items-start justify-between">
+                <button
+                  onclick={() => loadParsedTree(item.id)}
+                  class="w-full rounded p-1 text-left transition hover:bg-blue-50"
+                  class:bg-blue-100={currentParsedId === item.id}
+                >
+                  <div class="font-bold text-gray-800">{item.name}</div>
+                  {#if item.remote_url}
+                    <div class="max-w-[200px] truncate text-xs text-purple-600">
+                      {item.remote_url}
+                    </div>
+                  {/if}
+                  <div class="text-[10px] text-gray-400">{item.created_at}</div>
+                </button>
+                <button
+                  onclick={() => openFolder(item.id)}
+                  title="Open in Folder"
+                  class="ml-2 rounded p-1 text-gray-500 hover:bg-gray-200"
+                >
+                  📂
+                </button>
+              </div>
+            </li>
+          {/each}
+        </ul>
+      </div>
+
+      <!-- Tree View -->
+      <div class="h-[400px] overflow-auto rounded border border-gray-200 bg-white p-2">
+        <h3 class="mb-2 border-b p-1 text-xs font-bold text-gray-500 uppercase">
+          Structure Preview {currentParsedId ? `(${currentParsedId.substring(0, 8)}...)` : ''}
+        </h3>
+        {#if parsedTree.length === 0}
+          <div class="mt-10 text-center text-xs text-gray-400 italic">
+            Select an item from the left to view structure
+          </div>
+        {:else}
+          <ul>
+            {#each parsedTree as node}
+              {@render treeNode(node, 'parsed')}
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- --- RECURSIVE TREE NODE SNIPPET --- -->
+{#snippet treeNode(node: ParsedPath, mode: 'system' | 'parsed')}
+  <li class="my-1 border-l border-gray-200 pl-4">
+    <div class="flex items-center gap-2 text-sm">
+      <!-- Folder -->
+      {#if node.type === 'Directory'}
+        <button
+          class="flex h-5 w-5 items-center justify-center rounded bg-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-300"
+          onclick={() => (mode === 'system' ? expandSystemFolder(node) : expandParsedFolder(node))}
+        >
+          {node.isExpanded ? '-' : '+'}
+        </button>
+        <span class="font-semibold text-blue-800">📂 {node.name}</span>
+
+        <!-- File -->
+      {:else}
+        <span class="h-5 w-5"></span>
+        <!-- Spacer for alignment -->
+        <span class="text-gray-700">📄 {node.name}</span>
+        <span class="text-xs text-gray-400">({node.size} b)</span>
+      {/if}
+    </div>
+
+    <!-- Children (Recursive) -->
+    {#if node.isExpanded && node.children}
+      <ul class="ml-2 transition-all">
+        {#each node.children as child}
+          {@render treeNode(child, mode)}
+        {/each}
+      </ul>
+    {/if}
+  </li>
 {/snippet}

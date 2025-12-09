@@ -1,127 +1,120 @@
 <script lang="ts">
-  // import { sumBy } from 'es-toolkit';
-  import { formatFileSize } from '@/lib/utils/utils';
-  import * as Collapsible from '$lib/components/ui/collapsible';
-  import { FileIcon, FolderIcon, ChevronRight, FolderOpen } from '@lucide/svelte/icons';
+  import { FileIcon, FolderIcon, FolderOpen, ChevronRight } from '@lucide/svelte/icons';
   import { Checkbox } from '$lib/components/ui/checkbox';
-  import { Label } from '$lib/components/ui/label';
-  import { setSelected } from '@/lib/utils/utils';
-  import Self from './file-tree-item.svelte';
-
-  import type { FileTree } from '@/lib/type.ts';
+  import { expandNode } from '@/lib/tauri';
+  import type { FileTree } from '@/lib/type';
   import { slide } from 'svelte/transition';
+  import { formatFileSize } from '../utils/utils';
 
-  let { node = $bindable(), isRoot = false } = $props();
+  let { nodes = $bindable() }: { nodes: FileTree[] } = $props();
 
-  let isOpen = $state(isRoot && node.type === 'Directory');
+  const handleSelect = (node: FileTree, checked: boolean) => {
+    node.selected = checked;
 
-  const onToggle = (checked: boolean) => {
-    setSelected(node, checked);
+    if (node.children) {
+      updateChildrenDeep(node.children, checked);
+    }
   };
 
-  let checkboxState = $derived.by(() => {
-    if (node.type !== 'Directory' || !node.children?.length) {
-      return { checked: node.selected ?? false, indeterminate: false };
+  const updateChildrenDeep = (list: FileTree[], val: boolean) => {
+    list.forEach((item) => {
+      item.selected = val;
+      if (item.children) updateChildrenDeep(item.children, val);
+    });
+  };
+
+  const handleExpand = async (e: MouseEvent, node: FileTree) => {
+    e.stopPropagation();
+    if (node.type !== 'Directory') return;
+
+    if (node.isExpanded) {
+      node.isExpanded = false;
+      return;
     }
 
-    const all = node.children.every((c: FileTree) => c.selected);
-    const none = node.children.every((c: FileTree) => !c.selected);
-
-    return {
-      checked: all,
-      indeterminate: !all && !none
-    };
-  });
-
-  // const calculateSelectedSize = (node: FileTree) => {
-  //   if (node.type === 'File') {
-  //     return node.selected ? (node.size ?? 0) : 0;
-  //   }
-  //   return sumBy(node.children ?? [], calculateSelectedSize);
-  // };
-  // let currentSize = $derived(calculateSelectedSize(node));
-
-  $effect(() => {
-    if (node.type === 'Directory') {
-      node.selected = checkboxState.checked;
+    if (node.children && node.children.length > 0) {
+      node.isExpanded = true;
+      return;
     }
-  });
+
+    try {
+      const loadedChildren = await expandNode(node.path);
+      node.children = loadedChildren;
+      node.isExpanded = true;
+    } catch (err) {
+      console.error(err);
+    }
+  };
 </script>
 
-{#if node.type === 'File'}
-  <li class="hover:bg-muted/50 flex items-center gap-2 pt-1">
-    <Checkbox bind:checked={node.selected} />
+<ul class="w-full space-y-0.5">
+  {#each nodes as node (node.path)}
+    {@render treeNode(node)}
+  {/each}
+</ul>
+
+{#snippet treeNode(node: FileTree)}
+  <li class="flex flex-col text-sm select-none">
     <div
-      class={{
-        'flex w-full items-center gap-2 transition-colors duration-100': true,
-        'text-primary ': node.selected,
-        'text-primary/20': !node.selected
-      }}
+      class="hover:bg-muted/50 group flex items-center gap-2 rounded-sm px-1 py-1 transition-colors"
     >
-      <FileIcon class="size-4.5 cursor-pointer stroke-1" />
-      <Label class="flex-1 cursor-pointer select-none">
-        {node.name}
-      </Label>
-      {#if node.size}
-        <span class="pr-4 text-xs opacity-70">
-          {formatFileSize(node.size)}
-        </span>
-      {/if}
-    </div>
-  </li>
-{:else}
-  <Collapsible.Root class="flex flex-col" bind:open={isOpen}>
-    <Collapsible.Trigger>
-      <li class="hover:bg-muted/50 flex flex-row items-center gap-2 transition-all">
-        <ChevronRight
-          class={{
-            'size-4 cursor-pointer transition-transform duration-200': true,
-            'rotate-90': isOpen
-          }}
-        />
+      <div class="flex size-5 items-center justify-center">
+        {#if node.type === 'Directory'}
+          <button
+            onclick={(e) => handleExpand(e, node)}
+            class="hover:bg-muted-foreground/20 cursor-pointer rounded p-0.5"
+          >
+            <ChevronRight
+              class="size-4 transition-transform duration-200 {node.isExpanded ? 'rotate-90' : ''}"
+            />
+          </button>
+        {:else}
+          <span class="w-4"></span>
+        {/if}
+      </div>
 
-        <Checkbox
-          checked={checkboxState.checked}
-          indeterminate={checkboxState.indeterminate}
-          onCheckedChange={onToggle}
-          onclick={(e: MouseEvent) => e.stopPropagation()}
-        />
+      <Checkbox checked={node.selected} onCheckedChange={(v) => handleSelect(node, v)} />
 
-        <div
-          class={{
-            'flex w-full items-center gap-2 transition-all  duration-100': true,
-            'text-primary': checkboxState.indeterminate || checkboxState.checked,
-            'text-primary/20': !checkboxState.indeterminate && !checkboxState.checked
-          }}
-        >
-          {#if isOpen}
-            <FolderOpen class="size-5 cursor-pointer stroke-1" />
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="flex flex-1 cursor-pointer items-center gap-2 overflow-hidden"
+        onclick={(e) =>
+          node.type === 'Directory' ? handleExpand(e, node) : handleSelect(node, !node.selected)}
+      >
+        {#if node.type === 'Directory'}
+          {#if node.isExpanded}
+            <FolderOpen class="text-primary/80 size-4" />
           {:else}
-            <FolderIcon class="size-5 cursor-pointer stroke-1" />
+            <FolderIcon
+              class="text-muted-foreground group-hover:text-primary/80 size-4 transition-colors"
+            />
           {/if}
-
-          <Label class="flex-1 cursor-pointer select-none">
+        {:else}
+          <FileIcon class="text-muted-foreground/70 size-4" />
+        {/if}
+        <div class="flex w-full justify-between">
+          <span
+            class="truncate {node.selected
+              ? 'text-foreground font-medium'
+              : 'text-muted-foreground'}"
+          >
             {node.name}
-          </Label>
-          {#if node.size}
-            <span class="ml-2 pr-4 text-xs opacity-70">
-              {formatFileSize(node.size)}
-            </span>
-          {/if}
+          </span>
+
+          <span class="ml-2 pr-4 text-xs opacity-70">
+            {formatFileSize(node.size ?? 0)}
+          </span>
         </div>
-      </li>
-    </Collapsible.Trigger>
-    <Collapsible.Content forceMount>
-      {#if isOpen && node.children?.length}
-        <ul
-          class="border-border relative ml-1 space-y-1 border-l pl-8"
-          transition:slide={{ duration: 200 }}
-        >
-          {#each node.children as child, i (child.path)}
-            <Self bind:node={node.children[i]} />
-          {/each}
-        </ul>
-      {/if}
-    </Collapsible.Content>
-  </Collapsible.Root>
-{/if}
+      </div>
+    </div>
+
+    {#if node.isExpanded && node.children}
+      <ul transition:slide|local={{ duration: 150 }} class="border-border/40 ml-2 border-l pl-4">
+        {#each node.children as child (child.path)}
+          {@render treeNode(child)}
+        {/each}
+      </ul>
+    {/if}
+  </li>
+{/snippet}

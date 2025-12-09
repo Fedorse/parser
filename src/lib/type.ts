@@ -5,9 +5,9 @@ export type FileTree = {
   path: string;
   type: NodeType;
   selected?: boolean;
+  isExpanded: boolean;
   children?: FileTree[];
   size?: number;
-  lastModified?: string;
 };
 
 export type FileMetadata = {
