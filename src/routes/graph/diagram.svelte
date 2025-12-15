@@ -203,7 +203,7 @@
     const { nodes: n, edges: e } = getLayoutedElements(outNodes, outEdges, { direction });
     nodes = n;
     edges = e;
-    // fitView({ duration: 200 });
+    fitView({ duration: 200 });
   };
 
   const toggleLayout = (dir: Direction) => {

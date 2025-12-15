@@ -26,6 +26,7 @@
   import { collectSelectedPathsRecursive } from '@/lib/utils/utils';
   import * as InputGroup from '$lib/components/ui/input-group/index.js';
   import * as Tabs from '$lib/components/ui/tabs/index.js';
+  import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 
   import type { FileTree, DragEventPayload } from '$lib/type';
 
@@ -346,15 +347,31 @@
     <div class="bg-border animate-in fade-in zoom-in-95 mx-1 h-4 w-[1px]"></div>
 
     <Tabs.List class="h-8 bg-transparent p-0">
-      <Tabs.Trigger
-        value="remote"
-        class="data-[state=active]:bg-background h-8 px-3 text-xs data-[state=active]:shadow-sm"
-      >
-        <Github class="start-1 size-4" />
-      </Tabs.Trigger>
-      <Tabs.Trigger value="local" class=" h-8 px-3 text-xs data-[state=active]:shadow-sm">
-        <HardDrive class="start-1 size-4" />
-      </Tabs.Trigger>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <Tabs.Trigger
+            value="remote"
+            class="data-[state=active]:bg-background h-8 px-3 text-xs data-[state=active]:shadow-sm"
+          >
+            <Github class="start-1 size-4" />
+          </Tabs.Trigger>
+        </Tooltip.Trigger>
+
+        <Tooltip.Content>Remote repository</Tooltip.Content>
+      </Tooltip.Root>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <Tabs.Trigger
+            value="local"
+            class=" h-8 px-3 text-xs data-[state=active]:shadow-sm"
+            title="System"
+          >
+            <HardDrive class="start-1 size-4" />
+          </Tabs.Trigger>
+        </Tooltip.Trigger>
+
+        <Tooltip.Content>System files</Tooltip.Content>
+      </Tooltip.Root>
     </Tabs.List>
   </div>
 {/snippet}
