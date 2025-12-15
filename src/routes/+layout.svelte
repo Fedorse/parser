@@ -10,7 +10,6 @@
   import PageTranstion from '@/lib/components/page-transtion.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
-  import { browser } from '$app/environment';
 
   let { children } = $props();
 
@@ -19,17 +18,6 @@
   const handleCloseEditor = () => {
     history.back();
   };
-
-  if (browser) {
-    const originalWarn = console.warn;
-    console.warn = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('using `window.fetch`')) {
-        return;
-      } else {
-        originalWarn(...args);
-      }
-    };
-  }
 
   onMount(() => {
     parseQueue.mount();

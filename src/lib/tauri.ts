@@ -4,6 +4,8 @@ import { setSelectedRecursive } from '@/lib/utils/utils';
 
 import type { File, FileTree, FileMetadata } from '@/lib/type.ts';
 
+type FileWithId = { id: string };
+
 export const getPreviewTreeNodes = async (paths: string[]): Promise<FileTree[]> => {
   const nodes = await invoke<FileTree[]>('get_preview_tree', { paths });
   return nodes.map((node) => {
@@ -68,8 +70,6 @@ export const openDefaultEditor = async (file: FileMetadata): Promise<void> => {
     await window.setFullscreen(false);
   }
 };
-
-type FileWithId = { id: string };
 
 export const openFileInfolder = async (file: FileWithId): Promise<void> => {
   await invoke('open_in_folder', { dirName: file.id });

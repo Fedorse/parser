@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onNavigate } from '$app/navigation';
   import { fly } from 'svelte/transition';
   import { expoOut, sineIn } from 'svelte/easing';
+  import { onNavigate } from '$app/navigation';
   import { page } from '$app/state';
 
   type TransitionDirection = 'forward' | 'backward' | 'none';
@@ -49,10 +49,10 @@
   });
 </script>
 
-<div class="grid flex-1 px-6">
+<main class="grid flex-1 px-6">
   {#key page.url.pathname}
     <div class=" col-start-1 row-start-1 h-full w-full" in:fly={inParams} out:fly={outParams}>
       {@render children()}
     </div>
   {/key}
-</div>
+</main>

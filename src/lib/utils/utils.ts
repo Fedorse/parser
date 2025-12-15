@@ -41,17 +41,6 @@ export function formatDate(dateString: string): string {
   return 'just now';
 }
 
-export const setSelected = (node: FileTree, value: boolean) => {
-  node.selected = value;
-  if (node.type === 'Directory' && node.children) {
-    node.children.forEach((child) => setSelected(child, value));
-  }
-};
-
-export const setSelectedAll = (nodes: FileTree[], value: boolean) => {
-  nodes.forEach((n) => setSelected(n, value));
-};
-
 const isDirFullySelectedRecursive = (node: FileTree): boolean => {
   if (!node.selected) return false;
   if (!node.children || node.children.length === 0) {

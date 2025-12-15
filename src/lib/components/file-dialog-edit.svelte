@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { z } from 'zod';
   import { goto, invalidate } from '$app/navigation';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
@@ -12,6 +11,7 @@
     getFileContent,
     getFileMetadata
   } from '$lib/tauri';
+  import { renameSchema } from '$lib/shemas';
   import { formatFileSize } from '@/lib/utils/utils';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
@@ -41,12 +41,6 @@
 
   const THIRTY_MB_SIZE = 30 * 1024 * 1024;
 
-  const renameSchema = z
-    .string()
-    .min(1, 'Name cannot be empty')
-    .max(255, 'Name cannot be longer than 255 characters')
-    .regex(/^[^\\/:*?"<>|]+$/, 'Invalid characters in filename');
-
   let file = $state<FileMetadata | null>(null);
 
   let rename = $state<string | undefined>('');
@@ -65,10 +59,6 @@
   let inputEl = $state<HTMLInputElement | null>(null);
 
   const isTainted = $derived(value !== snapshot);
-
-  $effect(() => {
-    console.log('isTainted', isTainted);
-  });
 
   const isLargeFile = $derived(file ? file.total_size > THIRTY_MB_SIZE : false);
 
@@ -140,9 +130,12 @@
     if (file && file.total_size <= THIRTY_MB_SIZE) {
       try {
         isContentLoading = true;
-        const content = await getFileContent(file);
-        value = content;
-        snapshot = content;
+        const rawContent = await getFileContent(file);
+
+        const normalizedContent = rawContent.replace(/\r\n/g, '\n');
+
+        value = normalizedContent;
+        snapshot = normalizedContent;
       } catch (err) {
         value = 'Failed to load file content';
         snapshot = 'Failed to load file content';
