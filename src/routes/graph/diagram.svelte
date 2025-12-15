@@ -311,4 +311,20 @@
   :global(.svelte-flow__controls button path) {
     fill: currentColor;
   }
+
+  /* :global(.svelte-flow__pane) {
+    cursor: default !important;
+  } */
+
+  /* :global(.svelte-flow__pane.dragging) {
+    cursor: grabbing !important;
+  }
+
+  :global(.svelte-flow__node) {
+    cursor: pointer !important;
+  } */
+
+  :global(.svelte-flow__pane) {
+    cursor: grabbing !important;
+  }
 </style>

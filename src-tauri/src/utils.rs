@@ -290,8 +290,9 @@ fn process_directory_with_progress(
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
+            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
 
-            if path.is_symlink() {
+            if path.is_symlink() || file_name.starts_with('.')  {
                 continue;
             }
 
@@ -571,13 +572,29 @@ pub fn save_metadata(path: &Path, metadata: &ParseMetadata) -> Result<()> {
 
 fn write_file_content(path: &Path, output_file: &mut File) -> Result<()> {
     let mut file = File::open(&path).with_context(|| format!("Opening {}", path.display()))?;
+    let mut content = String::new();
+
+    file.read_to_string(&mut content)
+        .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
     writeln!(output_file, "===== {} =====", path.display())?;
-    io::copy(&mut file, output_file)?;
+
+    output_file.write_all(content.as_bytes())?;
+
     writeln!(output_file)?;
 
     Ok(())
 }
+
+// fn write_file_content(path: &Path, output_file: &mut File) -> Result<()> {
+//     let mut file = File::open(&path).with_context(|| format!("Opening {}", path.display()))?;
+
+//     writeln!(output_file, "===== {} =====", path.display())?;
+//     io::copy(&mut file, output_file)?;
+//     writeln!(output_file)?;
+
+//     Ok(())
+// }
 
 // /////////////////////////////////////////////////////////////////////////////
 // System Actions (Open, Reveal)

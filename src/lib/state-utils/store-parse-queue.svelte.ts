@@ -11,7 +11,7 @@ class ParseQueue {
   queue = $state<Map<string, ParseProgress>>(new Map());
   isSideBarOpen = $state(false);
   pendingCount = $state(0);
-  autoOpen = $state(true);
+  autoOpen = $state(false);
 
   private unlistenFn: UnlistenFn | undefined;
   private processedIds = new Set<string>();

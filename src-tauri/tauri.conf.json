@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "parser",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.parser.app",
   "build": {
     "beforeDevCommand": "pnpm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "pnpm run build",
     "frontendDist": "../build"
   },
   "app": {
@@ -19,7 +19,8 @@
         "minHeight": 700,
         "center": true,
         "resizable": true,
-        "fullscreen": true
+        "fullscreen": false,
+        "maximized": false
       }
     ],
     "security": {
