@@ -122,7 +122,8 @@
       repoUrl = '';
     } catch (e) {
       console.error('Clone failed:', e);
-      toast.error('Repository not found or invalid URL');
+      // toast.error('Repository not found or invalid URL');
+      repoError = String(e);
     } finally {
       isLoadingPreview = false;
       isCloning = false;
@@ -232,7 +233,8 @@
       </div>
 
       <InputGroup.Root
-        class=" bg-transparent!
+        class=" !cursor-text
+                      bg-transparent!
                       transition-colors
                       focus-within:border-blue-900
                       focus-within:ring-0!
@@ -244,6 +246,7 @@
         </InputGroup.Addon>
         <InputGroup.Input
           placeholder="https://github.com/user/repo"
+          class="!cursor-text"
           id="repo-url"
           bind:value={repoUrl}
           onkeydown={(e: KeyboardEvent) => e.key === 'Enter' && handleCloneRepo()}
@@ -333,7 +336,7 @@
 {/snippet}
 
 {#snippet controls()}
-  <div class="flex items-center gap-1 rounded-lg border p-1 shadow-sm">
+  <div class="flex items-center gap-1 rounded-lg border p-1 shadow-xs">
     <Button
       variant="ghost"
       size="sm"
