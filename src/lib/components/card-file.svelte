@@ -140,7 +140,7 @@
   </Tooltip.Root>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger>
-      <Button variant="link" size="icon" class="size-10">
+      <Button variant="ghost" size="icon" class="size-10">
         <Ellipsis class="size-5 stroke-1" />
       </Button>
     </DropdownMenu.Trigger>

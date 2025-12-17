@@ -180,7 +180,7 @@
 "
 >
   <Tabs.Root bind:value={activeTab} class="flex w-full items-center">
-    <Card.Root class="bg-card/20 w-full max-w-5xl justify-between py-8" data-tauri-drag-region>
+    <Card.Root class="bg-card/20 w-full max-w-5xl justify-between py-8">
       <Card.Header class="flex justify-between">
         <div class="flex flex-col gap-2">
           <Card.Title>

@@ -28,7 +28,7 @@
   });
 </script>
 
-<div class="flex h-full w-full flex-col">
+<div class="flex h-full w-full flex-col py-8">
   <!-- {#if localFiles.length}
     <div class="mb-6">
       <h1 class="text-xl font-semibold">Saved Files</h1>

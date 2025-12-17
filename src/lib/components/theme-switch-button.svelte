@@ -4,7 +4,12 @@
   import { SunIcon, MoonIcon } from '@lucide/svelte';
 </script>
 
-<Button onclick={toggleMode} variant="nav" size="icon" class=" cursor-pointer p-5 ">
+<Button
+  onclick={toggleMode}
+  variant="ghost"
+  size="icon"
+  class=" text-muted-foreground  hover:text-foreground cursor-pointer "
+>
   <SunIcon
     class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90 "
   />

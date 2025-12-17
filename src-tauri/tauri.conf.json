@@ -20,7 +20,12 @@
         "center": true,
         "resizable": true,
         "fullscreen": false,
-        "maximized": false
+        "maximized": false,
+
+        "decorations": true,
+        "transparent": true,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {
