@@ -1,7 +1,7 @@
 {
   "name": "parser",
   "private": true,
-  "version": "2.0.3",
+  "version": "2.0.4",
   "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
