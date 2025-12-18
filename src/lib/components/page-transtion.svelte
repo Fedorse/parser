@@ -49,7 +49,7 @@
   });
 </script>
 
-<main class="grid flex-1 px-6">
+<main class="grid flex-1 overflow-x-hidden overflow-y-auto px-6">
   {#key page.url.pathname}
     <div class=" col-start-1 row-start-1 h-full w-full" in:fly={inParams} out:fly={outParams}>
       {@render children()}

@@ -29,13 +29,6 @@
 </script>
 
 <div class="flex h-full w-full flex-col py-8">
-  <!-- {#if localFiles.length}
-    <div class="mb-6">
-      <h1 class="text-xl font-semibold">Saved Files</h1>
-      <p class="text-muted-foreground">Manage your saved files and documents</p>
-    </div>
-  {/if} -->
-
   {#await data.files}
     <div
       class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
@@ -55,7 +48,7 @@
       <div
         class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
       >
-        {#each localFiles as file (file.id)}
+        {#each localFiles as file}
           <Card {file} {handleDelete} />
         {/each}
       </div>

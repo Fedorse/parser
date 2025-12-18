@@ -30,26 +30,24 @@ pub async fn parse(
     remote_url: Option<String>,
     app: tauri::AppHandle,
 ) -> Result<ParseMetadata, CommandError> {
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        utils::parse_files(paths, app, remote_url)
-    })
-    .await
-    .map_err(|e| CommandError::from(anyhow::anyhow!("Thread join error: {}", e)))?
-    .map_err(CommandError::from)?;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || utils::parse_files(paths, app, remote_url))
+            .await
+            .map_err(|e| CommandError::from(anyhow::anyhow!("Thread join error: {}", e)))?
+            .map_err(CommandError::from)?;
 
     Ok(result)
 }
 
 #[tauri::command]
 pub async fn parse_repository(url: String) -> Result<String, CommandError> {
-    let result =
-        tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
-            let path = utils::clone_git_repo(&url)?;
-            Ok(path.to_string_lossy().to_string())
-        })
-        .await
-        .map_err(|e| CommandError::from(anyhow::anyhow!("Thread join error: {}", e)))?
-        .map_err(CommandError::from)?;
+    let result = tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let path = utils::clone_git_repo(&url)?;
+        Ok(path.to_string_lossy().to_string())
+    })
+    .await
+    .map_err(|e| CommandError::from(anyhow::anyhow!("Thread join error: {}", e)))?
+    .map_err(CommandError::from)?;
 
     Ok(result)
 }

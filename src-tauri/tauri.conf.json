@@ -26,6 +26,8 @@
         "transparent": true,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay"
+
+
       }
     ],
     "security": {

@@ -1,20 +1,31 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { onDestroy, onMount } from 'svelte';
+  import { onMount } from 'svelte';
+  import { type } from '@tauri-apps/plugin-os';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import ToggleThemeButton from '$lib/components/theme-switch-button.svelte';
-  import { Settings, Monitor, ChevronLeft, Minus, Square, X } from '@lucide/svelte/icons';
+  import {
+    Settings,
+    Monitor,
+    ChevronLeft,
+    Square,
+    Minus,
+    X,
+    SquaresExclude
+  } from '@lucide/svelte/icons';
   import { parseQueue } from '$lib/state-utils/store-parse-queue.svelte';
   import { Button } from '$lib/components/ui/button/index';
   import { Badge } from '@/lib/components/ui/badge/index.js';
 
   let isFullscreen = $state(false);
+  let isMaximized = $state(false);
+  let osType = $state<string | null>(null);
+  const isMac = $derived(osType === 'macos');
 
   const appWindow = getCurrentWindow();
 
   const isHome = $derived(page.url.pathname === '/');
-  const isMac = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac');
 
   const getParentPath = (currentPath: string): string | null => {
     if (currentPath === '/') return null;
@@ -23,6 +34,8 @@
     if (currentPath === '/files') return '/';
     return '/';
   };
+
+  const parentPath = $derived(getParentPath(page.url.pathname));
 
   function minimize() {
     appWindow.minimize();
@@ -34,8 +47,6 @@
     appWindow.close();
   }
 
-  const parentPath = $derived(getParentPath(page.url.pathname));
-
   const goBack = () => {
     if (parentPath) goto(parentPath);
   };
@@ -44,21 +55,32 @@
     parseQueue.setOpen(!parseQueue.isSideBarOpen);
   };
 
-  onMount(async () => {
+  const checkStateScreen = async () => {
+    isMaximized = await appWindow.isMaximized();
     isFullscreen = await appWindow.isFullscreen();
-    const unlisten = await appWindow.onResized(async () => {
-      isFullscreen = await appWindow.isFullscreen();
-    });
+  };
+
+  onMount(() => {
+    let unlistenResize: () => void;
+    const init = async () => {
+      osType = await type();
+      await checkStateScreen();
+      unlistenResize = await appWindow.onResized(async () => {
+        checkStateScreen();
+      });
+    };
+
+    init();
     return () => {
-      unlisten();
+      if (unlistenResize) return unlistenResize();
     };
   });
 </script>
 
 <nav
   class={{
-    'border-border bg-card/20 supports-[backdrop-filter]:bg-background/60 z-50 flex min-h-10 w-full items-center  justify-between border-b backdrop-blur select-none': true,
-    'pl-18': !isFullscreen,
+    'border-border bg-card/20 supports-[backdrop-filter]:bg-background/60 flex min-h-10 w-full items-center  justify-between border-b backdrop-blur select-none': true,
+    'pl-18': !isFullscreen && isMac,
     'pl-2': isFullscreen
   }}
   data-tauri-drag-region
@@ -76,25 +98,30 @@
     {/if}
   </div>
 
-  <div class="flex items-center gap-3 pr-4">
+  <div class="flex items-center gap-3">
     {@render controlSystemActiv()}
-    <!-- <Separator orientation="vertical" class="text-muted-foreground mx-1 h-full w-1" /> -->
+
     <ToggleThemeButton />
+    {#if !isMac}
+      <div class=" border-border/40 no-drag flex">
+        <button onclick={minimize} title="Minimize" class="px-3">
+          <Minus size={16} />
+        </button>
+
+        <button onclick={maximize} title="Maximize" class="px-3">
+          {#if isMaximized}
+            <SquaresExclude size={14} />
+          {:else}
+            <Square size={14} />
+          {/if}
+        </button>
+
+        <button onclick={close} class=" w-full p-3 hover:bg-red-600 hover:text-white" title="Close">
+          <X size={18} class="stroke-1" />
+        </button>
+      </div>
+    {/if}
   </div>
-  {#if !isMac}
-    <div class="bg-border mx-1 h-4 w-[1px]"></div>
-    <div class="flex h-10 items-start">
-      <button onclick={minimize} class="win-btn" title="Minimize">
-        <Minus size={16} />
-      </button>
-      <button onclick={maximize} class="win-btn" title="Maximize">
-        <Square size={14} />
-      </button>
-      <button onclick={close} class="win-btn hover:bg-red-600 hover:text-white" title="Close">
-        <X size={16} />
-      </button>
-    </div>
-  {/if}
 </nav>
 
 {#snippet controlSystemActiv()}

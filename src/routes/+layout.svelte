@@ -30,7 +30,7 @@
 
 <Tooltip.Provider delayDuration={1000}>
   <Toaster richColors={true} position="bottom-right" />
-  <div class="flex h-screen w-screen flex-col">
+  <div class="flex h-screen w-screen flex-col overflow-hidden">
     <NavBar />
     <ModeWatcher />
     <PageTranstion>

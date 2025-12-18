@@ -148,7 +148,8 @@ fn sanitize_repo_url(input: &str) -> String {
         .trim_start_matches("https://")
         .trim_start_matches("http://");
 
-    let sanitized: String = clean_url.chars()
+    let sanitized: String = clean_url
+        .chars()
         .map(|c| {
             if c.is_alphanumeric() || c == '-' || c == '_' {
                 c
@@ -201,7 +202,11 @@ fn cleanup_temp_repos(paths: &[String]) -> Result<()> {
 // Main Parsing Logic
 // /////////////////////////////////////////////////////////////////////////////
 
-pub fn parse_files(paths: Vec<String>, app: AppHandle, remote_url: Option<String>) -> Result<ParseMetadata> {
+pub fn parse_files(
+    paths: Vec<String>,
+    app: AppHandle,
+    remote_url: Option<String>,
+) -> Result<ParseMetadata> {
     let remote_url_str = remote_url.unwrap_or_default();
     let (parse_dir, mut output_file, parse_id) = create_parse_directory(&remote_url_str)?;
 
@@ -216,14 +221,18 @@ pub fn parse_files(paths: Vec<String>, app: AppHandle, remote_url: Option<String
     for path_str in &paths {
         let path = Path::new(path_str);
         if path.exists() {
-            if path.is_symlink() { continue; }
+            if path.is_symlink() {
+                continue;
+            }
             file_tree.push(build_file_tree(&path)?);
         }
     }
 
     for path_str in &paths {
         let path = Path::new(&path_str);
-        if path.is_symlink() { continue; }
+        if path.is_symlink() {
+            continue;
+        }
 
         if path.is_dir() {
             process_directory_with_progress(
@@ -236,7 +245,12 @@ pub fn parse_files(paths: Vec<String>, app: AppHandle, remote_url: Option<String
                 &app,
                 &parse_id,
             )?;
-        } else if process_single_text_file(&path, &mut output_file, &mut parsed_files, &mut total_size)? {
+        } else if process_single_text_file(
+            &path,
+            &mut output_file,
+            &mut parsed_files,
+            &mut total_size,
+        )? {
             current_count += 1;
             emit_progress(&app, &parse_id, current_count, total_files, None);
         }
@@ -292,7 +306,7 @@ fn process_directory_with_progress(
             let path = entry.path();
             let file_name = path.file_name().unwrap_or_default().to_string_lossy();
 
-            if path.is_symlink() || file_name.starts_with('.')  {
+            if path.is_symlink() || file_name.starts_with('.') {
                 continue;
             }
 
@@ -373,7 +387,6 @@ fn get_recursive_dir_size(path: &Path) -> u64 {
     total_size
 }
 
-
 fn build_file_tree(path: &Path) -> Result<ParsedPath> {
     let name = path
         .file_name()
@@ -451,12 +464,10 @@ pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
             }
         }
 
-        children.sort_by(|a, b| {
-            match (a, b) {
-                (ParsedPath::Directory { .. }, ParsedPath::File { .. }) => std::cmp::Ordering::Less,
-                (ParsedPath::File { .. }, ParsedPath::Directory { .. }) => std::cmp::Ordering::Greater,
-                _ => a.path().cmp(b.path())
-            }
+        children.sort_by(|a, b| match (a, b) {
+            (ParsedPath::Directory { .. }, ParsedPath::File { .. }) => std::cmp::Ordering::Less,
+            (ParsedPath::File { .. }, ParsedPath::Directory { .. }) => std::cmp::Ordering::Greater,
+            _ => a.path().cmp(b.path()),
         });
 
         Ok(ParsedPath::Directory {
@@ -522,7 +533,9 @@ pub fn find_children_in_tree(tree: &[ParsedPath], target_path: &str) -> Option<V
 pub fn to_shallow_node(node: &ParsedPath) -> ParsedPath {
     match node {
         ParsedPath::File { .. } => node.clone(),
-        ParsedPath::Directory { name, path, size, .. } => ParsedPath::Directory {
+        ParsedPath::Directory {
+            name, path, size, ..
+        } => ParsedPath::Directory {
             name: name.clone(),
             path: path.clone(),
             size: *size,
@@ -624,18 +637,13 @@ fn reveal_in_folder(path: &Path) -> Result<()> {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("explorer")
-            .arg("/select,")
-            .arg(path)
-            .spawn()?;
+        Command::new("explorer").arg("/select,").arg(path).spawn()?;
     }
 
     #[cfg(target_os = "linux")]
     {
         if let Some(parent) = path.parent() {
-            Command::new("xdg-open")
-                .arg(parent)
-                .spawn()?;
+            Command::new("xdg-open").arg(parent).spawn()?;
         }
     }
 

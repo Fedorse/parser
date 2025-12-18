@@ -1,8 +1,9 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-pub mod utils;
 pub mod commands;
 pub mod error;
+pub mod utils;
 
+use tauri::Manager;
 use tauri_plugin_log;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -12,9 +13,23 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_log::Builder::new().build())
+        
+        .setup(|app| {
+            let window = app.get_webview_window("main").unwrap();
+
+
+            #[cfg(target_os = "windows")]
+            {
+                window.set_decorations(false).unwrap();
+                window.set_shadow(true).unwrap();
+            }
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::get_preview_tree,
             commands::get_parsed_preview_tree,
