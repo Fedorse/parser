@@ -1,5 +1,9 @@
 # Parser-codebase
 
+[![Release](https://img.shields.io/github/v/release/Fedorse/Codebase-parser?include_prereleases)](https://github.com/Fedorse/Codebase-parser/releases)
+[![Downloads](https://img.shields.io/github/downloads/Fedorse/Codebase-parser/total)](https://github.com/Fedorse/Codebase-parser/releases)
+[![License](https://img.shields.io/github/license/Fedorse/Codebase-parser)](./LICENSE)
+
 **Desktop codebase parser & analyzer** built with **Tauri v2 (Rust)** and **SvelteKit (Svelte 5, TypeScript)**.
 
 Parse local projects or Git repositories into a clean output content.txt , keep a history of runs, and quickly inspect results.
