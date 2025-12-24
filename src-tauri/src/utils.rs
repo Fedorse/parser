@@ -203,6 +203,10 @@ fn cleanup_temp_repos(paths: &[String]) -> Result<()> {
 // /////////////////////////////////////////////////////////////////////////////
 // Main Parsing Logic
 // /////////////////////////////////////////////////////////////////////////////
+fn is_valid_path(path: &Path) -> bool {
+    let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+    path.exists() && !path.is_symlink() && !file_name.starts_with('.')
+}
 
 pub fn parse_files(
     paths: Vec<String>,
@@ -222,17 +226,14 @@ pub fn parse_files(
 
     for path_str in &paths {
         let path = Path::new(path_str);
-        if path.exists() {
-            if path.is_symlink() {
-                continue;
-            }
+        if is_valid_path(path) {
             file_tree.push(build_file_tree(&path)?);
         }
     }
 
     for path_str in &paths {
         let path = Path::new(&path_str);
-        if path.is_symlink() {
+        if !is_valid_path(&path){
             continue;
         }
 
@@ -306,9 +307,8 @@ fn process_directory_with_progress(
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
 
-            if path.is_symlink() || file_name.starts_with('.') {
+            if !is_valid_path(&path){
                 continue;
             }
 
@@ -374,8 +374,7 @@ fn get_recursive_dir_size(path: &Path) -> u64 {
         for entry in entries.flatten() {
             let child_path = entry.path();
 
-            // Skip symlinks to avoid infinite loops
-            if child_path.is_symlink() {
+            if !is_valid_path(&child_path) {
                 continue;
             }
 
@@ -404,7 +403,8 @@ fn build_file_tree(path: &Path) -> Result<ParsedPath> {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
                 let child_path = entry.path();
-                if child_path.is_symlink() {
+
+                if !is_valid_path(&path) {
                     continue;
                 }
 
@@ -450,7 +450,8 @@ pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
                 let child_path = entry.path();
-                if child_path.is_symlink() {
+
+                if !is_valid_path(&child_path) {
                     continue;
                 }
 
