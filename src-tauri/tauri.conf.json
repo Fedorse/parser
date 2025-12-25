@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "parser",
+  "productName": "codebase-parser",
   "version": "1.0.0",
   "identifier": "com.parser.app",
   "build": {

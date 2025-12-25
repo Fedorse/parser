@@ -1,7 +1,7 @@
 {
-  "name": "parser",
-  "private": true,
-  "version": "2.0.1",
+  "name": "codebase-parser",
+  "private": false,
+  "version": "2.0.5",
   "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
