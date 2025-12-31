@@ -4,7 +4,7 @@
 [![Downloads](https://img.shields.io/github/downloads/Fedorse/Codebase-parser/total)](https://github.com/Fedorse/Codebase-parser/releases)
 [![License](https://img.shields.io/github/license/Fedorse/Codebase-parser)](./LICENSE)
 
-A desktop tool that turns your whole project code into a single text file. You can use it with local folders or GitHub links.
+A desktop tool that turns your whole project code into a single text file and displays a tree diagram of your file structure. You can use it with local folders or GitHub links.
 
 It helps you easily provide code context to AI models like Claude, ChatGPT, or Gemini.
 
