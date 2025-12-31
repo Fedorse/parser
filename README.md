@@ -10,7 +10,7 @@ It helps you easily provide code context to AI models like Claude, ChatGPT, or G
 
 [Download the latest release](https://github.com/Fedorse/Codebase-parser/releases)
 
-![Project Parser Demo](placeholder_for_your_gif_url_here)
+![Project Parser Demo](https://github.com/user-attachments/assets/3f40d34e-27ce-443d-92f5-51ca6ac4c6e2)
 
 ## Technologies
 
