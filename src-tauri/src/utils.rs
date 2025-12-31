@@ -237,9 +237,17 @@ pub fn parse_files(
             continue;
         }
 
+        let base_path = if path.is_file() {
+            path.parent().unwrap_or(path)
+        } else {
+            path
+        };
+
+
         if path.is_dir() {
             process_directory_with_progress(
                 &path,
+                base_path,
                 &mut output_file,
                 &mut parsed_files,
                 &mut total_size,
@@ -250,6 +258,7 @@ pub fn parse_files(
             )?;
         } else if process_single_text_file(
             &path,
+            base_path,
             &mut output_file,
             &mut parsed_files,
             &mut total_size,
@@ -296,6 +305,7 @@ pub fn parse_files(
 
 fn process_directory_with_progress(
     dir: &Path,
+    base_path: &Path,
     output_file: &mut File,
     parsed_files: &mut Vec<FileMetadata>,
     total_size: &mut u64,
@@ -315,6 +325,7 @@ fn process_directory_with_progress(
             if path.is_dir() {
                 let _ = process_directory_with_progress(
                     &path,
+                    base_path,
                     output_file,
                     parsed_files,
                     total_size,
@@ -325,7 +336,7 @@ fn process_directory_with_progress(
                 );
             } else {
                 if let Ok(processed) =
-                    process_single_text_file(&path, output_file, parsed_files, total_size)
+                    process_single_text_file(&path, base_path, output_file, parsed_files, total_size)
                 {
                     if processed {
                         *current_count += 1;
@@ -340,6 +351,7 @@ fn process_directory_with_progress(
 
 fn process_single_text_file(
     path: &Path,
+    base_path: &Path,
     output_file: &mut File,
     parsed_files: &mut Vec<FileMetadata>,
     total_size: &mut u64,
@@ -348,7 +360,7 @@ fn process_single_text_file(
         return Ok(false);
     }
 
-    match write_file_content(path, output_file) {
+    match write_file_content(path, base_path, output_file) {
         Ok(_) => {
             if let Ok(metadata) = get_file_metadata(path) {
                 *total_size += metadata.size;
@@ -586,14 +598,16 @@ pub fn save_metadata(path: &Path, metadata: &ParseMetadata) -> Result<()> {
     Ok(())
 }
 
-fn write_file_content(path: &Path, output_file: &mut File) -> Result<()> {
+fn write_file_content(path: &Path, base_path: &Path, output_file: &mut File) -> Result<()> {
     let mut file = File::open(&path).with_context(|| format!("Opening {}", path.display()))?;
     let mut content = String::new();
 
     file.read_to_string(&mut content)
         .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-    writeln!(output_file, "===== {} =====", path.display())?;
+    let relative_path = path.strip_prefix(base_path).unwrap_or(path);
+
+    writeln!(output_file, "===== {} =====", relative_path.display())?;
 
     output_file.write_all(content.as_bytes())?;
 
