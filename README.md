@@ -8,7 +8,7 @@ A desktop tool that turns your whole project code into a single text file. You c
 
 It helps you easily provide code context to AI models like Claude, ChatGPT, or Gemini.
 
-[Download the latest release here](https://github.com/your-username/your-repo/releases)
+[Download the latest release here]([https://github.com/your-username/your-repo/releases](https://github.com/Fedorse/Codebase-parser/releases))
 
 ![Project Parser Demo](placeholder_for_your_gif_url_here)
 
