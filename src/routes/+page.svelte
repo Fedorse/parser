@@ -313,9 +313,7 @@
           </div>
         {:else}
           <InfoIcon class="text-muted-foreground size-3 stroke-1" />
-          <p class="text-muted-foreground text-[10px]">
-            Supports GitHub, GitLab, and standard .git repositories.
-          </p>
+          <p class="text-muted-foreground text-[10px]">Supports only public GitHub repositories.</p>
         {/if}
       </div>
     </div>
