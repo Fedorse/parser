@@ -4,9 +4,9 @@
 [![Downloads](https://img.shields.io/github/downloads/Fedorse/Codebase-parser/total)](https://github.com/Fedorse/Codebase-parser/releases)
 [![License](https://img.shields.io/github/license/Fedorse/Codebase-parser)](./LICENSE)
 
-A desktop utility that transforms entire codebases into a single, clearly labeled text file. It supports parsing both local directories and GitHub repositories directly.
+A desktop tool that turns your whole project code into a single text file. You can use it with local folders or GitHub links.
 
-This tool is designed to streamline the process of gathering project context for Large Language Models (LLMs) like Claude, ChatGPT, or Gemini.
+It helps you easily provide code context to AI models like Claude, ChatGPT, or Gemini.
 
 [Download the latest release here](https://github.com/your-username/your-repo/releases)
 
