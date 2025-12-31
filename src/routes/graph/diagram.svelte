@@ -23,6 +23,7 @@
   import * as Tabs from '$lib/components/ui/tabs/index.js';
   import CustomNode from '@/routes/graph/node.svelte';
   import { ArrowLeftRight, ArrowUpDown, Fullscreen } from '@lucide/svelte';
+  import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 
   import type { FileTree, GraphData, Direction, WithMeasured, FileMetadata } from '@/lib/type';
 
@@ -245,29 +246,38 @@
 </div>
 
 {#snippet layoutSwitch()}
-  <Tabs.Root bind:value={direction}>
-    <Tabs.List class="bg-card/20 h-10! gap-2">
-      <Tabs.Trigger
-        value="LR"
-        class="inline-flex items-center gap-2"
-        onclick={() => toggleLayout('LR')}
-        title="Horizontal layout"
-      >
-        <ArrowLeftRight class="size-4" />
-        <span class="inline">Horizontal</span>
-      </Tabs.Trigger>
+  <div class="flex items-center gap-1 rounded-lg border p-1 shadow-xs">
+    <Tabs.Root bind:value={direction}>
+      <Tabs.List class="bg-card/20 h-8! gap-2">
+        <Tooltip.Root>
+          <Tooltip.Trigger>
+            <Tabs.Trigger
+              value="LR"
+              class="inline-flex items-center gap-2"
+              onclick={() => toggleLayout('LR')}
+            >
+              <ArrowLeftRight class="size-4" />
+            </Tabs.Trigger>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Horizontal layout</Tooltip.Content>
+        </Tooltip.Root>
 
-      <Tabs.Trigger
-        value="TB"
-        class="inline-flex items-center gap-2"
-        onclick={() => toggleLayout('TB')}
-        title="Vertical layout"
-      >
-        <ArrowUpDown class="size-4" />
-        <span class="inline">Vertical</span>
-      </Tabs.Trigger>
-    </Tabs.List>
-  </Tabs.Root>
+        <div class="bg-border animate-in fade-in zoom-in-95 mx-1 h-4 w-[1px]"></div>
+        <Tooltip.Root>
+          <Tooltip.Trigger>
+            <Tabs.Trigger
+              value="TB"
+              class="inline-flex items-center gap-2"
+              onclick={() => toggleLayout('TB')}
+            >
+              <ArrowUpDown class="size-4" />
+            </Tabs.Trigger>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Vertical layout</Tooltip.Content>
+        </Tooltip.Root>
+      </Tabs.List>
+    </Tabs.Root>
+  </div>
 {/snippet}
 
 <style>
@@ -311,16 +321,4 @@
   :global(.svelte-flow__controls button path) {
     fill: currentColor;
   }
-
-  /* :global(.svelte-flow__pane) {
-    cursor: default !important;
-  }
-
-  :global(.svelte-flow__pane.dragging) {
-    cursor: grabbing !important;
-  }
-
-  :global(.svelte-flow__node) {
-    cursor: pointer !important;
-  } */
 </style>
