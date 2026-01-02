@@ -24,13 +24,14 @@ pub const CONTENT_FILENAME: &str = "content.txt";
 pub const METADATA_FILENAME: &str = "metadata.json";
 pub const TREE_FILENAME: &str = "tree.json";
 pub const TEMP_REPOS_DIR: &str = "temp-repos";
-pub const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB limit for file size
+pub const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileMetadata {
     pub path: String,
     pub name: String,
     pub size: u64,
+    pub relative_path: String
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,11 +52,13 @@ pub enum ParsedPath {
     File {
         name: String,
         path: String,
+        relative_path: String,
         size: u64,
     },
     Directory {
         name: String,
         path: String,
+        relative_path: String,
         size: u64,
         children: Vec<ParsedPath>,
     },
@@ -250,7 +253,13 @@ pub fn parse_files(
     for path_str in &paths {
         let path = Path::new(path_str);
         if is_valid_path(path) {
-            if let Ok(tree) = build_file_tree(&path) {
+            let base_path = if path.is_file() {
+                path.parent().unwrap_or(path)
+            } else {
+                path
+            };
+
+            if let Ok(tree) = build_file_tree(path, base_path) {
                 file_tree.push(tree);
             }
         }
@@ -259,9 +268,7 @@ pub fn parse_files(
     if total_files > 0 {
         for path_str in &paths {
             let path = Path::new(&path_str);
-            if !is_valid_path(&path){
-                continue;
-            }
+            if !is_valid_path(&path){ continue; }
 
             let base_path = if path.is_file() {
                 path.parent().unwrap_or(path)
@@ -389,7 +396,7 @@ fn process_single_text_file(
 
     match write_file_content(path, base_path, output_file) {
         Ok(_) => {
-            if let Ok(metadata) = get_file_metadata(path) {
+            if let Ok(metadata) = build_file_metadata(path, base_path) {
                 *total_size += metadata.size;
                 parsed_files.push(metadata);
                 Ok(true)
@@ -427,13 +434,15 @@ fn get_recursive_dir_size(path: &Path) -> u64 {
     total_size
 }
 
-fn build_file_tree(path: &Path) -> Result<ParsedPath> {
-    let name = path
-        .file_name()
-        .ok_or(anyhow::anyhow!("Failed to extract filename"))?
+fn build_file_tree(path: &Path, base_path: &Path) -> Result<ParsedPath> {
+    let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let file_path = path.to_string_lossy().to_string();
+
+    let relative_path = path
+        .strip_prefix(base_path)
+        .unwrap_or(path)
         .to_string_lossy()
         .to_string();
-    let file_path = path.to_string_lossy().to_string();
 
     if path.is_dir() {
         let mut children = Vec::new();
@@ -442,12 +451,9 @@ fn build_file_tree(path: &Path) -> Result<ParsedPath> {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
                 let child_path = entry.path();
+                if !is_valid_path(&path) { continue; }
 
-                if !is_valid_path(&path) {
-                    continue;
-                }
-
-                if let Ok(tree) = build_file_tree(&child_path) {
+                if let Ok(tree) = build_file_tree(&child_path, base_path) {
                     total_size += match &tree {
                         ParsedPath::File { size, .. } => *size,
                         ParsedPath::Directory { size, .. } => *size,
@@ -460,27 +466,35 @@ fn build_file_tree(path: &Path) -> Result<ParsedPath> {
             name,
             children,
             path: file_path,
+            relative_path,
             size: total_size,
         })
     } else {
-        let metadata = get_file_metadata(path)?;
-        let size = if is_text_file(path) { metadata.size } else { 0 };
+        let metadata = fs::metadata(path)?;
+        let size = if is_text_file(path) { metadata.len() } else { 0 };
 
         Ok(ParsedPath::File {
             name,
             size,
             path: file_path,
+            relative_path,
         })
     }
 }
 
-pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
+pub fn build_file_tree_shallow(path: &Path, base_path: &Path) -> Result<ParsedPath> {
     let name = path
         .file_name()
         .ok_or(anyhow::anyhow!("Failed to extract filename"))?
         .to_string_lossy()
         .to_string();
     let file_path = path.to_string_lossy().to_string();
+
+    let relative_path = path
+        .strip_prefix(base_path)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .to_string();
 
     if path.is_dir() {
         let mut children = Vec::new();
@@ -494,7 +508,7 @@ pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
                     continue;
                 }
 
-                let child_node = create_shallow_node(&child_path)?;
+                let child_node = create_shallow_node(&child_path, base_path)?;
 
                 match &child_node {
                     ParsedPath::File { size, .. } | ParsedPath::Directory { size, .. } => {
@@ -516,31 +530,35 @@ pub fn build_file_tree_shallow(path: &Path) -> Result<ParsedPath> {
             name,
             children,
             path: file_path,
+            relative_path,
             size: current_level_size,
         })
     } else {
-        let metadata = get_file_metadata(path)?;
+        let metadata = build_file_metadata(path, base_path)?;
         Ok(ParsedPath::File {
             name,
             size: metadata.size,
             path: file_path,
+            relative_path: metadata.relative_path,
         })
     }
 }
 
-pub fn create_shallow_node(path: &Path) -> Result<ParsedPath> {
+pub fn create_shallow_node(path: &Path, base_path: &Path) -> Result<ParsedPath> {
     let name = path
         .file_name()
         .ok_or(anyhow::anyhow!("Failed to extract filename"))?
         .to_string_lossy()
         .to_string();
     let file_path = path.to_string_lossy().to_string();
+    let relative_path = path.strip_prefix(base_path).unwrap_or(path).to_string_lossy().to_string();
 
     if path.is_dir() {
         let size = get_recursive_dir_size(path);
 
         Ok(ParsedPath::Directory {
             name,
+            relative_path,
             path: file_path,
             size,
             children: Vec::new(),
@@ -549,8 +567,10 @@ pub fn create_shallow_node(path: &Path) -> Result<ParsedPath> {
         let metadata = fs::metadata(path)?;
         Ok(ParsedPath::File {
             name,
+            relative_path,
             path: file_path,
             size: metadata.len(),
+
         })
     }
 }
@@ -576,10 +596,11 @@ pub fn to_shallow_node(node: &ParsedPath) -> ParsedPath {
     match node {
         ParsedPath::File { .. } => node.clone(),
         ParsedPath::Directory {
-            name, path, size, ..
+            name, path, relative_path, size, ..
         } => ParsedPath::Directory {
             name: name.clone(),
             path: path.clone(),
+            relative_path: relative_path.clone(),
             size: *size,
             children: Vec::new(),
         },
@@ -781,8 +802,14 @@ fn is_text_file(path: &Path) -> bool {
     !matches!(inspect(&buf[..sample_len]), ContentType::BINARY)
 }
 
-fn get_file_metadata(path: &Path) -> Result<FileMetadata> {
+fn build_file_metadata(path: &Path, base_path: &Path) -> Result<FileMetadata> {
     let metadata = fs::metadata(path)?;
+    let relative_path = path
+        .strip_prefix(base_path)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .to_string();
+
     Ok(FileMetadata {
         path: path.to_string_lossy().to_string(),
         name: path
@@ -791,6 +818,7 @@ fn get_file_metadata(path: &Path) -> Result<FileMetadata> {
             .to_string_lossy()
             .to_string(),
         size: metadata.len(),
+        relative_path
     })
 }
 

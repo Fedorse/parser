@@ -57,7 +57,7 @@
       <button
         class="hover:bg-background inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5
                transition"
-        onclick={() => data?.openEditor?.(data.path)}
+        onclick={() => data?.openEditor?.(data.relativePath || data.path)}
         title={`Find "${data.label}" in file`}
       >
         <SearchCode class="size-3.5" />

@@ -66,7 +66,13 @@ pub async fn get_preview_tree(paths: Vec<String>) -> Result<Vec<ParsedPath>, Com
             tokio::task::spawn_blocking(move || {
                 let path = PathBuf::from(input);
                 if path.exists() {
-                    return Some(utils::build_file_tree_shallow(&path));
+                    let base_path = if path.is_file() {
+                        path.parent().unwrap_or(&path).to_path_buf()
+                    } else {
+                        path.clone()
+                    };
+
+                    return Some(utils::build_file_tree_shallow(&path, &base_path));
                 }
                 None
             })
@@ -98,8 +104,8 @@ pub async fn expand_folder(path: String) -> Result<Vec<ParsedPath>, CommandError
                         continue;
                     }
 
-                    if let Ok(_node) = utils::build_file_tree_shallow(&child_path) {
-                        if let Ok(node) = utils::create_shallow_node(&child_path) {
+                    if let Ok(_node) = utils::build_file_tree_shallow(&child_path, &path_buf) {
+                        if let Ok(node) = utils::create_shallow_node(&child_path, &path_buf) {
                             children.push(node);
                         }
                     }

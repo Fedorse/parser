@@ -3,6 +3,7 @@ export type NodeType = 'File' | 'Directory';
 export type FileTree = {
   name: string;
   path: string;
+  relative_path: string;
   type: NodeType;
   selected?: boolean;
   isExpanded: boolean;
@@ -49,6 +50,7 @@ export type GraphData = {
   label: string;
   type: NodeType;
   path: string;
+  relativePath?: string;
   onToggle?: (p: string) => void;
   open?: boolean;
   dir: Direction;

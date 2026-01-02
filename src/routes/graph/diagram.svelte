@@ -124,6 +124,7 @@
       label: file.name,
       type: file.type,
       path: file.path,
+      relativePath: file.relative_path,
       onToggle: file.type === 'Directory' ? toggleDir : asyncNoop,
       open: file.type === 'Directory' ? expandedDirs.has(file.path) : undefined,
       dir: direction,
